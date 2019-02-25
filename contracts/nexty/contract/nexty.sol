@@ -75,7 +75,7 @@ contract NextyGovernance {
     * - must not be the sender's address
     */
     modifier validSigner(address _signer) {
-        require(signerCoinbase[_signer] != ZERO_ADDRESS, "signer already used");
+        require(signerCoinbase[_signer] == ZERO_ADDRESS, "coinbase already used");
         require(_signer != ZERO_ADDRESS, "signer zero");
         require(_signer != address(this), "same contract's address");
         require(_signer != msg.sender, "same sender's address");
