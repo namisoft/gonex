@@ -37,7 +37,6 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
-	"github.com/ethereum/go-ethereum/rlp"
 )
 
 // makeGenesis creates a new genesis struct based on some user input.
@@ -199,14 +198,6 @@ func (w *wizard) makeGenesis() {
 		if err != nil {
 			fmt.Println("Can't deploy nexty foundation token smart contract")
 			return
-		}
-
-		// Pre-process the storage map for genesis json
-		for key, val := range storage {
-			decode := []byte{}
-			trim := bytes.TrimLeft(val.Bytes(), "\x00")
-			rlp.DecodeBytes(trim, &decode)
-			storage[key] = common.BytesToHash(decode)
 		}
 
 		genesis.Alloc[params.TokenAddress] = core.GenesisAccount{
