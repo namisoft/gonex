@@ -1,6 +1,7 @@
 package deployer
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"math/big"
@@ -11,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/log"
+	"github.com/ethereum/go-ethereum/rlp"
 )
 
 // DeployContract deploy a smart contract to simulated chain to get out the contract's code and state
@@ -31,8 +33,13 @@ func DeployContract(deployCallback func(sim *backends.SimulatedBackend, auth *bi
 	code, _ = sim.CodeAt(ctx, address, nil)
 	storage = make(map[common.Hash]common.Hash)
 	sim.ForEachStorageAt(ctx, address, nil, func(key, val common.Hash) bool {
-		storage[key] = val
-		log.Info("DecodeBytes", "key", key, "value", storage[key])
+		// decode value from the RLP encoded format
+		decode := []byte{}
+		trim := bytes.TrimLeft(val.Bytes(), "\x00")
+		rlp.DecodeBytes(trim, &decode)
+		value := common.BytesToHash(decode)
+		storage[key] = value
+		log.Info("DecodeBytes", "key", key, "value", value, "storage value", storage[key])
 		return true
 	})
 	return code, storage, err
