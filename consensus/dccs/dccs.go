@@ -616,8 +616,7 @@ func (d *Dccs) snapshot2(chain consensus.ChainReader, number uint64, hash common
 			}
 			size := state.GetCodeSize(chain.Config().Dccs.Contract)
 			if size > 0 && state.Error() == nil {
-				var num int64 = 2 // signers array position in the smart contract state
-				index := common.BigToHash(big.NewInt(num))
+				index := common.BigToHash(common.Big0)
 				result := state.GetState(chain.Config().Dccs.Contract, index)
 				var length int64
 				if (result == common.Hash{}) {
@@ -854,7 +853,7 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 	checkpoint := chain.GetHeaderByNumber(cp)
 	if checkpoint != nil {
 		root, _ := chain.StateAt(checkpoint.Root)
-		index := common.BigToHash(big.NewInt(4)).String()[2:]
+		index := common.BigToHash(common.Big1).String()[2:]
 		coinbase := "0x000000000000000000000000" + header.Coinbase.String()[2:]
 		key := crypto.Keccak256Hash(hexutil.MustDecode(coinbase + index))
 		result := root.GetState(chain.Config().Dccs.Contract, key)
@@ -945,7 +944,9 @@ func deployConsensusContracts(state *state.StateDB, chainConfig *params.ChainCon
 	{
 		// Generate contract code and data using a simulated backend
 		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
-			address, _, _, err := contract.DeployNextyGovernance(auth, sim, params.TokenAddress, signers)
+			stakeRequire := new(big.Int).SetUint64(chainConfig.Dccs.StakeRequire)
+			stakeLockHeight := new(big.Int).SetUint64(chainConfig.Dccs.StakeLockHeight)
+			address, _, _, err := contract.DeployNextyGovernance(auth, sim, params.TokenAddress, stakeRequire, stakeLockHeight, signers)
 			return address, err
 		})
 		if err != nil {
