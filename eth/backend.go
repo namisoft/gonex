@@ -463,8 +463,7 @@ func (s *Ethereum) StartMining(threads int) error {
 					result := state.GetState(s.chainConfig.Dccs.Contract, key)
 
 					if (result == common.Hash{}) {
-						log.Error("Validator is not in activation sealer set")
-						return fmt.Errorf("Validator is not in activation sealer set")
+						log.Warn("Validator is not in activation sealer set")
 					}
 				}
 			}
