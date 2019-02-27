@@ -37,7 +37,6 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
-	"github.com/ethereum/go-ethereum/rlp"
 )
 
 // makeGenesis creates a new genesis struct based on some user input.
@@ -118,6 +117,9 @@ func (w *wizard) makeGenesis() {
 			Period:   2,
 			Epoch:    30000,
 			Contract: common.HexToAddress("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+			// Stake params
+			StakeRequire:    100,
+			StakeLockHeight: 24 * 60 * 60 / 2,
 			// ThangLong hardfork
 			ThangLongBlock: common.Big0,
 			ThangLongEpoch: 3000,
@@ -171,6 +173,14 @@ func (w *wizard) makeGenesis() {
 			genesis.Config.Dccs.Contract = *address
 		}
 
+		fmt.Println()
+		fmt.Printf("How many NTF is required to join sealing? (default = %v)\n", genesis.Config.Dccs.StakeRequire)
+		genesis.Config.Dccs.StakeRequire = uint64(w.readDefaultInt(int(genesis.Config.Dccs.StakeRequire)))
+
+		fmt.Println()
+		fmt.Printf("How many block to lock the NTF after a sealer leaving? (default = %v)\n", genesis.Config.Dccs.StakeLockHeight)
+		genesis.Config.Dccs.StakeLockHeight = uint64(w.readDefaultInt(int(genesis.Config.Dccs.StakeLockHeight)))
+
 		// Generate nexty token foundation contract
 		fmt.Println()
 		fmt.Println("Which account is allowed to be the onwer of NTF token contract? (mandatory)")
@@ -188,14 +198,6 @@ func (w *wizard) makeGenesis() {
 		if err != nil {
 			fmt.Println("Can't deploy nexty foundation token smart contract")
 			return
-		}
-
-		// Pre-process the storage map for genesis json
-		for key, val := range storage {
-			decode := []byte{}
-			trim := bytes.TrimLeft(val.Bytes(), "\x00")
-			rlp.DecodeBytes(trim, &decode)
-			storage[key] = common.BytesToHash(decode)
 		}
 
 		genesis.Alloc[params.TokenAddress] = core.GenesisAccount{
