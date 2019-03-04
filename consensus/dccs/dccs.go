@@ -927,15 +927,19 @@ func deployContract(state *state.StateDB, address common.Address, code []byte, s
 func deployConsensusContracts(state *state.StateDB, chainConfig *params.ChainConfig, signers []common.Address) error {
 	// Deploy NTF ERC20 Token Contract
 	{
+		owner := common.HexToAddress("0x000000270840d8ebdffc7d162193cc5ba1ad8707")
 		// Generate contract code and data using a simulated backend
 		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
-			owner := common.HexToAddress("0x000000270840d8ebdffc7d162193cc5ba1ad8707")
 			address, _, _, err := token.DeployNtfToken(auth, sim, owner)
 			return address, err
 		})
 		if err != nil {
 			return err
 		}
+
+		// replace the random generated sender address in MultiOwnable's manager field
+		storage[common.BigToHash(common.Big1)] = owner.Hash()
+
 		// Deploy only, no upgrade
 		deployContract(state, params.TokenAddress, code, storage, false)
 	}
