@@ -83,7 +83,7 @@ var (
 			Period: 2,
 			Epoch:  30000,
 			// Governance contract
-			Contract: common.HexToAddress("0xcafecafecafecafecafecafecafecafecafecafe"),
+			Contract: common.HexToAddress("0x0000000000000000000000000000000000012345"),
 			// ThangLong hard-fork
 			StakeRequire:    500,
 			StakeLockHeight: 3000,
