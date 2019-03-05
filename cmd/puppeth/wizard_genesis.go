@@ -183,27 +183,26 @@ func (w *wizard) makeGenesis() {
 
 		// Generate nexty token foundation contract
 		fmt.Println()
-		fmt.Println("Which account is allowed to be the onwer of NTF token contract? (mandatory)")
+		fmt.Println("Which account is allowed to be the onwer of NTF token contract? (optional)")
 		var onwer *common.Address
-		for onwer == nil {
-			if address := w.readAddress(); address != nil {
-				onwer = address
+		if address := w.readAddress(); address != nil {
+			onwer = address
+		}
+		if onwer != nil {
+			code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
+				address, _, _, err := token.DeployNtfToken(auth, sim, *onwer)
+				return address, err
+			})
+			if err != nil {
+				fmt.Println("Can't deploy nexty foundation token smart contract")
+				return
 			}
-		}
 
-		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
-			address, _, _, err := token.DeployNtfToken(auth, sim, *onwer)
-			return address, err
-		})
-		if err != nil {
-			fmt.Println("Can't deploy nexty foundation token smart contract")
-			return
-		}
-
-		genesis.Alloc[params.TokenAddress] = core.GenesisAccount{
-			Balance: big.NewInt(0),
-			Code:    code,
-			Storage: storage,
+			genesis.Alloc[params.TokenAddress] = core.GenesisAccount{
+				Balance: big.NewInt(0),
+				Code:    code,
+				Storage: storage,
+			}
 		}
 
 	default:
