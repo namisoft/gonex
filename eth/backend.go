@@ -37,6 +37,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/eth/downloader"
 	"github.com/ethereum/go-ethereum/eth/filters"
 	"github.com/ethereum/go-ethereum/eth/gasprice"
@@ -114,6 +115,12 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 		log.Warn("Sanitizing invalid miner gas price", "provided", config.MinerGasPrice, "updated", DefaultConfig.MinerGasPrice)
 		config.MinerGasPrice = new(big.Int).Set(DefaultConfig.MinerGasPrice)
 	}
+	if config.NoPruning && config.TrieDirtyCache > 0 {
+		config.TrieCleanCache += config.TrieDirtyCache
+		config.TrieDirtyCache = 0
+	}
+	log.Info("Allocated trie memory caches", "clean", common.StorageSize(config.TrieCleanCache)*1024*1024, "dirty", common.StorageSize(config.TrieDirtyCache)*1024*1024)
+
 	// Assemble the Ethereum object
 	chainDb, err := CreateDB(ctx, config, "chaindata")
 	if err != nil {
@@ -144,8 +151,10 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 
 	if !config.SkipBcVersionCheck {
 		bcVersion := rawdb.ReadDatabaseVersion(chainDb)
-		if bcVersion != core.BlockChainVersion && bcVersion != 0 {
-			return nil, fmt.Errorf("Blockchain DB version mismatch (%d / %d).\n", bcVersion, core.BlockChainVersion)
+		if bcVersion != nil && *bcVersion > core.BlockChainVersion {
+			return nil, fmt.Errorf("database version is v%d, Geth %s only supports v%d", *bcVersion, params.VersionWithMeta, core.BlockChainVersion)
+		} else if bcVersion != nil && *bcVersion < core.BlockChainVersion {
+			log.Warn("Upgrade blockchain database version", "from", *bcVersion, "to", core.BlockChainVersion)
 		}
 		rawdb.WriteDatabaseVersion(chainDb, core.BlockChainVersion)
 	}
@@ -436,6 +445,27 @@ func (s *Ethereum) StartMining(threads int) error {
 			if wallet == nil || err != nil {
 				log.Error("Etherbase account unavailable locally", "err", err)
 				return fmt.Errorf("signer missing: %v", err)
+			}
+			state, err := s.blockchain.State()
+			if state == nil || err != nil {
+				log.Error("Cannot read state of current header", "err", err)
+				return fmt.Errorf("cannot read state of current header: %v", err)
+			}
+			header := s.blockchain.CurrentHeader()
+			if s.chainConfig.IsThangLong(header.Number) {
+				size := state.GetCodeSize(s.chainConfig.Dccs.Contract)
+				log.Info("smart contract size", "size", size)
+				if size > 0 && state.Error() == nil {
+					// Get token holder from coinbase
+					index := common.BigToHash(common.Big1).String()[2:]
+					coinbase := "0x000000000000000000000000" + eb.String()[2:]
+					key := crypto.Keccak256Hash(hexutil.MustDecode(coinbase + index))
+					result := state.GetState(s.chainConfig.Dccs.Contract, key)
+
+					if (result == common.Hash{}) {
+						log.Warn("Validator is not in activation sealer set")
+					}
+				}
 			}
 			dccs.Authorize(eb, wallet.SignHash)
 		}
