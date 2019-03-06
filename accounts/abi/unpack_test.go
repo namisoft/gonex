@@ -192,6 +192,11 @@ var unpackTests = []unpackTest{
 		want: [][2]uint8{{1, 2}},
 	},
 	{
+		def:  `[{"type": "uint8[2][]"}]`,
+		enc:  "000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002",
+		want: [][2]uint8{{1, 2}, {1, 2}},
+	},
+	{
 		def:  `[{"type": "uint16[]"}]`,
 		enc:  "0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002",
 		want: []uint16{1, 2},
@@ -296,6 +301,53 @@ var unpackTests = []unpackTest{
 		}{big.NewInt(1), big.NewInt(2)},
 	},
 	{
+		def: `[{"name":"int_one","type":"int256"}]`,
+		enc: "00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002",
+		want: struct {
+			IntOne *big.Int
+		}{big.NewInt(1)},
+	},
+	{
+		def: `[{"name":"int__one","type":"int256"}]`,
+		enc: "00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002",
+		want: struct {
+			IntOne *big.Int
+		}{big.NewInt(1)},
+	},
+	{
+		def: `[{"name":"int_one_","type":"int256"}]`,
+		enc: "00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002",
+		want: struct {
+			IntOne *big.Int
+		}{big.NewInt(1)},
+	},
+	{
+		def: `[{"name":"int_one","type":"int256"}, {"name":"intone","type":"int256"}]`,
+		enc: "00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002",
+		want: struct {
+			IntOne *big.Int
+			Intone *big.Int
+		}{big.NewInt(1), big.NewInt(2)},
+	},
+	{
+		def: `[{"name":"___","type":"int256"}]`,
+		enc: "00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002",
+		want: struct {
+			IntOne *big.Int
+			Intone *big.Int
+		}{},
+		err: "abi: purely underscored output cannot unpack to struct",
+	},
+	{
+		def: `[{"name":"int_one","type":"int256"},{"name":"IntOne","type":"int256"}]`,
+		enc: "00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002",
+		want: struct {
+			Int1 *big.Int
+			Int2 *big.Int
+		}{},
+		err: "abi: multiple outputs mapping to the same struct field 'IntOne'",
+	},
+	{
 		def: `[{"name":"int","type":"int256"},{"name":"Int","type":"int256"}]`,
 		enc: "00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002",
 		want: struct {
@@ -356,6 +408,55 @@ func TestUnpack(t *testing.T) {
 				t.Errorf("test %d (%v) failed: expected %v, got %v", i, test.def, test.want, out)
 			}
 		})
+	}
+}
+
+func TestUnpackSetDynamicArrayOutput(t *testing.T) {
+	abi, err := JSON(strings.NewReader(`[{"constant":true,"inputs":[],"name":"testDynamicFixedBytes15","outputs":[{"name":"","type":"bytes15[]"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"testDynamicFixedBytes32","outputs":[{"name":"","type":"bytes32[]"}],"payable":false,"stateMutability":"view","type":"function"}]`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var (
+		marshalledReturn32 = common.Hex2Bytes("0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000230783132333435363738393000000000000000000000000000000000000000003078303938373635343332310000000000000000000000000000000000000000")
+		marshalledReturn15 = common.Hex2Bytes("0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000230783031323334350000000000000000000000000000000000000000000000003078393837363534000000000000000000000000000000000000000000000000")
+
+		out32 [][32]byte
+		out15 [][15]byte
+	)
+
+	// test 32
+	err = abi.Unpack(&out32, "testDynamicFixedBytes32", marshalledReturn32)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(out32) != 2 {
+		t.Fatalf("expected array with 2 values, got %d", len(out32))
+	}
+	expected := common.Hex2Bytes("3078313233343536373839300000000000000000000000000000000000000000")
+	if !bytes.Equal(out32[0][:], expected) {
+		t.Errorf("expected %x, got %x\n", expected, out32[0])
+	}
+	expected = common.Hex2Bytes("3078303938373635343332310000000000000000000000000000000000000000")
+	if !bytes.Equal(out32[1][:], expected) {
+		t.Errorf("expected %x, got %x\n", expected, out32[1])
+	}
+
+	// test 15
+	err = abi.Unpack(&out15, "testDynamicFixedBytes32", marshalledReturn15)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(out15) != 2 {
+		t.Fatalf("expected array with 2 values, got %d", len(out15))
+	}
+	expected = common.Hex2Bytes("307830313233343500000000000000")
+	if !bytes.Equal(out15[0][:], expected) {
+		t.Errorf("expected %x, got %x\n", expected, out15[0])
+	}
+	expected = common.Hex2Bytes("307839383736353400000000000000")
+	if !bytes.Equal(out15[1][:], expected) {
+		t.Errorf("expected %x, got %x\n", expected, out15[1])
 	}
 }
 

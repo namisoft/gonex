@@ -5,7 +5,8 @@
 #   git config --global core.excludesfile ~/.gitignore_global
 
 /tmp
-/data
+/data/**/gonex
+/data/**/history
 */**/*un~
 */**/*.test
 *un~
@@ -48,5 +49,7 @@ profile.cov
 **/yarn-error.log
 
 # testnet
-boot.key
-nexty.json
+*.log
+passwd
+
+*.exe

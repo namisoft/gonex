@@ -23,6 +23,8 @@ const (
 	MinGasLimit          uint64 = 5000     // Minimum the gas limit may ever be.
 	GenesisGasLimit      uint64 = 42000000 // Gas limit of the Genesis block.
 
+	MRUGasThreshold uint64 = TxGas * 3 // Gas threshold to fully exhaust the accumulating MRU of an account.
+
 	MaximumExtraDataSize  uint64 = 32    // Maximum size extra data may be after Genesis.
 	ExpByteGas            uint64 = 10    // Times ceil(log256(exponent)) for the EXP instruction.
 	SloadGas              uint64 = 50    // Multiplied by the number of 32-byte words that are copied (round up) for any *COPY operation and added.
@@ -70,7 +72,6 @@ const (
 	TxDataNonZeroGas uint64 = 68    // Per byte of data attached to a transaction that is not equal to zero. NOTE: Not payable on data of calls between transactions.
 
 	MaxCodeSize = 24576 // Maximum bytecode to permit for a contract
-	TxGasPrice  = 0     // Zero Transaction Fee
 
 	// Precompiled contract gas prices
 

@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/eth/downloader"
 	"github.com/ethereum/go-ethereum/log"
@@ -168,12 +169,19 @@ func (pm *ProtocolManager) synchronise(peer *peer) {
 	}
 	// Make sure the peer's TD is higher than our own
 	currentBlock := pm.blockchain.CurrentBlock()
-	td := pm.blockchain.GetTd(currentBlock.Hash(), currentBlock.NumberU64())
+	hash := currentBlock.Hash()
+	td := pm.blockchain.GetTd(hash, currentBlock.NumberU64())
 
 	pHead, pTd := peer.Head()
-	if pTd.Cmp(td) <= 0 {
+	cmp := core.ChainCompare(pTd, td, pHead, hash)
+	if cmp <= 0 {
+		if cmp < 0 && currentBlock.NumberU64() > 0 {
+			// broadcast our better chain back to the peer
+			go pm.BroadcastBlock(currentBlock, true)
+		}
 		return
 	}
+
 	// Otherwise try to sync with the downloader
 	mode := downloader.FullSync
 	if atomic.LoadUint32(&pm.fastSync) == 1 {
@@ -191,7 +199,9 @@ func (pm *ProtocolManager) synchronise(peer *peer) {
 
 	if mode == downloader.FastSync {
 		// Make sure the peer's total difficulty we are synchronizing is higher.
-		if pm.blockchain.GetTdByHash(pm.blockchain.CurrentFastBlock().Hash()).Cmp(pTd) >= 0 {
+		fastBlock := pm.blockchain.CurrentFastBlock()
+		fastTd := pm.blockchain.GetTd(fastBlock.Hash(), fastBlock.NumberU64())
+		if core.ChainCompare(pTd, fastTd, pHead, fastBlock.Hash()) <= 0 {
 			return
 		}
 	}

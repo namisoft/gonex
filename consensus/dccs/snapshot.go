@@ -19,12 +19,16 @@ package dccs
 import (
 	"bytes"
 	"encoding/json"
+	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethdb"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
+	"github.com/ethereum/go-ethereum/rlp"
 	lru "github.com/hashicorp/golang-lru"
+	"golang.org/x/crypto/sha3"
 )
 
 // Vote represents a single vote that an authorized signer made to modify the
@@ -55,6 +59,23 @@ type Snapshot struct {
 	Votes   []*Vote                     `json:"votes"`   // List of votes cast in chronological order
 	Tally   map[common.Address]Tally    `json:"tally"`   // Current vote tally to avoid recalculating
 }
+
+// Signer contain data of signer's address and checkpoint block hash
+type Signer struct {
+	Hash    common.Hash
+	Address common.Address
+}
+
+// Signers implements the sort interface to allow sorting a list of signers by hash
+type Signers []Signer
+
+func (sn Signers) Len() int { return len(sn) }
+func (sn Signers) Less(i, j int) bool {
+	h1 := rlpHash(sn[i])
+	h2 := rlpHash(sn[j])
+	return bytes.Compare(h1[:], h2[:]) < 0
+}
+func (sn Signers) Swap(i, j int) { sn[i], sn[j] = sn[j], sn[i] }
 
 // newSnapshot creates a new snapshot with the specified startup parameters. This
 // method does not initialize the set of recent signers, so only ever use if for
@@ -192,7 +213,7 @@ func (s *Snapshot) apply(headers []*types.Header) (*Snapshot, error) {
 	for _, header := range headers {
 		// Remove any votes on checkpoint blocks
 		number := header.Number.Uint64()
-		if number%s.config.Epoch == 0 {
+		if s.config.IsCheckpoint(number) {
 			snap.Votes = nil
 			snap.Tally = make(map[common.Address]Tally)
 		}
@@ -300,11 +321,111 @@ func (s *Snapshot) signers() []common.Address {
 	return signers
 }
 
+// signers2 retrieves the list of authorized signers in hash ascending order.
+func (s *Snapshot) signers2() []Signer {
+	sigs := make([]Signer, 0, len(s.Signers))
+	for sig := range s.Signers {
+		sigs = append(sigs, Signer{Hash: s.Hash, Address: sig})
+	}
+	sort.Sort(Signers(sigs))
+	return sigs
+}
+
 // inturn returns if a signer at a given block height is in-turn or not.
 func (s *Snapshot) inturn(number uint64, signer common.Address) bool {
 	signers, offset := s.signers(), 0
 	for offset < len(signers) && signers[offset] != signer {
 		offset++
 	}
+	log.Trace("inturn", "offset", offset, "number", number, "len(signers)", len(signers))
 	return (number % uint64(len(signers))) == uint64(offset)
+}
+
+// inturn2 returns if a signer at a given block height is in-turn or not.
+func (s *Snapshot) inturn2(signer common.Address, parent *types.Header) bool {
+	offset, err := s.offset(signer, parent)
+	if err != nil {
+		return false
+	}
+	log.Trace("inturn", "offset", offset)
+	return offset == 0
+}
+
+func signerPosition(signer common.Address, signers []Signer) (int, bool) {
+	for i, sig := range signers {
+		if sig.Address == signer {
+			return i, true
+		}
+	}
+	return -1, false
+}
+
+func (s *Snapshot) offset(signer common.Address, parent *types.Header) (int, error) {
+	signers := s.signers2()
+	n := len(signers)
+	if n <= 1 {
+		// no competition
+		return 0, nil
+	}
+
+	pos, ok := signerPosition(signer, signers)
+	if !ok {
+		// unable to find the signer position
+		return n, errUnauthorized
+	}
+
+	if parent == nil || s.config.IsCheckpoint(parent.Number.Uint64()+1) {
+		// first block of an epoch, just return the rightful order
+		log.Info("the first block of an epoch")
+		return pos, nil
+	}
+
+	// Resolve the last authorization key and check against signer
+	prevSigner, err := ecrecover(parent, s.sigcache)
+	if err != nil {
+		return 0, err
+	}
+	prevPos, ok := signerPosition(prevSigner, signers)
+	if !ok {
+		// unable to find the previous signer position
+		return n, errUnauthorized
+	}
+
+	offset := pos - prevPos - 1
+	if offset < 0 {
+		offset += n
+	}
+
+	log.Info("offset", "signer position", pos, "previous signer position", prevPos, "len(signers)", n, "offset", offset)
+
+	return offset, nil
+}
+
+// difficulty returns the block weight at a given block height for a signer.
+// Turn-ness is the directional distant from a signer to the previous one,
+// following a circular order of the signers list.
+// @return maximum value = len(signers) if signer is right after the prevSigner (circularly)
+// @return minimum value = 1 if the signer is right before the prevSigner (circularly)
+// @return invalid value = 0 if the signer or parent signer is not on the sealer list
+func (s *Snapshot) difficulty(signer common.Address, parent *types.Header) uint64 {
+	offset, err := s.offset(signer, parent)
+	if err != nil {
+		return 0
+	}
+
+	signers := s.signers2()
+	n := len(signers)
+
+	return uint64(n - offset)
+}
+
+// rlpHash return hash of an input
+func rlpHash(s Signer) (h common.Hash) {
+	hasher := sha3.NewLegacyKeccak256()
+	rlp.Encode(hasher, []interface{}{
+		s.Address,
+		s.Hash,
+	})
+	hasher.Sum(h[:0])
+	return h
 }
