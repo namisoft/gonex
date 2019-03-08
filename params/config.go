@@ -44,8 +44,8 @@ var (
 		EIP155Block:         big.NewInt(3),
 		EIP158Block:         big.NewInt(3),
 		ByzantiumBlock:      big.NewInt(4),
-		ConstantinopleBlock: big.NewInt(15000000),
-		PetersburgBlock:     big.NewInt(15000000),
+		ConstantinopleBlock: big.NewInt(15360000),
+		PetersburgBlock:     big.NewInt(15360000),
 		Dccs: &DccsConfig{
 			Period: 2,
 			Epoch:  30000,
@@ -54,7 +54,7 @@ var (
 			// ThangLong hard-fork
 			StakeRequire:    50000,
 			StakeLockHeight: 30000,
-			ThangLongBlock:  big.NewInt(15000000),
+			ThangLongBlock:  big.NewInt(15360000),
 			ThangLongEpoch:  3000,
 		},
 	}
