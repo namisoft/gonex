@@ -963,7 +963,7 @@ func (bc *BlockChain) writeBlockWithState(block *types.Block, receipts []*types.
 	snapshot := bc.Config().IsSnapshot(block.Number())
 
 	// If we're running an archive node, always flush
-	// Also flush for ThangLong snapshot.
+	// Also flush for ThangLong snapshot block.
 	// TODO: optimize this by gc-ing the past snapshots.
 	if bc.cacheConfig.Disabled || snapshot {
 		if err := triedb.Commit(root, false); err != nil {
