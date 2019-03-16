@@ -386,9 +386,9 @@ func (c *ChainConfig) IsSnapshotBlock(num *big.Int) bool {
 	if c.Dccs == nil || c.Dccs.ThangLongBlock == nil {
 		return false
 	}
-	depth := new(big.Int).SetUint64(CanonicalDepth)
-	depth.Add(num, depth)
-	return c.Dccs.IsThangLong(depth) && c.Dccs.IsCheckpoint(depth.Uint64())
+	forBlock := new(big.Int).SetUint64(CanonicalDepth)
+	forBlock.Add(num, forBlock)
+	return c.Dccs.IsThangLong(forBlock) && c.Dccs.IsCheckpoint(forBlock.Uint64())
 }
 
 // IsThangLongPreparationBlock returns whether num represents a block number exactly at the ThangLong Preparation
