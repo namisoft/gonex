@@ -56,10 +56,6 @@ const (
 	inmemorySignatures = 4096 // Number of recent block signatures to keep in memory
 
 	wiggleTime = 500 * time.Millisecond // Random delay (per signer) to allow concurrent signers
-
-	// It is used by the miner to provide logs to the user when a previously mined block
-	// has a high enough guarantee to not be reorged out of the canonical chain.
-	depth = 10
 )
 
 // Dccs proof-of-foundation protocol constants.
@@ -591,14 +587,7 @@ func (d *Dccs) snapshot2(chain consensus.ChainReader, number uint64, hash common
 	)
 	for snap == nil {
 		// Get signers from Nexty staking smart contract at the latest epoch checkpoint from block number
-		cp := d.config.Checkpoint(number + 1)
-		// Get genesis block as checkpoint for 1st epoch
-		if cp <= 0 {
-			cp = 0
-		} else {
-			// Get the state from canonical chain to ensure the chain and state are not in sidefork
-			cp = cp - depth
-		}
+		cp := d.config.Snapshot(number + 1)
 		checkpoint := chain.GetHeaderByNumber(cp)
 		if checkpoint != nil {
 			hash := checkpoint.Hash()
@@ -842,14 +831,7 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 	header.Nonce = types.BlockNonce{}
 	// Get the beneficiary of signer from smart contract and set to header's coinbase to give sealing reward later
 	number := header.Number.Uint64()
-	cp := d.config.Checkpoint(number)
-	// get genesis block as checkpoint for 1st epoch
-	if cp <= 0 {
-		cp = 0
-	} else {
-		// Get the state from canonical chain to ensure the chain and state are not in sidefork
-		cp = cp - depth
-	}
+	cp := d.config.Snapshot(number)
 	checkpoint := chain.GetHeaderByNumber(cp)
 	if checkpoint != nil {
 		root, _ := chain.StateAt(checkpoint.Root)

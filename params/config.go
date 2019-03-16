@@ -23,6 +23,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+const (
+	// CanonicalDepth is the confirmation required for a block to be considered canonical.
+	// Also the distant from the ThangLong checkpoint block to it's snapshot.
+	CanonicalDepth = 7
+)
+
 // Genesis hashes to enforce below configs on.
 var (
 	MainnetGenesisHash = common.HexToHash("0x080eeb525df0e852343ba13afedf2b256f0991c1b18797e18863fd7b4ab3574b")
@@ -271,6 +277,19 @@ func (c *DccsConfig) Checkpoint(number uint64) uint64 {
 	return number - c.PositionInEpoch(number)
 }
 
+// Snapshot returns the snapshot block for this block's epoch.
+// Snapshot is (Checkpoint - CanonicalDepth) for ThangLong consensus.
+func (c *DccsConfig) Snapshot(number uint64) uint64 {
+	// Get the checkpoint first
+	cp := c.Checkpoint(number)
+	// Get genesis block as checkpoint for 1st epoch
+	if cp <= CanonicalDepth {
+		return 0
+	}
+	// Get the state from canonical chain to ensure the chain and state are not in sidefork
+	return cp - CanonicalDepth
+}
+
 // String implements the stringer interface, returning the consensus engine details.
 func (c *DccsConfig) String() string {
 	return "dccs"
@@ -360,6 +379,16 @@ func (c *ChainConfig) IsEWASM(num *big.Int) bool {
 // IsThangLongPreparationBlock returns whether num represents a block number exactly at the ThangLong Preparation
 func (c *ChainConfig) IsThangLongPreparationBlock(num *big.Int) bool {
 	return c.Dccs != nil && c.Dccs.ThangLongBlock != nil && c.Dccs.IsThangLongPreparationBlock(num)
+}
+
+// IsSnapshot returns whether num represents a block number exactly at the snapshot block of an epoch.
+func (c *ChainConfig) IsSnapshot(num *big.Int) bool {
+	if c.Dccs == nil || c.Dccs.ThangLongBlock == nil {
+		return false
+	}
+	depth := new(big.Int).SetUint64(CanonicalDepth)
+	depth.Add(num, depth)
+	return c.Dccs.IsThangLong(depth) && c.Dccs.IsCheckpoint(depth.Uint64())
 }
 
 // IsThangLongPreparationBlock returns whether num represents a block number exactly at the ThangLong Preparation
