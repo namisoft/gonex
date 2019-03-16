@@ -960,7 +960,7 @@ func (bc *BlockChain) writeBlockWithState(block *types.Block, receipts []*types.
 	triedb := bc.stateCache.TrieDB()
 
 	// Checkpoint snapshot for ThangLong consensus.
-	snapshot := bc.Config().IsSnapshot(block.Number())
+	snapshot := bc.Config().IsSnapshotBlock(block.Number())
 
 	// If we're running an archive node, always flush
 	// Also flush for ThangLong snapshot block.
