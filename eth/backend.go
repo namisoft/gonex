@@ -37,7 +37,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/eth/downloader"
 	"github.com/ethereum/go-ethereum/eth/filters"
 	"github.com/ethereum/go-ethereum/eth/gasprice"
@@ -447,22 +446,7 @@ func (s *Ethereum) StartMining(threads int) error {
 				return fmt.Errorf("cannot read state of current header: %v", err)
 			}
 			header := s.blockchain.CurrentHeader()
-			if s.chainConfig.IsThangLong(header.Number) {
-				size := state.GetCodeSize(s.chainConfig.Dccs.Contract)
-				log.Info("smart contract size", "size", size)
-				if size > 0 && state.Error() == nil {
-					// Get token holder from coinbase
-					index := common.BigToHash(common.Big1).String()[2:]
-					coinbase := "0x000000000000000000000000" + eb.String()[2:]
-					key := crypto.Keccak256Hash(hexutil.MustDecode(coinbase + index))
-					result := state.GetState(s.chainConfig.Dccs.Contract, key)
-
-					if (result == common.Hash{}) {
-						log.Warn("Validator is not in activation sealer set")
-					}
-				}
-			}
-			dccs.Authorize(eb, wallet.SignHash)
+			dccs.Authorize(eb, wallet.SignHash, state, header)
 		}
 		// If mining is started, we can disable the transaction rejection mechanism
 		// introduced to speed sync times.
