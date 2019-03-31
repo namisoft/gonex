@@ -29,14 +29,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/console"
 	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/eth/downloader"
-	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/event"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/trie"
-	"github.com/syndtr/goleveldb/leveldb/util"
 	cli "gopkg.in/urfave/cli.v1"
 )
 
@@ -192,7 +190,7 @@ func initGenesis(ctx *cli.Context) error {
 	// Open an initialise both full and light databases
 	stack := makeFullNode(ctx)
 	for _, name := range []string{"chaindata", "lightchaindata"} {
-		chaindb, err := stack.OpenDatabase(name, 0, 0)
+		chaindb, err := stack.OpenDatabase(name, 0, 0, "")
 		if err != nil {
 			utils.Fatalf("Failed to open database: %v", err)
 		}
@@ -210,8 +208,8 @@ func importChain(ctx *cli.Context) error {
 		utils.Fatalf("This command requires an argument.")
 	}
 	stack := makeFullNode(ctx)
-	chain, chainDb := utils.MakeChain(ctx, stack)
-	defer chainDb.Close()
+	chain, db := utils.MakeChain(ctx, stack)
+	defer db.Close()
 
 	// Start periodically gathering memory profiles
 	var peakMemAlloc, peakMemSys uint64
@@ -245,23 +243,17 @@ func importChain(ctx *cli.Context) error {
 	chain.Stop()
 	fmt.Printf("Import done in %v.\n\n", time.Since(start))
 
-	// Output pre-compaction stats mostly to see the import trashing
-	db := chainDb.(*ethdb.LDBDatabase)
-
-	stats, err := db.LDB().GetProperty("leveldb.stats")
+	stats, err := db.Stat("leveldb.stats")
 	if err != nil {
 		utils.Fatalf("Failed to read database stats: %v", err)
 	}
 	fmt.Println(stats)
 
-	ioStats, err := db.LDB().GetProperty("leveldb.iostats")
+	ioStats, err := db.Stat("leveldb.iostats")
 	if err != nil {
 		utils.Fatalf("Failed to read database iostats: %v", err)
 	}
 	fmt.Println(ioStats)
-
-	fmt.Printf("Trie cache misses:  %d\n", trie.CacheMisses())
-	fmt.Printf("Trie cache unloads: %d\n\n", trie.CacheUnloads())
 
 	// Print the memory statistics used by the importing
 	mem := new(runtime.MemStats)
@@ -279,18 +271,18 @@ func importChain(ctx *cli.Context) error {
 	// Compact the entire database to more accurately measure disk io and print the stats
 	start = time.Now()
 	fmt.Println("Compacting entire database...")
-	if err = db.LDB().CompactRange(util.Range{}); err != nil {
+	if err = db.Compact(nil, nil); err != nil {
 		utils.Fatalf("Compaction failed: %v", err)
 	}
 	fmt.Printf("Compaction done in %v.\n\n", time.Since(start))
 
-	stats, err = db.LDB().GetProperty("leveldb.stats")
+	stats, err = db.Stat("leveldb.stats")
 	if err != nil {
 		utils.Fatalf("Failed to read database stats: %v", err)
 	}
 	fmt.Println(stats)
 
-	ioStats, err = db.LDB().GetProperty("leveldb.iostats")
+	ioStats, err = db.Stat("leveldb.iostats")
 	if err != nil {
 		utils.Fatalf("Failed to read database iostats: %v", err)
 	}
@@ -337,10 +329,12 @@ func importPreimages(ctx *cli.Context) error {
 		utils.Fatalf("This command requires an argument.")
 	}
 	stack := makeFullNode(ctx)
-	diskdb := utils.MakeChainDatabase(ctx, stack).(*ethdb.LDBDatabase)
+	defer stack.Close()
 
+	db := utils.MakeChainDatabase(ctx, stack)
 	start := time.Now()
-	if err := utils.ImportPreimages(diskdb, ctx.Args().First()); err != nil {
+
+	if err := utils.ImportPreimages(db, ctx.Args().First()); err != nil {
 		utils.Fatalf("Import error: %v\n", err)
 	}
 	fmt.Printf("Import done in %v\n", time.Since(start))
@@ -353,10 +347,12 @@ func exportPreimages(ctx *cli.Context) error {
 		utils.Fatalf("This command requires an argument.")
 	}
 	stack := makeFullNode(ctx)
-	diskdb := utils.MakeChainDatabase(ctx, stack).(*ethdb.LDBDatabase)
+	defer stack.Close()
 
+	db := utils.MakeChainDatabase(ctx, stack)
 	start := time.Now()
-	if err := utils.ExportPreimages(diskdb, ctx.Args().First()); err != nil {
+
+	if err := utils.ExportPreimages(db, ctx.Args().First()); err != nil {
 		utils.Fatalf("Export error: %v\n", err)
 	}
 	fmt.Printf("Export done in %v\n", time.Since(start))
@@ -370,13 +366,14 @@ func copyDb(ctx *cli.Context) error {
 	}
 	// Initialize a new chain for the running node to sync into
 	stack := makeFullNode(ctx)
-	chain, chainDb := utils.MakeChain(ctx, stack)
+	defer stack.Close()
 
+	chain, chainDb := utils.MakeChain(ctx, stack)
 	syncmode := *utils.GlobalTextMarshaler(ctx, utils.SyncModeFlag.Name).(*downloader.SyncMode)
 	dl := downloader.New(syncmode, chainDb, new(event.TypeMux), chain, nil, nil)
 
 	// Create a source peer to satisfy downloader requests from
-	db, err := ethdb.NewLDBDatabase(ctx.Args().First(), ctx.GlobalInt(utils.CacheFlag.Name), 256)
+	db, err := rawdb.NewLevelDBDatabase(ctx.Args().First(), ctx.GlobalInt(utils.CacheFlag.Name), 256, "")
 	if err != nil {
 		return err
 	}
@@ -403,11 +400,10 @@ func copyDb(ctx *cli.Context) error {
 	// Compact the entire database to remove any sync overhead
 	start = time.Now()
 	fmt.Println("Compacting entire database...")
-	if err = chainDb.(*ethdb.LDBDatabase).LDB().CompactRange(util.Range{}); err != nil {
+	if err = db.Compact(nil, nil); err != nil {
 		utils.Fatalf("Compaction failed: %v", err)
 	}
 	fmt.Printf("Compaction done in %v.\n\n", time.Since(start))
-
 	return nil
 }
 

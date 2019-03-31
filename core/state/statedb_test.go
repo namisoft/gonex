@@ -31,15 +31,15 @@ import (
 	check "gopkg.in/check.v1"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethdb"
 )
 
 // Tests that updating a state trie does not leak any database writes prior to
 // actually committing the state.
 func TestUpdateLeaks(t *testing.T) {
 	// Create an empty state database
-	db := ethdb.NewMemDatabase()
+	db := rawdb.NewMemoryDatabase()
 	state, _ := New(common.Hash{}, NewDatabase(db))
 
 	// Update it with some accounts
@@ -47,7 +47,6 @@ func TestUpdateLeaks(t *testing.T) {
 		addr := common.BytesToAddress([]byte{i})
 		state.AddBalance(addr, big.NewInt(int64(11*i)))
 		state.SetNonce(addr, uint64(42*i))
-		state.SetMRUNumber(addr, uint64(88*i))
 		if i%2 == 0 {
 			state.SetState(addr, common.BytesToHash([]byte{i, i, i}), common.BytesToHash([]byte{i, i, i, i}))
 		}
@@ -57,25 +56,25 @@ func TestUpdateLeaks(t *testing.T) {
 		state.IntermediateRoot(false)
 	}
 	// Ensure that no data was leaked into the database
-	for _, key := range db.Keys() {
-		value, _ := db.Get(key)
-		t.Errorf("State leaked into database: %x -> %x", key, value)
+	it := db.NewIterator()
+	for it.Next() {
+		t.Errorf("State leaked into database: %x -> %x", it.Key(), it.Value())
 	}
+	it.Release()
 }
 
 // Tests that no intermediate state of an object is stored into the database,
 // only the one right before the commit.
 func TestIntermediateLeaks(t *testing.T) {
 	// Create two state databases, one transitioning to the final state, the other final from the beginning
-	transDb := ethdb.NewMemDatabase()
-	finalDb := ethdb.NewMemDatabase()
+	transDb := rawdb.NewMemoryDatabase()
+	finalDb := rawdb.NewMemoryDatabase()
 	transState, _ := New(common.Hash{}, NewDatabase(transDb))
 	finalState, _ := New(common.Hash{}, NewDatabase(finalDb))
 
 	modify := func(state *StateDB, addr common.Address, i, tweak byte) {
 		state.SetBalance(addr, big.NewInt(int64(11*i)+int64(tweak)))
 		state.SetNonce(addr, uint64(42*i+tweak))
-		state.SetMRUNumber(addr, uint64(88*i+tweak))
 		if i%2 == 0 {
 			state.SetState(addr, common.Hash{i, i, i, 0}, common.Hash{})
 			state.SetState(addr, common.Hash{i, i, i, tweak}, common.Hash{i, i, i, i, tweak})
@@ -105,16 +104,20 @@ func TestIntermediateLeaks(t *testing.T) {
 	if _, err := finalState.Commit(false); err != nil {
 		t.Fatalf("failed to commit final state: %v", err)
 	}
-	for _, key := range finalDb.Keys() {
+	it := finalDb.NewIterator()
+	for it.Next() {
+		key := it.Key()
 		if _, err := transDb.Get(key); err != nil {
-			val, _ := finalDb.Get(key)
-			t.Errorf("entry missing from the transition database: %x -> %x", key, val)
+			t.Errorf("entry missing from the transition database: %x -> %x", key, it.Value())
 		}
 	}
-	for _, key := range transDb.Keys() {
+	it.Release()
+
+	it = transDb.NewIterator()
+	for it.Next() {
+		key := it.Key()
 		if _, err := finalDb.Get(key); err != nil {
-			val, _ := transDb.Get(key)
-			t.Errorf("extra entry in the transition database: %x -> %x", key, val)
+			t.Errorf("extra entry in the transition database: %x -> %x", key, it.Value())
 		}
 	}
 }
@@ -124,12 +127,11 @@ func TestIntermediateLeaks(t *testing.T) {
 // https://github.com/ethereum/go-ethereum/pull/15549.
 func TestCopy(t *testing.T) {
 	// Create a random state test to copy and modify "independently"
-	orig, _ := New(common.Hash{}, NewDatabase(ethdb.NewMemDatabase()))
+	orig, _ := New(common.Hash{}, NewDatabase(rawdb.NewMemoryDatabase()))
 
 	for i := byte(0); i < 255; i++ {
 		obj := orig.GetOrNewStateObject(common.BytesToAddress([]byte{i}))
 		obj.AddBalance(big.NewInt(int64(i)))
-		obj.SetMRUNumber(uint64(i))
 		orig.updateStateObject(obj)
 	}
 	orig.Finalise(false)
@@ -227,13 +229,6 @@ func newTestAction(addr common.Address, r *rand.Rand) testAction {
 			name: "SetNonce",
 			fn: func(a testAction, s *StateDB) {
 				s.SetNonce(addr, uint64(a.args[0]))
-			},
-			args: make([]int64, 1),
-		},
-		{
-			name: "SetMRUNumber",
-			fn: func(a testAction, s *StateDB) {
-				s.SetMRUNumber(addr, uint64(a.args[0]))
 			},
 			args: make([]int64, 1),
 		},
@@ -352,7 +347,7 @@ func (test *snapshotTest) String() string {
 func (test *snapshotTest) run() bool {
 	// Run all actions and create snapshots.
 	var (
-		state, _     = New(common.Hash{}, NewDatabase(ethdb.NewMemDatabase()))
+		state, _     = New(common.Hash{}, NewDatabase(rawdb.NewMemoryDatabase()))
 		snapshotRevs = make([]int, len(test.snapshots))
 		sindex       = 0
 	)
@@ -395,7 +390,6 @@ func (test *snapshotTest) checkEqual(state, checkstate *StateDB) error {
 		checkeq("HasSuicided", state.HasSuicided(addr), checkstate.HasSuicided(addr))
 		checkeq("GetBalance", state.GetBalance(addr), checkstate.GetBalance(addr))
 		checkeq("GetNonce", state.GetNonce(addr), checkstate.GetNonce(addr))
-		checkeq("GetMRUNumber", state.GetMRUNumber(addr), checkstate.GetMRUNumber(addr))
 		checkeq("GetCode", state.GetCode(addr), checkstate.GetCode(addr))
 		checkeq("GetCodeHash", state.GetCodeHash(addr), checkstate.GetCodeHash(addr))
 		checkeq("GetCodeSize", state.GetCodeSize(addr), checkstate.GetCodeSize(addr))
@@ -444,7 +438,7 @@ func (s *StateSuite) TestTouchDelete(c *check.C) {
 // TestCopyOfCopy tests that modified objects are carried over to the copy, and the copy of the copy.
 // See https://github.com/ethereum/go-ethereum/pull/15225#issuecomment-380191512
 func TestCopyOfCopy(t *testing.T) {
-	sdb, _ := New(common.Hash{}, NewDatabase(ethdb.NewMemDatabase()))
+	sdb, _ := New(common.Hash{}, NewDatabase(rawdb.NewMemoryDatabase()))
 	addr := common.HexToAddress("aaaa")
 	sdb.SetBalance(addr, big.NewInt(42))
 

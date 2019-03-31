@@ -55,7 +55,7 @@ func TestDB_persistence(t *testing.T) {
 	}
 	defer os.RemoveAll(dir)
 
-	db, err := NewDB(dir)
+	db, err := NewDB(dir, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,7 +73,7 @@ func TestDB_persistence(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	db2, err := NewDB(dir)
+	db2, err := NewDB(dir, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,11 +100,13 @@ func newTestDB(t *testing.T) (db *DB, cleanupFunc func()) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cleanupFunc = func() { os.RemoveAll(dir) }
-	db, err = NewDB(dir)
+	db, err = NewDB(dir, "")
 	if err != nil {
-		cleanupFunc()
+		os.RemoveAll(dir)
 		t.Fatal(err)
 	}
-	return db, cleanupFunc
+	return db, func() {
+		db.Close()
+		os.RemoveAll(dir)
+	}
 }

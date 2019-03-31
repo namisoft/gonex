@@ -84,9 +84,6 @@ var (
 	// than some meaningful limit a user might use. This is not a consensus error
 	// making the transaction invalid, rather a DOS protection.
 	ErrOversizedData = errors.New("oversized data")
-
-	// ErrBlockTimePrice ...
-	ErrBlockTimePrice = errors.New("invalid block time price")
 )
 
 var (
@@ -139,8 +136,9 @@ type TxPoolConfig struct {
 	Journal   string           // Journal of local transactions to survive node restarts
 	Rejournal time.Duration    // Time interval to regenerate the local transaction journal
 
-	PriceLimit  uint64 // Minimum gas price to enforce for acceptance into the pool
-	PriceBump   uint64 // Minimum price bump percentage to replace an already existing transaction (nonce)
+	PriceLimit uint64 // Minimum gas price to enforce for acceptance into the pool
+	PriceBump  uint64 // Minimum price bump percentage to replace an already existing transaction (nonce)
+
 	ParityLimit uint64 // Minimum parity to enforce for acceptance into the pool
 	ParityPrice uint64 // Price (in wei) for 1 parity unit
 
@@ -158,8 +156,9 @@ var DefaultTxPoolConfig = TxPoolConfig{
 	Journal:   "transactions.rlp",
 	Rejournal: time.Hour,
 
-	PriceLimit:  1,
-	PriceBump:   10,
+	PriceLimit: 1,
+	PriceBump:  10,
+
 	ParityLimit: types.ParityMax,
 	ParityPrice: 13e15, // ~ 273 NTY ~ 0.01 USD for 21000 Tx Gas
 
@@ -190,6 +189,26 @@ func (config *TxPoolConfig) sanitize() TxPoolConfig {
 	if conf.ParityPrice < 0 {
 		log.Warn("Sanitizing invalid txpool pairty price", "provided", conf.PriceBump, "updated", DefaultTxPoolConfig.ParityPrice)
 		conf.PriceBump = DefaultTxPoolConfig.ParityPrice
+	}
+	if conf.AccountSlots < 1 {
+		log.Warn("Sanitizing invalid txpool account slots", "provided", conf.AccountSlots, "updated", DefaultTxPoolConfig.AccountSlots)
+		conf.AccountSlots = DefaultTxPoolConfig.AccountSlots
+	}
+	if conf.GlobalSlots < 1 {
+		log.Warn("Sanitizing invalid txpool global slots", "provided", conf.GlobalSlots, "updated", DefaultTxPoolConfig.GlobalSlots)
+		conf.GlobalSlots = DefaultTxPoolConfig.GlobalSlots
+	}
+	if conf.AccountQueue < 1 {
+		log.Warn("Sanitizing invalid txpool account queue", "provided", conf.AccountQueue, "updated", DefaultTxPoolConfig.AccountQueue)
+		conf.AccountQueue = DefaultTxPoolConfig.AccountQueue
+	}
+	if conf.GlobalQueue < 1 {
+		log.Warn("Sanitizing invalid txpool global queue", "provided", conf.GlobalQueue, "updated", DefaultTxPoolConfig.GlobalQueue)
+		conf.GlobalQueue = DefaultTxPoolConfig.GlobalQueue
+	}
+	if conf.Lifetime < 1 {
+		log.Warn("Sanitizing invalid txpool lifetime", "provided", conf.Lifetime, "updated", DefaultTxPoolConfig.Lifetime)
+		conf.Lifetime = DefaultTxPoolConfig.Lifetime
 	}
 	return conf
 }
@@ -390,11 +409,26 @@ func (pool *TxPool) reset(oldHead, newHead *types.Header) {
 		} else {
 			// Reorg seems shallow enough to pull in all transactions into memory
 			var discarded, included types.Transactions
-
 			var (
 				rem = pool.chain.GetBlock(oldHead.Hash(), oldHead.Number.Uint64())
 				add = pool.chain.GetBlock(newHead.Hash(), newHead.Number.Uint64())
 			)
+			if rem == nil {
+				// This can happen if a setHead is performed, where we simply discard the old
+				// head from the chain.
+				// If that is the case, we don't have the lost transactions any more, and
+				// there's nothing to add
+				if newNum < oldNum {
+					// If the reorg ended up on a lower number, it's indicative of setHead being the cause
+					log.Debug("Skipping transaction reset caused by setHead",
+						"old", oldHead.Hash(), "oldnum", oldNum, "new", newHead.Hash(), "newnum", newNum)
+				} else {
+					// If we reorged to a same or higher number, then it's not a case of setHead
+					log.Warn("Transaction pool reset with missing oldhead",
+						"old", oldHead.Hash(), "oldnum", oldNum, "new", newHead.Hash(), "newnum", newNum)
+				}
+				return
+			}
 			for rem.NumberU64() > add.NumberU64() {
 				discarded = append(discarded, rem.Transactions()...)
 				if rem = pool.chain.GetBlock(rem.ParentHash(), rem.NumberU64()-1); rem == nil {
@@ -727,7 +761,6 @@ func (pool *TxPool) add(tx *types.Transaction, local bool) (bool, error) {
 		log.Trace("Discarding already known transaction", "hash", hash)
 		return false, fmt.Errorf("known transaction: %x", hash)
 	}
-
 	// If the transaction fails basic validation, discard it
 	if err := pool.validateTx(tx, local); err != nil {
 		log.Trace("Discarding invalid transaction", "hash", hash, "err", err)
@@ -937,7 +970,6 @@ func (pool *TxPool) addTxs(txs []*types.Transaction, local bool) []error {
 	for _, tx := range txs {
 		types.Sender(pool.signer, tx)
 	}
-
 	pool.mu.Lock()
 	defer pool.mu.Unlock()
 

@@ -54,7 +54,6 @@ func (w *wizard) makeGenesis() {
 			EIP158Block:         big.NewInt(3),
 			ByzantiumBlock:      big.NewInt(4),
 			ConstantinopleBlock: big.NewInt(5),
-			PetersburgBlock:     big.NewInt(5),
 		},
 	}
 	// Figure out which consensus engine to choose
@@ -325,9 +324,12 @@ func (w *wizard) manageGenesis() {
 		fmt.Printf("Which block should Constantinople come into effect? (default = %v)\n", w.conf.Genesis.Config.ConstantinopleBlock)
 		w.conf.Genesis.Config.ConstantinopleBlock = w.readDefaultBigInt(w.conf.Genesis.Config.ConstantinopleBlock)
 
+		if w.conf.Genesis.Config.PetersburgBlock == nil {
+			w.conf.Genesis.Config.PetersburgBlock = w.conf.Genesis.Config.ConstantinopleBlock
+		}
 		fmt.Println()
-		fmt.Printf("Which block should Constantinople-Fix (remove EIP-1283) come into effect? (default = %v)\n", w.conf.Genesis.Config.ConstantinopleBlock)
-		w.conf.Genesis.Config.PetersburgBlock = w.readDefaultBigInt(w.conf.Genesis.Config.ConstantinopleBlock)
+		fmt.Printf("Which block should Constantinople-Fix (remove EIP-1283) come into effect? (default = %v)\n", w.conf.Genesis.Config.PetersburgBlock)
+		w.conf.Genesis.Config.PetersburgBlock = w.readDefaultBigInt(w.conf.Genesis.Config.PetersburgBlock)
 
 		if w.conf.Genesis.Config.Dccs != nil {
 			fmt.Println()
@@ -343,6 +345,8 @@ func (w *wizard) manageGenesis() {
 
 		out, _ := json.MarshalIndent(w.conf.Genesis.Config, "", "  ")
 		fmt.Printf("Chain configuration updated:\n\n%s\n", out)
+
+		w.conf.flush()
 
 	case "2":
 		// Save whatever genesis configuration we currently have
