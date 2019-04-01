@@ -19,9 +19,9 @@ package params
 import "math/big"
 
 const (
-	GasLimitBoundDivisor uint64 = 1024     // The bound divisor of the gas limit, used in update calculations.
-	MinGasLimit          uint64 = 5000     // Minimum the gas limit may ever be.
-	GenesisGasLimit      uint64 = 42000000 // Gas limit of the Genesis block.
+	GasLimitBoundDivisor uint64 = 1024    // The bound divisor of the gas limit, used in update calculations.
+	MinGasLimit          uint64 = 5000    // Minimum the gas limit may ever be.
+	GenesisGasLimit      uint64 = 4712388 // Gas limit of the Genesis block.
 
 	MRUGasThreshold uint64 = TxGas * 3 // Gas threshold to fully exhaust the accumulating MRU of an account.
 
@@ -54,7 +54,7 @@ const (
 	NetSstoreResetRefund      uint64 = 4800  // Once per SSTORE operation for resetting to the original non-zero value
 	NetSstoreResetClearRefund uint64 = 19800 // Once per SSTORE operation for resetting to the original zero value
 
-	JumpdestGas      uint64 = 1     // Refunded gas, once per SSTORE operation if the zeroness changes to zero.
+	JumpdestGas      uint64 = 1     // Once per JUMPDEST operation.
 	EpochDuration    uint64 = 30000 // Duration between proof-of-work epochs.
 	CallGas          uint64 = 40    // Once per CALL operation & message call transaction.
 	CreateDataGas    uint64 = 200   //
@@ -90,8 +90,8 @@ const (
 )
 
 var (
-	DifficultyBoundDivisor = big.NewInt(2048) // The bound divisor of the difficulty, used in the update calculations.
-	GenesisDifficulty      = big.NewInt(1)    // Difficulty of the Genesis block.
-	MinimumDifficulty      = big.NewInt(1)    // The minimum that the difficulty may ever be.
-	DurationLimit          = big.NewInt(13)   // The decision boundary on the blocktime duration used to determine whether difficulty should go up or not.
+	DifficultyBoundDivisor = big.NewInt(2048)   // The bound divisor of the difficulty, used in the update calculations.
+	GenesisDifficulty      = big.NewInt(131072) // Difficulty of the Genesis block.
+	MinimumDifficulty      = big.NewInt(131072) // The minimum that the difficulty may ever be.
+	DurationLimit          = big.NewInt(13)     // The decision boundary on the blocktime duration used to determine whether difficulty should go up or not.
 )

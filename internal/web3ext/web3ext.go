@@ -18,23 +18,23 @@
 package web3ext
 
 var Modules = map[string]string{
-	"admin":      Admin_JS,
-	"chequebook": Chequebook_JS,
-	"clique":     Clique_JS,
-	"dccs":       Dccs_JS,
-	"ethash":     Ethash_JS,
-	"debug":      Debug_JS,
-	"eth":        Eth_JS,
-	"miner":      Miner_JS,
-	"net":        Net_JS,
-	"personal":   Personal_JS,
-	"rpc":        RPC_JS,
-	"shh":        Shh_JS,
-	"swarmfs":    SWARMFS_JS,
-	"txpool":     TxPool_JS,
+	"accounting": AccountingJs,
+	"admin":      AdminJs,
+	"chequebook": ChequebookJs,
+	"clique":     CliqueJs,
+	"ethash":     EthashJs,
+	"debug":      DebugJs,
+	"eth":        EthJs,
+	"miner":      MinerJs,
+	"net":        NetJs,
+	"personal":   PersonalJs,
+	"rpc":        RpcJs,
+	"shh":        ShhJs,
+	"swarmfs":    SwarmfsJs,
+	"txpool":     TxpoolJs,
 }
 
-const Chequebook_JS = `
+const ChequebookJs = `
 web3._extend({
 	property: 'chequebook',
 	methods: [
@@ -65,7 +65,7 @@ web3._extend({
 });
 `
 
-const Clique_JS = `
+const CliqueJs = `
 web3._extend({
 	property: 'clique',
 	methods: [
@@ -111,53 +111,7 @@ web3._extend({
 });
 `
 
-const Dccs_JS = `
-web3._extend({
-	property: 'dccs',
-	methods: [
-		new web3._extend.Method({
-			name: 'getSnapshot',
-			call: 'dccs_getSnapshot',
-			params: 1,
-			inputFormatter: [null]
-		}),
-		new web3._extend.Method({
-			name: 'getSnapshotAtHash',
-			call: 'dccs_getSnapshotAtHash',
-			params: 1
-		}),
-		new web3._extend.Method({
-			name: 'getSigners',
-			call: 'dccs_getSigners',
-			params: 1,
-			inputFormatter: [null]
-		}),
-		new web3._extend.Method({
-			name: 'getSignersAtHash',
-			call: 'dccs_getSignersAtHash',
-			params: 1
-		}),
-		new web3._extend.Method({
-			name: 'propose',
-			call: 'dccs_propose',
-			params: 2
-		}),
-		new web3._extend.Method({
-			name: 'discard',
-			call: 'dccs_discard',
-			params: 1
-		}),
-	],
-	properties: [
-		new web3._extend.Property({
-			name: 'proposals',
-			getter: 'dccs_proposals'
-		}),
-		]
-	});
-	`
-
-const Ethash_JS = `
+const EthashJs = `
 web3._extend({
 	property: 'ethash',
 	methods: [
@@ -185,7 +139,7 @@ web3._extend({
 });
 `
 
-const Admin_JS = `
+const AdminJs = `
 web3._extend({
 	property: 'admin',
 	methods: [
@@ -263,7 +217,7 @@ web3._extend({
 });
 `
 
-const Debug_JS = `
+const DebugJs = `
 web3._extend({
 	property: 'debug',
 	methods: [
@@ -276,6 +230,12 @@ web3._extend({
 			name: 'getBlockRlp',
 			call: 'debug_getBlockRlp',
 			params: 1
+		}),
+		new web3._extend.Method({
+			name: 'testSignCliqueBlock',
+			call: 'debug_testSignCliqueBlock',
+			params: 2, 
+			inputFormatters: [web3._extend.formatters.inputAddressFormatter, null],
 		}),
 		new web3._extend.Method({
 			name: 'setHead',
@@ -494,7 +454,7 @@ web3._extend({
 });
 `
 
-const Eth_JS = `
+const EthJs = `
 web3._extend({
 	property: 'eth',
 	methods: [
@@ -564,7 +524,7 @@ web3._extend({
 });
 `
 
-const Miner_JS = `
+const MinerJs = `
 web3._extend({
 	property: 'miner',
 	methods: [
@@ -609,7 +569,7 @@ web3._extend({
 });
 `
 
-const Net_JS = `
+const NetJs = `
 web3._extend({
 	property: 'net',
 	methods: [],
@@ -622,7 +582,7 @@ web3._extend({
 });
 `
 
-const Personal_JS = `
+const PersonalJs = `
 web3._extend({
 	property: 'personal',
 	methods: [
@@ -668,7 +628,7 @@ web3._extend({
 })
 `
 
-const RPC_JS = `
+const RpcJs = `
 web3._extend({
 	property: 'rpc',
 	methods: [],
@@ -681,7 +641,7 @@ web3._extend({
 });
 `
 
-const Shh_JS = `
+const ShhJs = `
 web3._extend({
 	property: 'shh',
 	methods: [
@@ -701,7 +661,7 @@ web3._extend({
 });
 `
 
-const SWARMFS_JS = `
+const SwarmfsJs = `
 web3._extend({
 	property: 'swarmfs',
 	methods:
@@ -725,7 +685,7 @@ web3._extend({
 });
 `
 
-const TxPool_JS = `
+const TxpoolJs = `
 web3._extend({
 	property: 'txpool',
 	methods: [],
@@ -747,6 +707,50 @@ web3._extend({
 				status.queued = web3._extend.utils.toDecimal(status.queued);
 				return status;
 			}
+		}),
+	]
+});
+`
+
+const AccountingJs = `
+web3._extend({
+	property: 'accounting',
+	methods: [
+		new web3._extend.Property({
+			name: 'balance',
+			getter: 'account_balance'
+		}),
+		new web3._extend.Property({
+			name: 'balanceCredit',
+			getter: 'account_balanceCredit'
+		}),
+		new web3._extend.Property({
+			name: 'balanceDebit',
+			getter: 'account_balanceDebit'
+		}),
+		new web3._extend.Property({
+			name: 'bytesCredit',
+			getter: 'account_bytesCredit'
+		}),
+		new web3._extend.Property({
+			name: 'bytesDebit',
+			getter: 'account_bytesDebit'
+		}),
+		new web3._extend.Property({
+			name: 'msgCredit',
+			getter: 'account_msgCredit'
+		}),
+		new web3._extend.Property({
+			name: 'msgDebit',
+			getter: 'account_msgDebit'
+		}),
+		new web3._extend.Property({
+			name: 'peerDrops',
+			getter: 'account_peerDrops'
+		}),
+		new web3._extend.Property({
+			name: 'selfDrops',
+			getter: 'account_selfDrops'
 		}),
 	]
 });

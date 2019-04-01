@@ -76,15 +76,18 @@ type NodeConfig struct {
 
 	// Listening address of pprof server.
 	PprofAddress string
+
+	// Ultra Light client options
+	ULC *eth.ULCConfig
 }
 
 // defaultNodeConfig contains the default node configuration values to use if all
 // or some fields are missing from the user's specified list.
 var defaultNodeConfig = &NodeConfig{
 	BootstrapNodes:        FoundationBootnodes(),
-	MaxPeers:              50,
+	MaxPeers:              25,
 	EthereumEnabled:       true,
-	EthereumNetworkID:     66666,
+	EthereumNetworkID:     1,
 	EthereumDatabaseCache: 16,
 }
 
@@ -131,6 +134,7 @@ func NewNode(datadir string, config *NodeConfig) (stack *Node, _ error) {
 			MaxPeers:         config.MaxPeers,
 		},
 	}
+
 	rawStack, err := node.New(nodeConf)
 	if err != nil {
 		return nil, err
@@ -186,6 +190,12 @@ func NewNode(datadir string, config *NodeConfig) (stack *Node, _ error) {
 		}
 	}
 	return &Node{rawStack}, nil
+}
+
+// Close terminates a running node along with all it's services, tearing internal
+// state doen too. It's not possible to restart a closed node.
+func (n *Node) Close() error {
+	return n.node.Close()
 }
 
 // Start creates a live P2P node and starts running it.

@@ -183,12 +183,13 @@ func (tx *Transaction) UnmarshalJSON(input []byte) error {
 	return nil
 }
 
-func (tx *Transaction) Data() []byte            { return common.CopyBytes(tx.data.Payload) }
-func (tx *Transaction) Gas() uint64             { return tx.data.GasLimit }
-func (tx *Transaction) GasPrice() *big.Int      { return new(big.Int).Set(tx.data.Price) }
-func (tx *Transaction) Value() *big.Int         { return new(big.Int).Set(tx.data.Amount) }
-func (tx *Transaction) Nonce() uint64           { return tx.data.AccountNonce }
-func (tx *Transaction) CheckNonce() bool        { return true }
+func (tx *Transaction) Data() []byte       { return common.CopyBytes(tx.data.Payload) }
+func (tx *Transaction) Gas() uint64        { return tx.data.GasLimit }
+func (tx *Transaction) GasPrice() *big.Int { return new(big.Int).Set(tx.data.Price) }
+func (tx *Transaction) Value() *big.Int    { return new(big.Int).Set(tx.data.Amount) }
+func (tx *Transaction) Nonce() uint64      { return tx.data.AccountNonce }
+func (tx *Transaction) CheckNonce() bool   { return true }
+
 func (tx *Transaction) HasParity() bool         { return tx.data.Parity != ParityUndefined }
 func (tx *Transaction) Parity() uint64          { return tx.data.Parity }
 func (tx *Transaction) SetParity(parity uint64) { tx.data.Parity = parity }
@@ -248,7 +249,7 @@ func (tx *Transaction) AsMessage(s Signer) (Message, error) {
 }
 
 // WithSignature returns a new transaction with the given signature.
-// This signature needs to be formatted as described in the yellow paper (v+27).
+// This signature needs to be in the [R || S || V] format where V is 0 or 1.
 func (tx *Transaction) WithSignature(signer Signer, sig []byte) (*Transaction, error) {
 	r, s, v, err := signer.SignatureValues(tx, sig)
 	if err != nil {

@@ -1768,27 +1768,27 @@ var ETH_UNITS = [
     'Gwei',
     'szabo',
     'finney',
-    'femtonexty',
-    'piconexty',
-    'nanonexty',
-    'micronexty',
-    'millinexty',
+    'femtoether',
+    'picoether',
+    'nanoether',
+    'microether',
+    'milliether',
     'nano',
     'micro',
     'milli',
-    'nexty',
+    'ether',
     'grand',
-    'Mnexty',
-    'Gnexty',
-    'Tnexty',
-    'Pnexty',
-    'Enexty',
-    'Znexty',
-    'Ynexty',
-    'Nnexty',
-    'Dnexty',
-    'Vnexty',
-    'Unexty'
+    'Mether',
+    'Gether',
+    'Tether',
+    'Pether',
+    'Eether',
+    'Zether',
+    'Yether',
+    'Nether',
+    'Dether',
+    'Vether',
+    'Uether'
 ];
 
 module.exports = {
@@ -5358,14 +5358,6 @@ var methods = function () {
         outputFormatter: utils.toDecimal
     });
 
-    var getMRUNumber = new Method({
-        name: 'getMRUNumber',
-        call: 'eth_getMRUNumber',
-        params: 2,
-        inputFormatter: [null, formatters.inputDefaultBlockNumberFormatter],
-        outputFormatter: utils.toDecimal
-    });    
-
     var sendRawTransaction = new Method({
         name: 'sendRawTransaction',
         call: 'eth_sendRawTransaction',
@@ -5452,7 +5444,6 @@ var methods = function () {
         getTransactionFromBlock,
         getTransactionReceipt,
         getTransactionCount,
-        getMRUNumber,
         call,
         estimateGas,
         sendRawTransaction,

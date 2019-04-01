@@ -80,6 +80,7 @@ var (
 		executablePath("puppeth"),
 		executablePath("rlpdump"),
 		executablePath("wnode"),
+		executablePath("clef"),
 	}
 
 	// Files that end up in the swarm*.zip archive.
@@ -117,6 +118,10 @@ var (
 		{
 			BinaryName:  "wnode",
 			Description: "Ethereum Whisper diagnostic tool",
+		},
+		{
+			BinaryName:  "clef",
+			Description: "Ethereum account management tool.",
 		},
 	}
 
@@ -156,7 +161,7 @@ var (
 	// Note: yakkety is unsupported because it was officially deprecated on lanchpad.
 	// Note: zesty is unsupported because it was officially deprecated on lanchpad.
 	// Note: artful is unsupported because it was officially deprecated on lanchpad.
-	debDistros = []string{"trusty", "xenial", "bionic", "cosmic"}
+	debDistros = []string{"trusty", "xenial", "bionic", "cosmic", "disco"}
 )
 
 var GOBIN, _ = filepath.Abs(filepath.Join("build", "bin"))
@@ -507,45 +512,48 @@ func doDebianSource(cmdline []string) {
 		for _, distro := range debDistros {
 			meta := newDebMetadata(distro, *signer, env, now, pkg.Name, pkg.Version, pkg.Executables)
 			pkgdir := stageDebianSource(*workdir, meta)
-			debuild := exec.Command("debuild", "-S", "-sa", "-us", "-uc", "-d")
+			debuild := exec.Command("debuild", "-S", "-sa", "-us", "-uc", "-d", "-Zxz")
 			debuild.Dir = pkgdir
 			build.MustRun(debuild)
 
-			changes := fmt.Sprintf("%s_%s_source.changes", meta.Name(), meta.VersionString())
-			changes = filepath.Join(*workdir, changes)
+			var (
+				basename = fmt.Sprintf("%s_%s", meta.Name(), meta.VersionString())
+				source   = filepath.Join(*workdir, basename+".tar.xz")
+				dsc      = filepath.Join(*workdir, basename+".dsc")
+				changes  = filepath.Join(*workdir, basename+"_source.changes")
+			)
 			if *signer != "" {
 				build.MustRunCommand("debsign", changes)
 			}
 			if *upload != "" {
-				uploadDebianSource(*workdir, *upload, *sshUser, changes)
+				ppaUpload(*workdir, *upload, *sshUser, []string{source, dsc, changes})
 			}
 		}
 	}
 }
 
-func uploadDebianSource(workdir, ppa, sshUser, changes string) {
-	// Create the dput config file.
-	dputConfig := filepath.Join(workdir, "dput.cf")
+func ppaUpload(workdir, ppa, sshUser string, files []string) {
 	p := strings.Split(ppa, "/")
 	if len(p) != 2 {
 		log.Fatal("-upload PPA name must contain single /")
 	}
-	templateData := map[string]string{
-		"LaunchpadUser": p[0],
-		"LaunchpadPPA":  p[1],
-		"LaunchpadSSH":  sshUser,
+	if sshUser == "" {
+		sshUser = p[0]
 	}
+	incomingDir := fmt.Sprintf("~%s/ubuntu/%s", p[0], p[1])
+	// Create the SSH identity file if it doesn't exist.
+	var idfile string
 	if sshkey := getenvBase64("PPA_SSH_KEY"); len(sshkey) > 0 {
-		idfile := filepath.Join(workdir, "sshkey")
-		ioutil.WriteFile(idfile, sshkey, 0600)
-		templateData["IdentityFile"] = idfile
+		idfile = filepath.Join(workdir, "sshkey")
+		if _, err := os.Stat(idfile); os.IsNotExist(err) {
+			ioutil.WriteFile(idfile, sshkey, 0600)
+		}
 	}
-	build.Render("build/dput-launchpad.cf", dputConfig, 0644, templateData)
-
-	// Run dput to do the upload.
-	dput := exec.Command("dput", "-c", dputConfig, "--no-upload-log", ppa, changes)
-	dput.Stdin = strings.NewReader("Yes\n") // accept SSH host key
-	build.MustRun(dput)
+	// Upload
+	dest := sshUser + "@ppa.launchpad.net"
+	if err := build.UploadSFTP(idfile, dest, incomingDir, files); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func getenvBase64(variable string) []byte {
@@ -797,12 +805,8 @@ func doAndroidArchive(cmdline []string) {
 	if os.Getenv("ANDROID_HOME") == "" {
 		log.Fatal("Please ensure ANDROID_HOME points to your Android SDK")
 	}
-	if os.Getenv("ANDROID_NDK") == "" {
-		log.Fatal("Please ensure ANDROID_NDK points to your Android NDK")
-	}
 	// Build the Android archive and Maven resources
 	build.MustRun(goTool("get", "golang.org/x/mobile/cmd/gomobile", "golang.org/x/mobile/cmd/gobind"))
-	build.MustRun(gomobileTool("init", "--ndk", os.Getenv("ANDROID_NDK")))
 	build.MustRun(gomobileTool("bind", "-ldflags", "-s -w", "--target", "android", "--javapkg", "org.ethereum", "-v", "github.com/ethereum/go-ethereum/mobile"))
 
 	if *local {
