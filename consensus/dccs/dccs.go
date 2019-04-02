@@ -211,6 +211,35 @@ func ecrecover(header *types.Header, sigcache *lru.ARCCache) (common.Address, er
 	return signer, nil
 }
 
+type Price big.Rat
+
+// PriceDecode returns the price derivation encoded in Header's extra
+func PriceDecode(bytes []byte) *Price {
+	if len(bytes) == 0 {
+		return nil
+	}
+	var rat big.Rat
+	err := rat.GobDecode(bytes)
+	if err != nil {
+		log.Info("Input bytes array is not price derivation", "bytes", bytes, "error", err)
+		return nil
+	}
+	return (*Price)(&rat)
+}
+
+// PriceEncode encodes the price derivation in Header's extra
+func PriceEncode(price *Price) []byte {
+	if price == nil || (*big.Rat)(price).Sign() == 0 {
+		return nil
+	}
+	bytes, err := (*big.Rat)(price).GobEncode()
+	if err != nil {
+		log.Info("Failed to encode price derivation", "price", price, "error", err)
+		return nil
+	}
+	return bytes
+}
+
 // Dccs is the proof-of-foundation consensus engine proposed to support the
 // Ethereum testnet following the Ropsten attacks.
 type Dccs struct {
@@ -225,6 +254,9 @@ type Dccs struct {
 	signer common.Address // Ethereum address of the signing key
 	signFn SignerFn       // Signer function to authorize hashes with
 	lock   sync.RWMutex   // Protects the signer fields
+
+	prices     *lru.Cache
+	priceCount uint64
 }
 
 // New creates a Dccs proof-of-foundation consensus engine with the initial
@@ -247,6 +279,20 @@ func New(config *params.DccsConfig, db ethdb.Database) *Dccs {
 			return nil
 		}
 	}
+
+	var pricesCount uint64
+	var prices *lru.Cache
+
+	if conf.EndurioBlock != nil && conf.EndurioBlock.Sign() > 0 {
+		pricesCount := conf.PriceDuration / conf.PriceInterval
+		var err error
+		prices, err = lru.New(int(pricesCount))
+		if err != nil {
+			log.Crit("Unable to create price LRU", "Endurio block", conf.EndurioBlock, "pricesCount", pricesCount, "error", err)
+			return nil
+		}
+	}
+
 	// Allocate the snapshot caches and create the engine
 	recents, _ := lru.NewARC(inmemorySnapshots)
 	signatures, _ := lru.NewARC(inmemorySignatures)
@@ -257,6 +303,8 @@ func New(config *params.DccsConfig, db ethdb.Database) *Dccs {
 		recents:    recents,
 		signatures: signatures,
 		proposals:  make(map[common.Address]bool),
+		prices:     prices,
+		priceCount: pricesCount,
 	}
 }
 
@@ -496,6 +544,12 @@ func (d *Dccs) verifyCascadingFields2(chain consensus.ChainReader, header *types
 		extraSuffix := len(header.Extra) - extraSeal
 		if !bytes.Equal(header.Extra[extraVanity:extraSuffix], signers) {
 			return errInvalidCheckpointSigners
+		}
+	} else if d.config.IsPriceBlock(number) {
+		extraBytes := header.Extra[extraVanity:]
+		price := PriceDecode(extraBytes)
+		if price != nil {
+			d.prices.Add(number, price)
 		}
 	}
 	// All basic checks passed, verify the seal and return
