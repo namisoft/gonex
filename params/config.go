@@ -80,6 +80,10 @@ var (
 			StakeLockHeight: 30000,
 			ThangLongBlock:  big.NewInt(15360000),
 			ThangLongEpoch:  3000,
+			// Endurio hard-fork
+			EndurioBlock:  big.NewInt(20000000),
+			PriceDuration: 7 * 24 * 60 * 60 / 2,
+			PriceInterval: 10*60/2 - 7,
 		},
 	}
 
@@ -339,6 +343,22 @@ type DccsConfig struct {
 	// ThangLong hardfork
 	ThangLongBlock *big.Int `json:"thangLongBlock,omitempty"` // ThangLong switch block (nil = no fork, 0 = already activated)
 	ThangLongEpoch uint64   `json:"thangLongEpoch"`           // Epoch length to reset votes and checkpoint
+	// Endurio hardfork
+	EndurioBlock  *big.Int `json:"endurioBlock,omitempty"`
+	PriceDuration uint64   `json:"priceDuration"` // number of blocks in a price week
+	PriceInterval uint64   `json:"priceInterval"` // the largest prime number of blocks in 10 minutes
+}
+
+// IsPriceBlock returns whether a block could include a price
+func (c *DccsConfig) IsPriceBlock(number uint64) bool {
+	if c.IsCheckpoint(number) {
+		// checkpoint block must not include price value
+		return false
+	}
+	if c.IsEndurio(new(big.Int).SetUint64(number)) {
+		return number%c.PriceInterval == 0
+	}
+	return false
 }
 
 // PositionInEpoch returns the offset of a block from the start of an epoch
@@ -494,6 +514,16 @@ func (c *ChainConfig) IsThangLong(num *big.Int) bool {
 // IsThangLong returns whether num represents a block number after the ThangLong fork
 func (c *DccsConfig) IsThangLong(num *big.Int) bool {
 	return isForked(c.ThangLongBlock, num)
+}
+
+// IsEndurio returns whether num represents a block number after the Endurio fork
+func (c *ChainConfig) IsEndurio(num *big.Int) bool {
+	return c.Dccs != nil && c.Dccs.IsEndurio(num)
+}
+
+// IsEndurio returns whether num represents a block number after the Endurio fork
+func (c *DccsConfig) IsEndurio(num *big.Int) bool {
+	return isForked(c.EndurioBlock, num)
 }
 
 // GasTable returns the gas table corresponding to the current phase (homestead or homestead reprice).
