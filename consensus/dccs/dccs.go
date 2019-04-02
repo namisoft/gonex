@@ -929,6 +929,10 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 		for _, signer := range snap.signers2() {
 			header.Extra = append(header.Extra, signer.Address[:]...)
 		}
+	} else if d.config.IsPriceBlock(number) {
+		// TODO: fetch the price from feeding daemon
+		var price Price
+		header.Extra = append(header.Extra, PriceEncode(&price)...)
 	}
 	header.Extra = append(header.Extra, make([]byte, extraSeal)...)
 
