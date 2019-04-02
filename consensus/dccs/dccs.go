@@ -541,16 +541,22 @@ func (d *Dccs) verifyCascadingFields2(chain consensus.ChainReader, header *types
 		for i, signer := range snap.signers2() {
 			copy(signers[i*common.AddressLength:], signer.Address[:])
 		}
+		// for checkpoint: extra = [vanity(32), signers(...), signature(65)]
 		extraSuffix := len(header.Extra) - extraSeal
 		if !bytes.Equal(header.Extra[extraVanity:extraSuffix], signers) {
 			return errInvalidCheckpointSigners
 		}
 	} else if d.config.IsPriceBlock(number) {
-		extraBytes := header.Extra[extraVanity:]
+		// for price block: extra = [vanity(32), price(...), signature(65)]
+		extraSuffix := len(header.Extra) - extraSeal
+		extraBytes := header.Extra[extraVanity:extraSuffix]
 		price := PriceDecode(extraBytes)
 		if price != nil {
+			log.Info("Block price derivation found", "number", number, "price", price)
 			d.prices.Add(number, price)
 		}
+	} else {
+		// for regular block: extra = [vanity(32), signature(65)]
 	}
 	// All basic checks passed, verify the seal and return
 	return d.verifySeal2(chain, header, parents)
