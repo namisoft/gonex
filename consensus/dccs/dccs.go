@@ -211,35 +211,6 @@ func ecrecover(header *types.Header, sigcache *lru.ARCCache) (common.Address, er
 	return signer, nil
 }
 
-type Price big.Rat
-
-// PriceDecode returns the price derivation encoded in Header's extra
-func PriceDecode(bytes []byte) *Price {
-	if len(bytes) == 0 {
-		return nil
-	}
-	var rat big.Rat
-	err := rat.GobDecode(bytes)
-	if err != nil {
-		log.Info("Input bytes array is not price derivation", "bytes", bytes, "error", err)
-		return nil
-	}
-	return (*Price)(&rat)
-}
-
-// PriceEncode encodes the price derivation in Header's extra
-func PriceEncode(price *Price) []byte {
-	if price == nil || (*big.Rat)(price).Sign() == 0 {
-		return nil
-	}
-	bytes, err := (*big.Rat)(price).GobEncode()
-	if err != nil {
-		log.Info("Failed to encode price derivation", "price", price, "error", err)
-		return nil
-	}
-	return bytes
-}
-
 // Dccs is the proof-of-foundation consensus engine proposed to support the
 // Ethereum testnet following the Ropsten attacks.
 type Dccs struct {
@@ -255,6 +226,7 @@ type Dccs struct {
 	signFn SignerFn       // Signer function to authorize hashes with
 	lock   sync.RWMutex   // Protects the signer fields
 
+	feeder     *feeder
 	prices     *lru.Cache
 	priceCount uint64
 }
@@ -280,6 +252,7 @@ func New(config *params.DccsConfig, db ethdb.Database) *Dccs {
 		}
 	}
 
+	var feeder *feeder
 	var pricesCount uint64
 	var prices *lru.Cache
 
@@ -291,6 +264,7 @@ func New(config *params.DccsConfig, db ethdb.Database) *Dccs {
 			log.Crit("Unable to create price LRU", "Endurio block", conf.EndurioBlock, "pricesCount", pricesCount, "error", err)
 			return nil
 		}
+		feeder = newFeeder()
 	}
 
 	// Allocate the snapshot caches and create the engine
@@ -303,6 +277,7 @@ func New(config *params.DccsConfig, db ethdb.Database) *Dccs {
 		recents:    recents,
 		signatures: signatures,
 		proposals:  make(map[common.Address]bool),
+		feeder:     feeder,
 		prices:     prices,
 		priceCount: pricesCount,
 	}
@@ -930,9 +905,10 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 			header.Extra = append(header.Extra, signer.Address[:]...)
 		}
 	} else if d.config.IsPriceBlock(number) {
-		// TODO: fetch the price from feeding daemon
-		var price Price
-		header.Extra = append(header.Extra, PriceEncode(&price)...)
+		var price = d.feeder.Price()
+		if price != nil {
+			header.Extra = append(header.Extra, PriceEncode(price)...)
+		}
 	}
 	header.Extra = append(header.Extra, make([]byte, extraSeal)...)
 
