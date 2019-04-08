@@ -23,16 +23,21 @@ import (
 	"net/http"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/ethereum/go-ethereum/log"
 )
 
+const feederServiceURL = "http://localhost:3000/price/NUSD_USD"
+
 // Data represents the external data feeded from outside
 type Data struct {
-	Value          interface{}
-	Timestamp      int64
-	Source         string
-	reentranceFlag int64 // prevent request routine to run twice
+	Value             interface{}
+	Source            string
+	DataTimestamp     time.Time
+	RequestTimestamp  time.Time
+	ResponseTimestamp time.Time
+	reentranceFlag    int64 // prevent request routine to run twice
 }
 
 // PriceData represents the external price feeded from outside
@@ -82,7 +87,9 @@ func (f *feeder) requestUpdate(url string) {
 	if data, ok = f.data[url]; !ok {
 		f.mutex.Lock()
 		defer f.mutex.Unlock()
-		data = &Data{}
+		data = &Data{
+			RequestTimestamp: time.Now(),
+		}
 		f.data[url] = data
 	}
 
@@ -123,13 +130,20 @@ func (f *feeder) requestUpdate(url string) {
 		f.mutex.Lock()
 		defer f.mutex.Unlock()
 		data.Value = &price
-		data.Timestamp = priceData.Timestamp
+		data.DataTimestamp = time.Unix(priceData.Timestamp, 0)
+		data.ResponseTimestamp = time.Now()
 		data.Source = priceData.Exchange
 	}()
 }
 
 func (f *feeder) Price() *Price {
-	return (*Price)(big.NewRat(1, 1))
+	data := f.getCurrent(feederServiceURL)
+	if data == nil {
+		// first request
+		f.requestUpdate(feederServiceURL)
+		return nil
+	}
+	return data.Value.(*Price)
 }
 
 // Price encoded in Rat
