@@ -26,9 +26,10 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/swarm/chunk"
+	ch "github.com/ethereum/go-ethereum/swarm/chunk"
 	"github.com/ethereum/go-ethereum/swarm/log"
 	"github.com/ethereum/go-ethereum/swarm/storage/mock/mem"
 	ldberrors "github.com/syndtr/goleveldb/leveldb/errors"
@@ -103,7 +104,7 @@ func TestMarkAccessed(t *testing.T) {
 		t.Fatalf("init dbStore failed: %v", err)
 	}
 
-	h := GenerateRandomChunk(chunk.DefaultSize)
+	h := GenerateRandomChunk(ch.DefaultSize)
 
 	db.Put(context.Background(), h)
 
@@ -189,11 +190,11 @@ func TestMockDbStoreNotFound(t *testing.T) {
 }
 
 func testIterator(t *testing.T, mock bool) {
+	var chunkcount int = 32
 	var i int
 	var poc uint
-	chunkcount := 32
 	chunkkeys := NewAddressCollection(chunkcount)
-	chunkkeysResults := NewAddressCollection(chunkcount)
+	chunkkeys_results := NewAddressCollection(chunkcount)
 
 	db, cleanup, err := newTestDbStore(mock, false)
 	defer cleanup()
@@ -201,7 +202,7 @@ func testIterator(t *testing.T, mock bool) {
 		t.Fatalf("init dbStore failed: %v", err)
 	}
 
-	chunks := GenerateRandomChunks(chunk.DefaultSize, chunkcount)
+	chunks := GenerateRandomChunks(ch.DefaultSize, chunkcount)
 
 	for i = 0; i < len(chunks); i++ {
 		chunkkeys[i] = chunks[i].Address()
@@ -218,7 +219,7 @@ func testIterator(t *testing.T, mock bool) {
 	for poc = 0; poc <= 255; poc++ {
 		err := db.SyncIterator(0, uint64(chunkkeys.Len()), uint8(poc), func(k Address, n uint64) bool {
 			log.Trace(fmt.Sprintf("Got key %v number %d poc %d", k, n, uint8(poc)))
-			chunkkeysResults[n] = k
+			chunkkeys_results[n] = k
 			i++
 			return true
 		})
@@ -228,8 +229,8 @@ func testIterator(t *testing.T, mock bool) {
 	}
 
 	for i = 0; i < chunkcount; i++ {
-		if !bytes.Equal(chunkkeys[i], chunkkeysResults[i]) {
-			t.Fatalf("Chunk put #%d key '%v' does not match iterator's key '%v'", i, chunkkeys[i], chunkkeysResults[i])
+		if !bytes.Equal(chunkkeys[i], chunkkeys_results[i]) {
+			t.Fatalf("Chunk put #%d key '%v' does not match iterator's key '%v'", i, chunkkeys[i], chunkkeys_results[i])
 		}
 	}
 
@@ -371,11 +372,11 @@ func testLDBStoreCollectGarbage(t *testing.T) {
 			t.Fatal(err.Error())
 		}
 		allChunks = append(allChunks, chunks...)
-		ldb.lock.RLock()
 		log.Debug("ldbstore", "entrycnt", ldb.entryCnt, "accesscnt", ldb.accessCnt, "cap", capacity, "n", n)
-		ldb.lock.RUnlock()
 
-		waitGc(ldb)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		defer cancel()
+		waitGc(ctx, ldb)
 	}
 
 	// attempt gets on all put chunks
@@ -449,7 +450,6 @@ func TestLDBStoreAddRemove(t *testing.T) {
 }
 
 func testLDBStoreRemoveThenCollectGarbage(t *testing.T) {
-	t.Skip("flaky with -race flag")
 
 	params := strings.Split(t.Name(), "/")
 	capacity, err := strconv.Atoi(params[2])
@@ -468,7 +468,7 @@ func testLDBStoreRemoveThenCollectGarbage(t *testing.T) {
 	// put capacity count number of chunks
 	chunks := make([]Chunk, n)
 	for i := 0; i < n; i++ {
-		c := GenerateRandomChunk(chunk.DefaultSize)
+		c := GenerateRandomChunk(ch.DefaultSize)
 		chunks[i] = c
 		log.Trace("generate random chunk", "idx", i, "chunk", c)
 	}
@@ -480,7 +480,9 @@ func testLDBStoreRemoveThenCollectGarbage(t *testing.T) {
 		}
 	}
 
-	waitGc(ldb)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	waitGc(ctx, ldb)
 
 	// delete all chunks
 	// (only count the ones actually deleted, the rest will have been gc'd)
@@ -519,14 +521,14 @@ func testLDBStoreRemoveThenCollectGarbage(t *testing.T) {
 		remaining -= putCount
 		for putCount > 0 {
 			ldb.Put(context.TODO(), chunks[puts])
-			ldb.lock.RLock()
 			log.Debug("ldbstore", "entrycnt", ldb.entryCnt, "accesscnt", ldb.accessCnt, "cap", capacity, "n", n, "puts", puts, "remaining", remaining, "roundtarget", roundTarget)
-			ldb.lock.RUnlock()
 			puts++
 			putCount--
 		}
 
-		waitGc(ldb)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		defer cancel()
+		waitGc(ctx, ldb)
 	}
 
 	// expect first surplus chunks to be missing, because they have the smallest access value
@@ -579,7 +581,9 @@ func TestLDBStoreCollectGarbageAccessUnlikeIndex(t *testing.T) {
 	}
 
 	// wait for garbage collection to kick in on the responsible actor
-	waitGc(ldb)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	waitGc(ctx, ldb)
 
 	var missing int
 	for i, ch := range chunks[2 : capacity/2] {
@@ -768,10 +772,7 @@ func TestCleanIndex(t *testing.T) {
 	}
 }
 
-// Note: waitGc does not guarantee that we wait 1 GC round; it only
-// guarantees that if the GC is running we wait for that run to finish
-// ticket: https://github.com/ethersphere/go-ethereum/issues/1151
-func waitGc(ldb *LDBStore) {
+func waitGc(ctx context.Context, ldb *LDBStore) {
 	<-ldb.gc.runC
 	ldb.gc.runC <- struct{}{}
 }

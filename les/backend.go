@@ -25,7 +25,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/common/mclock"
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/bloombits"
@@ -79,7 +78,7 @@ type LightEthereum struct {
 }
 
 func New(ctx *node.ServiceContext, config *eth.Config) (*LightEthereum, error) {
-	chainDb, err := ctx.OpenDatabase("lightchaindata", config.DatabaseCache, config.DatabaseHandles, "eth/db/chaindata/")
+	chainDb, err := eth.CreateDB(ctx, config, "lightchaindata")
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +100,7 @@ func New(ctx *node.ServiceContext, config *eth.Config) (*LightEthereum, error) {
 		chainConfig:    chainConfig,
 		eventMux:       ctx.EventMux,
 		peers:          peers,
-		reqDist:        newRequestDistributor(peers, quitSync, &mclock.System{}),
+		reqDist:        newRequestDistributor(peers, quitSync),
 		accountManager: ctx.AccountManager,
 		engine:         eth.CreateConsensusEngine(ctx, chainConfig, &config.Ethash, nil, false, chainDb),
 		shutdownChan:   make(chan bool),
@@ -110,12 +109,8 @@ func New(ctx *node.ServiceContext, config *eth.Config) (*LightEthereum, error) {
 		bloomIndexer:   eth.NewBloomIndexer(chainDb, params.BloomBitsBlocksClient, params.HelperTrieConfirmations),
 	}
 
-	var trustedNodes []string
-	if leth.config.ULC != nil {
-		trustedNodes = leth.config.ULC.TrustedServers
-	}
 	leth.relay = NewLesTxRelay(peers, leth.reqDist)
-	leth.serverPool = newServerPool(chainDb, quitSync, &leth.wg, trustedNodes)
+	leth.serverPool = newServerPool(chainDb, quitSync, &leth.wg)
 	leth.retriever = newRetrieveManager(peers, leth.reqDist, leth.serverPool)
 
 	leth.odr = NewLesOdr(chainDb, light.DefaultClientIndexerConfig, leth.retriever)
@@ -141,33 +136,10 @@ func New(ctx *node.ServiceContext, config *eth.Config) (*LightEthereum, error) {
 	}
 
 	leth.txPool = light.NewTxPool(leth.chainConfig, leth.blockchain, leth.relay)
-
-	if leth.protocolManager, err = NewProtocolManager(
-		leth.chainConfig,
-		light.DefaultClientIndexerConfig,
-		true,
-		config.NetworkId,
-		leth.eventMux,
-		leth.engine,
-		leth.peers,
-		leth.blockchain,
-		nil,
-		chainDb,
-		leth.odr,
-		leth.relay,
-		leth.serverPool,
-		quitSync,
-		&leth.wg,
-		config.ULC); err != nil {
+	if leth.protocolManager, err = NewProtocolManager(leth.chainConfig, light.DefaultClientIndexerConfig, true, config.NetworkId, leth.eventMux, leth.engine, leth.peers, leth.blockchain, nil, chainDb, leth.odr, leth.relay, leth.serverPool, quitSync, &leth.wg); err != nil {
 		return nil, err
 	}
-
-	if leth.protocolManager.isULCEnabled() {
-		log.Warn("Ultra light client is enabled", "trustedNodes", len(leth.protocolManager.ulc.trustedKeys), "minTrustedFraction", leth.protocolManager.ulc.minTrustedFraction)
-		leth.blockchain.DisableCheckFreq()
-	}
 	leth.ApiBackend = &LesApiBackend{leth, nil}
-
 	gpoParams := config.GPO
 	if gpoParams.Default == nil {
 		gpoParams.Default = config.MinerGasPrice

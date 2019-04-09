@@ -29,10 +29,7 @@ import (
  */
 func TestDiscovery(t *testing.T) {
 	params := NewHiveParams()
-	s, pp, err := newHiveTester(t, params, 1, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	s, pp := newHiveTester(t, params, 1, nil)
 
 	node := s.Nodes[0]
 	raddr := NewAddr(node)
@@ -43,7 +40,7 @@ func TestDiscovery(t *testing.T) {
 	defer pp.Stop()
 
 	// send subPeersMsg to the peer
-	err = s.TestExchanges(p2ptest.Exchange{
+	err := s.TestExchanges(p2ptest.Exchange{
 		Label: "outgoing subPeersMsg",
 		Expects: []p2ptest.Expect{
 			{

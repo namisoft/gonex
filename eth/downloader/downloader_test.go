@@ -28,7 +28,6 @@ import (
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/event"
@@ -72,9 +71,8 @@ func newTester() *downloadTester {
 		ownReceipts: map[common.Hash]types.Receipts{testGenesis.Hash(): nil},
 		ownChainTd:  map[common.Hash]*big.Int{testGenesis.Hash(): testGenesis.Difficulty()},
 	}
-	tester.stateDb = rawdb.NewMemoryDatabase()
+	tester.stateDb = ethdb.NewMemDatabase()
 	tester.stateDb.Put(testGenesis.Root().Bytes(), []byte{0x00})
-
 	tester.downloader = New(FullSync, tester.stateDb, new(event.TypeMux), tester, nil, tester.dropPeer)
 	return tester
 }
@@ -187,7 +185,7 @@ func (dl *downloadTester) CurrentFastBlock() *types.Block {
 func (dl *downloadTester) FastSyncCommitHead(hash common.Hash) error {
 	// For now only check that the state trie is correct
 	if block := dl.GetBlockByHash(hash); block != nil {
-		_, err := trie.NewSecure(block.Root(), trie.NewDatabase(dl.stateDb))
+		_, err := trie.NewSecure(block.Root(), trie.NewDatabase(dl.stateDb), 0)
 		return err
 	}
 	return fmt.Errorf("non existent block: %x", hash[:4])

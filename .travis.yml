@@ -4,7 +4,7 @@ sudo: false
 matrix:
   include:
     - os: linux
-      dist: trusty
+      dist: xenial
       sudo: required
       go: 1.10.x
       script:
@@ -15,7 +15,7 @@ matrix:
       - go run build/ci.go test -coverage $TEST_PACKAGES
 
     - os: linux
-      dist: trusty
+      dist: xenial
       sudo: required
       go: 1.11.x
       script:
@@ -54,8 +54,8 @@ matrix:
 
     # This builder only tests code linters on latest version of Go
     - os: linux
-      dist: trusty
-      go: 1.12.x
+      dist: xenial
+      go: 1.11.x
       env:
         - lint
       git:
@@ -66,8 +66,8 @@ matrix:
     # This builder does the Ubuntu PPA upload
     - if: repo = ethereum/go-ethereum AND type = push
       os: linux
-      dist: trusty
-      go: 1.12.x
+      dist: xenial
+      go: 1.11.x
       env:
         - ubuntu-ppa
       git:
@@ -88,7 +88,7 @@ matrix:
     # This builder does the Linux Azure uploads
     - if: repo = ethereum/go-ethereum AND type = push
       os: linux
-      dist: trusty
+      dist: xenial
       sudo: required
       go: 1.12.x
       env:
@@ -122,7 +122,7 @@ matrix:
     # This builder does the Linux Azure MIPS xgo uploads
     - if: repo = ethereum/go-ethereum AND type = push
       os: linux
-      dist: trusty
+      dist: xenial
       services:
         - docker
       go: 1.12.x
@@ -150,7 +150,7 @@ matrix:
     # This builder does the Android Maven and Azure uploads
     - if: repo = ethereum/go-ethereum AND type = push
       os: linux
-      dist: trusty
+      dist: xenial
       addons:
         apt:
           packages:
@@ -170,7 +170,7 @@ matrix:
       git:
         submodules: false # avoid cloning ethereum/tests
       before_install:
-        - curl https://dl.google.com/go/go1.12.linux-amd64.tar.gz | tar -xz
+        - curl https://storage.googleapis.com/golang/go1.11.5.linux-amd64.tar.gz | tar -xz
         - export PATH=`pwd`/go/bin:$PATH
         - export GOROOT=`pwd`/go
         - export GOPATH=$HOME/go
@@ -216,8 +216,8 @@ matrix:
     # This builder does the Azure archive purges to avoid accumulating junk
     - if: repo = ethereum/go-ethereum AND type = cron
       os: linux
-      dist: trusty
-      go: 1.12.x
+      dist: xenial
+      go: 1.11.x
       env:
         - azure-purge
       git:

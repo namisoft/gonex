@@ -75,6 +75,7 @@ var AppHelpFlagGroups = []flagGroup{
 			utils.TestnetFlag,
 			utils.RinkebyFlag,
 			utils.DccsFlag,
+			utils.GoerliFlag,
 			utils.SyncModeFlag,
 			utils.GCModeFlag,
 			utils.EthStatsURLFlag,
@@ -137,6 +138,7 @@ var AppHelpFlagGroups = []flagGroup{
 			utils.CacheDatabaseFlag,
 			utils.CacheTrieFlag,
 			utils.CacheGCFlag,
+			utils.TrieCacheGenFlag,
 		},
 	},
 	{
@@ -153,6 +155,7 @@ var AppHelpFlagGroups = []flagGroup{
 			utils.RPCListenAddrFlag,
 			utils.RPCPortFlag,
 			utils.RPCApiFlag,
+			utils.RPCGlobalGasCap,
 			utils.WSEnabledFlag,
 			utils.WSListenAddrFlag,
 			utils.WSPortFlag,
@@ -230,6 +233,7 @@ var AppHelpFlagGroups = []flagGroup{
 			utils.MetricsInfluxDBDatabaseFlag,
 			utils.MetricsInfluxDBUsernameFlag,
 			utils.MetricsInfluxDBPasswordFlag,
+			utils.MetricsInfluxDBTagsFlag,
 		},
 	},
 	{

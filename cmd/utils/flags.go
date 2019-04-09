@@ -19,7 +19,6 @@ package utils
 
 import (
 	"crypto/ecdsa"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math/big"
@@ -38,6 +37,7 @@ import (
 	"github.com/ethereum/go-ethereum/consensus/dccs"
 	"github.com/ethereum/go-ethereum/consensus/ethash"
 	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/dashboard"
@@ -141,6 +141,10 @@ var (
 		Name:  "rinkeby",
 		Usage: "Rinkeby network: pre-configured proof-of-authority test network",
 	}
+	GoerliFlag = cli.BoolFlag{
+		Name:  "goerli",
+		Usage: "Görli network: pre-configured proof-of-authority test network",
+	}
 	DccsFlag = cli.BoolFlag{
 		Name:  "dccs",
 		Usage: "Dccs network: pre-configured proof-of-foundation network",
@@ -166,26 +170,6 @@ var (
 		Usage: "Document Root for HTTPClient file scheme",
 		Value: DirectoryString{homeDir()},
 	}
-	ExitWhenSyncedFlag = cli.BoolFlag{
-		Name:  "exitwhensynced",
-		Usage: "Exists syncing after block synchronisation",
-	}
-	ULCModeConfigFlag = cli.StringFlag{
-		Name:  "ulc.config",
-		Usage: "Config file to use for ultra light client mode",
-	}
-	OnlyAnnounceModeFlag = cli.BoolFlag{
-		Name:  "ulc.onlyannounce",
-		Usage: "ULC server sends announcements only",
-	}
-	ULCMinTrustedFractionFlag = cli.IntFlag{
-		Name:  "ulc.fraction",
-		Usage: "Minimum % of trusted ULC servers required to announce a new head",
-	}
-	ULCTrustedNodesFlag = cli.StringFlag{
-		Name:  "ulc.trusted",
-		Usage: "List of trusted ULC servers",
-	}
 	defaultSyncMode = eth.DefaultConfig.SyncMode
 	SyncModeFlag    = TextMarshalerFlag{
 		Name:  "syncmode",
@@ -199,18 +183,8 @@ var (
 	}
 	LightServFlag = cli.IntFlag{
 		Name:  "lightserv",
-		Usage: "Maximum percentage of time allowed for serving LES requests (multi-threaded processing allows values over 100)",
+		Usage: "Maximum percentage of time allowed for serving LES requests (0-90)",
 		Value: 0,
-	}
-	LightBandwidthInFlag = cli.IntFlag{
-		Name:  "lightbwin",
-		Usage: "Incoming bandwidth limit for light server (1000 bytes/sec, 0 = unlimited)",
-		Value: 1000,
-	}
-	LightBandwidthOutFlag = cli.IntFlag{
-		Name:  "lightbwout",
-		Usage: "Outgoing bandwidth limit for light server (1000 bytes/sec, 0 = unlimited)",
-		Value: 5000,
 	}
 	LightPeersFlag = cli.IntFlag{
 		Name:  "lightpeers",
@@ -227,7 +201,7 @@ var (
 	}
 	// Dashboard settings
 	DashboardEnabledFlag = cli.BoolFlag{
-		Name:  "dashboard",
+		Name:  metrics.DashboardEnabledFlag,
 		Usage: "Enable the dashboard",
 	}
 	DashboardAddrFlag = cli.StringFlag{
@@ -352,13 +326,18 @@ var (
 	}
 	CacheTrieFlag = cli.IntFlag{
 		Name:  "cache.trie",
-		Usage: "Percentage of cache memory allowance to use for trie caching (default = 25% full mode, 50% archive mode)",
+		Usage: "Percentage of cache memory allowance to use for trie caching",
 		Value: 25,
 	}
 	CacheGCFlag = cli.IntFlag{
 		Name:  "cache.gc",
-		Usage: "Percentage of cache memory allowance to use for trie pruning (default = 25% full mode, 0% archive mode)",
+		Usage: "Percentage of cache memory allowance to use for trie pruning",
 		Value: 25,
+	}
+	TrieCacheGenFlag = cli.IntFlag{
+		Name:  "trie-cache-gens",
+		Usage: "Number of trie node generations to keep in memory",
+		Value: int(state.MaxTrieCacheGen),
 	}
 	// Miner settings
 	MiningEnabledFlag = cli.BoolFlag{
@@ -442,14 +421,14 @@ var (
 		Usage: "Password file to use for non-interactive password input",
 		Value: "",
 	}
-	ExternalSignerFlag = cli.StringFlag{
-		Name:  "signer",
-		Usage: "External signer (url or path to ipc file)",
-		Value: "",
-	}
+
 	VMEnableDebugFlag = cli.BoolFlag{
 		Name:  "vmdebug",
 		Usage: "Record information useful for VM and contract debugging",
+	}
+	RPCGlobalGasCap = cli.Uint64Flag{
+		Name:  "rpc.gascap",
+		Usage: "Sets a cap on gas that can be used in eth_call/estimateGas",
 	}
 	// Logging and debug settings
 	EthStatsURLFlag = cli.StringFlag{
@@ -478,30 +457,6 @@ var (
 		Name:  "rpcport",
 		Usage: "HTTP-RPC server listening port",
 		Value: node.DefaultHTTPPort,
-	}
-	GraphQLEnabledFlag = cli.BoolFlag{
-		Name:  "graphql",
-		Usage: "Enable the GraphQL server",
-	}
-	GraphQLListenAddrFlag = cli.StringFlag{
-		Name:  "graphql.addr",
-		Usage: "GraphQL server listening interface",
-		Value: node.DefaultGraphQLHost,
-	}
-	GraphQLPortFlag = cli.IntFlag{
-		Name:  "graphql.port",
-		Usage: "GraphQL server listening port",
-		Value: node.DefaultGraphQLPort,
-	}
-	GraphQLCORSDomainFlag = cli.StringFlag{
-		Name:  "graphql.rpccorsdomain",
-		Usage: "Comma separated list of domains from which to accept cross origin requests (browser enforced)",
-		Value: "",
-	}
-	GraphQLVirtualHostsFlag = cli.StringFlag{
-		Name:  "graphql.rpcvhosts",
-		Usage: "Comma separated list of virtual hostnames from which to accept requests (server enforced). Accepts '*' wildcard.",
-		Value: strings.Join(node.DefaultConfig.HTTPVirtualHosts, ","),
 	}
 	RPCCORSDomainFlag = cli.StringFlag{
 		Name:  "rpccorsdomain",
@@ -655,12 +610,8 @@ var (
 
 	// Metrics flags
 	MetricsEnabledFlag = cli.BoolFlag{
-		Name:  "metrics",
+		Name:  metrics.MetricsEnabledFlag,
 		Usage: "Enable metrics collection and reporting",
-	}
-	MetricsEnabledExpensiveFlag = cli.BoolFlag{
-		Name:  "metrics.expensive",
-		Usage: "Enable expensive metrics collection and reporting",
 	}
 	MetricsEnableInfluxDBFlag = cli.BoolFlag{
 		Name:  "metrics.influxdb",
@@ -719,6 +670,9 @@ func MakeDataDir(ctx *cli.Context) string {
 		if ctx.GlobalBool(RinkebyFlag.Name) {
 			return filepath.Join(path, "rinkeby")
 		}
+		if ctx.GlobalBool(GoerliFlag.Name) {
+			return filepath.Join(path, "goerli")
+		}
 		if ctx.GlobalBool(DccsFlag.Name) {
 			return filepath.Join(path, "dccs")
 		}
@@ -776,6 +730,8 @@ func setBootstrapNodes(ctx *cli.Context, cfg *p2p.Config) {
 		urls = params.TestnetBootnodes
 	case ctx.GlobalBool(RinkebyFlag.Name):
 		urls = params.RinkebyBootnodes
+	case ctx.GlobalBool(GoerliFlag.Name):
+		urls = params.GoerliBootnodes
 	case ctx.GlobalBool(DccsFlag.Name):
 		urls = params.DccsBootnodes
 	case cfg.BootstrapNodes != nil:
@@ -784,14 +740,11 @@ func setBootstrapNodes(ctx *cli.Context, cfg *p2p.Config) {
 
 	cfg.BootstrapNodes = make([]*enode.Node, 0, len(urls))
 	for _, url := range urls {
-		if url != "" {
-			node, err := enode.ParseV4(url)
-			if err != nil {
-				log.Crit("Bootstrap URL invalid", "enode", url, "err", err)
-				continue
-			}
-			cfg.BootstrapNodes = append(cfg.BootstrapNodes, node)
+		node, err := enode.ParseV4(url)
+		if err != nil {
+			log.Crit("Bootstrap URL invalid", "enode", url, "err", err)
 		}
+		cfg.BootstrapNodes = append(cfg.BootstrapNodes, node)
 	}
 }
 
@@ -808,22 +761,20 @@ func setBootstrapNodesV5(ctx *cli.Context, cfg *p2p.Config) {
 		}
 	case ctx.GlobalBool(RinkebyFlag.Name):
 		urls = params.RinkebyBootnodes
-	case ctx.GlobalBool(DccsFlag.Name):
-		urls = params.DccsBootnodes
+	case ctx.GlobalBool(GoerliFlag.Name):
+		urls = params.GoerliBootnodes
 	case cfg.BootstrapNodesV5 != nil:
 		return // already set, don't apply defaults.
 	}
 
 	cfg.BootstrapNodesV5 = make([]*discv5.Node, 0, len(urls))
 	for _, url := range urls {
-		if url != "" {
-			node, err := discv5.ParseNode(url)
-			if err != nil {
-				log.Error("Bootstrap URL invalid", "enode", url, "err", err)
-				continue
-			}
-			cfg.BootstrapNodesV5 = append(cfg.BootstrapNodesV5, node)
+		node, err := discv5.ParseNode(url)
+		if err != nil {
+			log.Error("Bootstrap URL invalid", "enode", url, "err", err)
+			continue
 		}
+		cfg.BootstrapNodesV5 = append(cfg.BootstrapNodesV5, node)
 	}
 }
 
@@ -880,24 +831,6 @@ func setHTTP(ctx *cli.Context, cfg *node.Config) {
 	}
 }
 
-// setGraphQL creates the GraphQL listener interface string from the set
-// command line flags, returning empty if the GraphQL endpoint is disabled.
-func setGraphQL(ctx *cli.Context, cfg *node.Config) {
-	if ctx.GlobalBool(GraphQLEnabledFlag.Name) && cfg.GraphQLHost == "" {
-		cfg.GraphQLHost = "127.0.0.1"
-		if ctx.GlobalIsSet(GraphQLListenAddrFlag.Name) {
-			cfg.GraphQLHost = ctx.GlobalString(GraphQLListenAddrFlag.Name)
-		}
-	}
-	cfg.GraphQLPort = ctx.GlobalInt(GraphQLPortFlag.Name)
-	if ctx.GlobalIsSet(GraphQLCORSDomainFlag.Name) {
-		cfg.GraphQLCors = splitAndTrim(ctx.GlobalString(GraphQLCORSDomainFlag.Name))
-	}
-	if ctx.GlobalIsSet(GraphQLVirtualHostsFlag.Name) {
-		cfg.GraphQLVirtualHosts = splitAndTrim(ctx.GlobalString(GraphQLVirtualHostsFlag.Name))
-	}
-}
-
 // setWS creates the WebSocket RPC listener interface string from the set
 // command line flags, returning empty if the HTTP endpoint is disabled.
 func setWS(ctx *cli.Context, cfg *node.Config) {
@@ -928,40 +861,6 @@ func setIPC(ctx *cli.Context, cfg *node.Config) {
 		cfg.IPCPath = ""
 	case ctx.GlobalIsSet(IPCPathFlag.Name):
 		cfg.IPCPath = ctx.GlobalString(IPCPathFlag.Name)
-	}
-}
-
-// SetULC setup ULC config from file if given.
-func SetULC(ctx *cli.Context, cfg *eth.Config) {
-	// ULC config isn't loaded from global config and ULC config and ULC trusted nodes are not defined.
-	if cfg.ULC == nil && !(ctx.GlobalIsSet(ULCModeConfigFlag.Name) || ctx.GlobalIsSet(ULCTrustedNodesFlag.Name)) {
-		return
-	}
-	cfg.ULC = &eth.ULCConfig{}
-
-	path := ctx.GlobalString(ULCModeConfigFlag.Name)
-	if path != "" {
-		cfgData, err := ioutil.ReadFile(path)
-		if err != nil {
-			Fatalf("Failed to unmarshal ULC configuration: %v", err)
-		}
-
-		err = json.Unmarshal(cfgData, &cfg.ULC)
-		if err != nil {
-			Fatalf("Failed to unmarshal ULC configuration: %s", err.Error())
-		}
-	}
-
-	if trustedNodes := ctx.GlobalString(ULCTrustedNodesFlag.Name); trustedNodes != "" {
-		cfg.ULC.TrustedServers = strings.Split(trustedNodes, ",")
-	}
-
-	if trustedFraction := ctx.GlobalInt(ULCMinTrustedFractionFlag.Name); trustedFraction > 0 {
-		cfg.ULC.MinTrustedFraction = trustedFraction
-	}
-	if cfg.ULC.MinTrustedFraction <= 0 && cfg.ULC.MinTrustedFraction > 100 {
-		log.Error("MinTrustedFraction is invalid", "MinTrustedFraction", cfg.ULC.MinTrustedFraction, "Changed to default", eth.DefaultULCMinTrustedFraction)
-		cfg.ULC.MinTrustedFraction = eth.DefaultULCMinTrustedFraction
 	}
 }
 
@@ -1017,15 +916,11 @@ func setEtherbase(ctx *cli.Context, ks *keystore.KeyStore, cfg *eth.Config) {
 	}
 	// Convert the etherbase into an address and configure it
 	if etherbase != "" {
-		if ks != nil {
-			account, err := MakeAddress(ks, etherbase)
-			if err != nil {
-				Fatalf("Invalid miner etherbase: %v", err)
-			}
-			cfg.Etherbase = account.Address
-		} else {
-			Fatalf("No etherbase configured")
+		account, err := MakeAddress(ks, etherbase)
+		if err != nil {
+			Fatalf("Invalid miner etherbase: %v", err)
 		}
+		cfg.Etherbase = account.Address
 	}
 }
 
@@ -1119,14 +1014,9 @@ func SetNodeConfig(ctx *cli.Context, cfg *node.Config) {
 	SetP2PConfig(ctx, &cfg.P2P)
 	setIPC(ctx, cfg)
 	setHTTP(ctx, cfg)
-	setGraphQL(ctx, cfg)
 	setWS(ctx, cfg)
 	setNodeUserIdent(ctx, cfg)
 	setDataDir(ctx, cfg)
-
-	if ctx.GlobalIsSet(ExternalSignerFlag.Name) {
-		cfg.ExternalSigner = ctx.GlobalString(ExternalSignerFlag.Name)
-	}
 
 	if ctx.GlobalIsSet(KeyStoreDirFlag.Name) {
 		cfg.KeyStoreDir = ctx.GlobalString(KeyStoreDirFlag.Name)
@@ -1149,6 +1039,8 @@ func setDataDir(ctx *cli.Context, cfg *node.Config) {
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "testnet")
 	case ctx.GlobalBool(RinkebyFlag.Name):
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "rinkeby")
+	case ctx.GlobalBool(GoerliFlag.Name):
+		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "goerli")
 	case ctx.GlobalBool(DccsFlag.Name):
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "dccs")
 	}
@@ -1310,14 +1202,10 @@ func SetShhConfig(ctx *cli.Context, stack *node.Node, cfg *whisper.Config) {
 // SetEthConfig applies eth-related command line flags to the config.
 func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *eth.Config) {
 	// Avoid conflicting network flags
-	checkExclusive(ctx, DeveloperFlag, TestnetFlag, RinkebyFlag, DccsFlag)
+	checkExclusive(ctx, DeveloperFlag, TestnetFlag, RinkebyFlag, GoerliFlag, DccsFlag)
 	checkExclusive(ctx, LightServFlag, SyncModeFlag, "light")
-	// Can't use both ephemeral unlocked and external signer
-	checkExclusive(ctx, DeveloperFlag, ExternalSignerFlag)
-	var ks *keystore.KeyStore
-	if keystores := stack.AccountManager().Backends(keystore.KeyStoreType); len(keystores) > 0 {
-		ks = keystores[0].(*keystore.KeyStore)
-	}
+
+	ks := stack.AccountManager().Backends(keystore.KeyStoreType)[0].(*keystore.KeyStore)
 	setEtherbase(ctx, ks, cfg)
 	setGPO(ctx, &cfg.GPO)
 	setTxPool(ctx, &cfg.TxPool)
@@ -1330,13 +1218,8 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *eth.Config) {
 	if ctx.GlobalIsSet(LightServFlag.Name) {
 		cfg.LightServ = ctx.GlobalInt(LightServFlag.Name)
 	}
-	cfg.LightBandwidthIn = ctx.GlobalInt(LightBandwidthInFlag.Name)
-	cfg.LightBandwidthOut = ctx.GlobalInt(LightBandwidthOutFlag.Name)
 	if ctx.GlobalIsSet(LightPeersFlag.Name) {
 		cfg.LightPeers = ctx.GlobalInt(LightPeersFlag.Name)
-	}
-	if ctx.GlobalIsSet(OnlyAnnounceModeFlag.Name) {
-		cfg.OnlyAnnounce = ctx.GlobalBool(OnlyAnnounceModeFlag.Name)
 	}
 	if ctx.GlobalIsSet(NetworkIdFlag.Name) {
 		cfg.NetworkId = ctx.GlobalUint64(NetworkIdFlag.Name)
@@ -1402,6 +1285,9 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *eth.Config) {
 	if ctx.GlobalIsSet(EVMInterpreterFlag.Name) {
 		cfg.EVMInterpreter = ctx.GlobalString(EVMInterpreterFlag.Name)
 	}
+	if ctx.GlobalIsSet(RPCGlobalGasCap.Name) {
+		cfg.RPCGasCap = new(big.Int).SetUint64(ctx.GlobalUint64(RPCGlobalGasCap.Name))
+	}
 
 	// Override any default configs for hard coded networks.
 	switch {
@@ -1415,6 +1301,11 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *eth.Config) {
 			cfg.NetworkId = 4
 		}
 		cfg.Genesis = core.DefaultRinkebyGenesisBlock()
+	case ctx.GlobalBool(GoerliFlag.Name):
+		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
+			cfg.NetworkId = 5
+		}
+		cfg.Genesis = core.DefaultGoerliGenesisBlock()
 	case ctx.GlobalBool(DccsFlag.Name):
 		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = 66666
@@ -1446,6 +1337,10 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *eth.Config) {
 		if !ctx.GlobalIsSet(MinerGasPriceFlag.Name) && !ctx.GlobalIsSet(MinerLegacyGasPriceFlag.Name) {
 			cfg.MinerGasPrice = big.NewInt(1)
 		}
+	}
+	// TODO(fjl): move trie cache generations into config
+	if gen := ctx.GlobalInt(TrieCacheGenFlag.Name); gen > 0 {
+		state.MaxTrieCacheGen = uint16(gen)
 	}
 }
 
@@ -1559,7 +1454,7 @@ func MakeChainDatabase(ctx *cli.Context, stack *node.Node) ethdb.Database {
 	if ctx.GlobalString(SyncModeFlag.Name) == "light" {
 		name = "lightchaindata"
 	}
-	chainDb, err := stack.OpenDatabase(name, cache, handles, "")
+	chainDb, err := stack.OpenDatabase(name, cache, handles)
 	if err != nil {
 		Fatalf("Could not open database: %v", err)
 	}
@@ -1573,6 +1468,8 @@ func MakeGenesis(ctx *cli.Context) *core.Genesis {
 		genesis = core.DefaultTestnetGenesisBlock()
 	case ctx.GlobalBool(RinkebyFlag.Name):
 		genesis = core.DefaultRinkebyGenesisBlock()
+	case ctx.GlobalBool(GoerliFlag.Name):
+		genesis = core.DefaultGoerliGenesisBlock()
 	case ctx.GlobalBool(DccsFlag.Name):
 		genesis = core.DefaultDccsGenesisBlock()
 	case ctx.GlobalBool(DeveloperFlag.Name):
@@ -1638,7 +1535,7 @@ func MakeConsolePreloads(ctx *cli.Context) []string {
 		return nil
 	}
 	// Otherwise resolve absolute paths and return them
-	var preloads []string
+	preloads := []string{}
 
 	assets := ctx.GlobalString(JSpathFlag.Name)
 	for _, file := range strings.Split(ctx.GlobalString(PreloadJSFlag.Name), ",") {

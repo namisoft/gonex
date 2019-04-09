@@ -34,7 +34,7 @@ Add the gophers PPA and install Go 1.11 and Debian packaging tools:
 
     $ sudo apt-add-repository ppa:gophers/ubuntu/archive
     $ sudo apt-get update
-    $ sudo apt-get install build-essential golang-1.11 devscripts debhelper python-bzrlib python-paramiko
+    $ sudo apt-get install build-essential golang-1.10 devscripts debhelper python-bzrlib python-paramiko
 
 Create the source packages:
 
