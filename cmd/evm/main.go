@@ -23,7 +23,7 @@ import (
 	"os"
 
 	"github.com/ethereum/go-ethereum/cmd/utils"
-	cli "gopkg.in/urfave/cli.v1"
+	"gopkg.in/urfave/cli.v1"
 )
 
 var gitCommit = "" // Git SHA1 commit hash of the release (set via linker flags)
@@ -110,11 +110,6 @@ var (
 		Name:  "nostack",
 		Usage: "disable stack output",
 	}
-	EVMInterpreterFlag = cli.StringFlag{
-		Name:  "vm.evm",
-		Usage: "External EVM configuration (default = built-in interpreter)",
-		Value: "",
-	}
 )
 
 func init() {
@@ -138,7 +133,6 @@ func init() {
 		ReceiverFlag,
 		DisableMemoryFlag,
 		DisableStackFlag,
-		EVMInterpreterFlag,
 	}
 	app.Commands = []cli.Command{
 		compileCommand,

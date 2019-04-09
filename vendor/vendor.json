@@ -56,12 +56,6 @@
 			"revisionTime": "2019-02-18T06:46:05Z"
 		},
 		{
-			"checksumSHA1": "hp2pna9yEn9hemIjc7asalxL2Qs=",
-			"path": "github.com/apilayer/freegeoip",
-			"revision": "3f942d1392f6439bda0f67b3c650ce468ebdba8e",
-			"revisionTime": "2018-07-02T11:14:01Z"
-		},
-		{
 			"checksumSHA1": "USkefO0g1U9mr+8hagv3fpSkrxg=",
 			"path": "github.com/aristanetworks/goarista/monotime",
 			"revision": "ea17b1a17847fb6e4c0a91de0b674704693469b0",

@@ -153,7 +153,7 @@ var (
 
 // SignerFn is a signer callback function to request a hash to be signed by a
 // backing account.
-type SignerFn func(accounts.Account, string, []byte) ([]byte, error)
+type SignerFn func(accounts.Account, []byte) ([]byte, error)
 
 // sigHash returns the hash which is used as input for the proof-of-authority
 // signing. It is the hash of the entire header apart from the 65 byte signature
@@ -311,7 +311,7 @@ func (d *Dccs) verifyHeader(chain consensus.ChainReader, header *types.Header, p
 	number := header.Number.Uint64()
 
 	// Don't waste time checking blocks from the future
-	if header.Time.Cmp(big.NewInt(time.Now().Unix())) > 0 {
+	if header.Time > uint64(time.Now().Unix()) {
 		return consensus.ErrFutureBlock
 	}
 	// Checkpoint blocks need to enforce zero beneficiary
@@ -374,7 +374,7 @@ func (d *Dccs) verifyHeader2(chain consensus.ChainReader, header *types.Header, 
 	number := header.Number.Uint64()
 
 	// Don't waste time checking blocks from the future
-	if header.Time.Cmp(big.NewInt(time.Now().Unix())) > 0 {
+	if header.Time > uint64(time.Now().Unix()) {
 		return consensus.ErrFutureBlock
 	}
 
@@ -436,7 +436,7 @@ func (d *Dccs) verifyCascadingFields(chain consensus.ChainReader, header *types.
 	if parent == nil || parent.Number.Uint64() != number-1 || parent.Hash() != header.ParentHash {
 		return consensus.ErrUnknownAncestor
 	}
-	if parent.Time.Uint64()+d.config.Period > header.Time.Uint64() {
+	if parent.Time+d.config.Period > header.Time {
 		return ErrInvalidTimestamp
 	}
 	// Retrieve the snapshot needed to verify this header and cache it
@@ -479,7 +479,7 @@ func (d *Dccs) verifyCascadingFields2(chain consensus.ChainReader, header *types
 	if parent == nil || parent.Number.Uint64() != number-1 || parent.Hash() != header.ParentHash {
 		return consensus.ErrUnknownAncestor
 	}
-	if parent.Time.Uint64()+d.config.Period > header.Time.Uint64() {
+	if parent.Time+d.config.Period > header.Time {
 		return ErrInvalidTimestamp
 	}
 	// Retrieve the snapshot needed to verify this header and cache it
@@ -819,9 +819,9 @@ func (d *Dccs) prepare(chain consensus.ChainReader, header *types.Header) error 
 	if parent == nil {
 		return consensus.ErrUnknownAncestor
 	}
-	header.Time = new(big.Int).Add(parent.Time, new(big.Int).SetUint64(d.config.Period))
-	if header.Time.Int64() < time.Now().Unix() {
-		header.Time = big.NewInt(time.Now().Unix())
+	header.Time = parent.Time + d.config.Period
+	if header.Time < uint64(time.Now().Unix()) {
+		header.Time = uint64(time.Now().Unix())
 	}
 	return nil
 }
@@ -876,9 +876,9 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 	header.MixDigest = common.Hash{}
 
 	// Ensure the timestamp has the correct delay
-	header.Time = new(big.Int).Add(parent.Time, new(big.Int).SetUint64(d.config.Period))
-	if header.Time.Int64() < time.Now().Unix() {
-		header.Time = big.NewInt(time.Now().Unix())
+	header.Time = parent.Time + d.config.Period
+	if header.Time < uint64(time.Now().Unix()) {
+		header.Time = uint64(time.Now().Unix())
 	}
 	return nil
 }
@@ -1066,7 +1066,7 @@ func (d *Dccs) seal(chain consensus.ChainReader, block *types.Block, results cha
 		}
 	}
 	// Sweet, the protocol permits us to sign the block, wait for our time
-	delay := time.Unix(header.Time.Int64(), 0).Sub(time.Now()) // nolint: gosimple
+	delay := time.Unix(int64(header.Time), 0).Sub(time.Now()) // nolint: gosimple
 	if header.Difficulty.Cmp(diffNoTurn) == 0 {
 		// It's not our turn explicitly to sign, delay it a bit
 		wiggle := time.Duration(len(snap.Signers)/2+1) * wiggleTime
@@ -1075,7 +1075,7 @@ func (d *Dccs) seal(chain consensus.ChainReader, block *types.Block, results cha
 		log.Trace("Out-of-turn signing requested", "wiggle", common.PrettyDuration(wiggle))
 	}
 	// Sign all the things!
-	sighash, err := signFn(accounts.Account{Address: signer}, accounts.MimetypeDccs, DccsRLP(header))
+	sighash, err := signFn(accounts.Account{Address: signer}, sigHash(header).Bytes())
 	if err != nil {
 		return err
 	}
@@ -1147,7 +1147,7 @@ func (d *Dccs) seal2(chain consensus.ChainReader, block *types.Block, results ch
 		parent = headers[0]
 	}
 	// Sweet, the protocol permits us to sign the block, wait for our time
-	delay := time.Unix(header.Time.Int64(), 0).Sub(time.Now()) // nolint: gosimple
+	delay := time.Unix(int64(header.Time), 0).Sub(time.Now()) // nolint: gosimple
 	if !snap.inturn2(signer, parent) {
 		// It's not our turn explicitly to sign, delay it a bit
 		offset, err := snap.offset(signer, parent)
@@ -1159,7 +1159,7 @@ func (d *Dccs) seal2(chain consensus.ChainReader, block *types.Block, results ch
 		log.Trace("Out-of-turn signing requested", "wiggle", common.PrettyDuration(wiggle))
 	}
 	// Sign all the things!
-	sighash, err := signFn(accounts.Account{Address: signer}, accounts.MimetypeDccs, DccsRLP(header))
+	sighash, err := signFn(accounts.Account{Address: signer}, sigHash(header).Bytes())
 	if err != nil {
 		return err
 	}

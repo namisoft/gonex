@@ -21,11 +21,9 @@ import (
 	"fmt"
 	"io"
 	"math/big"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/metrics"
 	"github.com/ethereum/go-ethereum/rlp"
 )
 
@@ -133,34 +131,34 @@ type AccountV1 struct {
 }
 
 // DecodeRLP implements rlp.Decoder interface
-func (c *Account) DecodeRLP(s *rlp.Stream) (err error) {
+func (self *Account) DecodeRLP(s *rlp.Stream) (err error) {
 	if _, err = s.List(); err != nil {
 		return err
 	}
 
-	if c.Nonce, err = s.Uint(); err != nil {
+	if self.Nonce, err = s.Uint(); err != nil {
 		return err
 	}
 
-	c.Balance = new(big.Int)
-	if err := s.Decode(c.Balance); err != nil {
+	self.Balance = new(big.Int)
+	if err := s.Decode(self.Balance); err != nil {
 		return err
 	}
 
-	if err = s.Decode(&c.Root); err != nil {
+	if err = s.Decode(&self.Root); err != nil {
 		return err
 	}
 
-	if c.CodeHash, err = s.Bytes(); err != nil {
+	if self.CodeHash, err = s.Bytes(); err != nil {
 		return err
 	}
 
-	if c.MRUNumber, err = s.Uint(); err != nil {
+	if self.MRUNumber, err = s.Uint(); err != nil {
 		if err != rlp.EOL {
 			return err
 		}
 		// old pre-fork state data, reset the value
-		c.MRUNumber = 0
+		self.MRUNumber = 0
 	}
 
 	if err = s.ListEnd(); err != nil {
@@ -174,62 +172,62 @@ func (c *Account) DecodeRLP(s *rlp.Stream) (err error) {
 //
 // Define this instead of (*Account) EncodeRLP(io.Writer) to prevent
 // recusive Encode call, or creating additional rplAccount type.
-func (s *stateObject) EncodeRLP(w io.Writer) error {
-	if s.data.MRUNumber == 0 {
+func (c *stateObject) EncodeRLP(w io.Writer) error {
+	if c.data.MRUNumber == 0 {
 		// encode in old db format
 		return rlp.Encode(w, &AccountV1{
-			Nonce:    s.data.Nonce,
-			Balance:  s.data.Balance,
-			Root:     s.data.Root,
-			CodeHash: s.data.CodeHash,
+			Nonce:    c.data.Nonce,
+			Balance:  c.data.Balance,
+			Root:     c.data.Root,
+			CodeHash: c.data.CodeHash,
 		})
 	}
-	return rlp.Encode(w, &s.data)
+	return rlp.Encode(w, &c.data)
 }
 
 // setError remembers the first non-nil error it is called with.
-func (s *stateObject) setError(err error) {
-	if s.dbErr == nil {
-		s.dbErr = err
+func (self *stateObject) setError(err error) {
+	if self.dbErr == nil {
+		self.dbErr = err
 	}
 }
 
-func (s *stateObject) markSuicided() {
-	s.suicided = true
+func (self *stateObject) markSuicided() {
+	self.suicided = true
 }
 
-func (s *stateObject) touch() {
-	s.db.journal.append(touchChange{
-		account: &s.address,
+func (c *stateObject) touch() {
+	c.db.journal.append(touchChange{
+		account: &c.address,
 	})
-	if s.address == ripemd {
+	if c.address == ripemd {
 		// Explicitly put it in the dirty-cache, which is otherwise generated from
 		// flattened journals.
-		s.db.journal.dirty(s.address)
+		c.db.journal.dirty(c.address)
 	}
 }
 
-func (s *stateObject) getTrie(db Database) Trie {
-	if s.trie == nil {
+func (c *stateObject) getTrie(db Database) Trie {
+	if c.trie == nil {
 		var err error
-		s.trie, err = db.OpenStorageTrie(s.addrHash, s.data.Root)
+		c.trie, err = db.OpenStorageTrie(c.addrHash, c.data.Root)
 		if err != nil {
-			s.trie, _ = db.OpenStorageTrie(s.addrHash, common.Hash{})
-			s.setError(fmt.Errorf("can't create storage trie: %v", err))
+			c.trie, _ = db.OpenStorageTrie(c.addrHash, common.Hash{})
+			c.setError(fmt.Errorf("can't create storage trie: %v", err))
 		}
 	}
-	return s.trie
+	return c.trie
 }
 
 // GetState retrieves a value from the account storage trie.
-func (s *stateObject) GetState(db Database, key common.Hash) common.Hash {
+func (self *stateObject) GetState(db Database, key common.Hash) common.Hash {
 	// If we have a dirty value for this state entry, return it
-	value, dirty := s.dirtyStorage[key]
+	value, dirty := self.dirtyStorage[key]
 	if dirty {
 		return value
 	}
 	// Otherwise return the entry's original value
-	return s.GetCommittedState(db, key)
+	return self.GetCommittedState(db, key)
 }
 
 // GetCommittedState retrieves a value from the committed account storage trie.
@@ -278,11 +276,6 @@ func (self *stateObject) setState(key, value common.Hash) {
 
 // updateTrie writes cached storage modifications into the object's storage trie.
 func (self *stateObject) updateTrie(db Database) Trie {
-	// Track the amount of time wasted on updating the storge trie
-	if metrics.EnabledExpensive {
-		defer func(start time.Time) { self.db.StorageUpdates += time.Since(start) }(time.Now())
-	}
-	// Update all the dirty slots in the trie
 	tr := self.getTrie(db)
 	for key, value := range self.dirtyStorage {
 		delete(self.dirtyStorage, key)
@@ -307,11 +300,6 @@ func (self *stateObject) updateTrie(db Database) Trie {
 // UpdateRoot sets the trie root to the current root hash of
 func (self *stateObject) updateRoot(db Database) {
 	self.updateTrie(db)
-
-	// Track the amount of time wasted on hashing the storge trie
-	if metrics.EnabledExpensive {
-		defer func(start time.Time) { self.db.StorageHashes += time.Since(start) }(time.Now())
-	}
 	self.data.Root = self.trie.Hash()
 }
 
@@ -321,10 +309,6 @@ func (self *stateObject) CommitTrie(db Database) error {
 	self.updateTrie(db)
 	if self.dbErr != nil {
 		return self.dbErr
-	}
-	// Track the amount of time wasted on committing the storge trie
-	if metrics.EnabledExpensive {
-		defer func(start time.Time) { self.db.StorageCommits += time.Since(start) }(time.Now())
 	}
 	root, err := self.trie.Commit(nil)
 	if err == nil {

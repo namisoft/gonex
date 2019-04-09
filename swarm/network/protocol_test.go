@@ -17,18 +17,15 @@
 package network
 
 import (
-	"crypto/ecdsa"
 	"flag"
 	"fmt"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/p2p"
 	"github.com/ethereum/go-ethereum/p2p/enode"
-	"github.com/ethereum/go-ethereum/p2p/enr"
 	"github.com/ethereum/go-ethereum/p2p/protocols"
 	p2ptest "github.com/ethereum/go-ethereum/p2p/testing"
 )
@@ -70,7 +67,7 @@ func HandshakeMsgExchange(lhs, rhs *HandshakeMsg, id enode.ID) []p2ptest.Exchang
 	}
 }
 
-func newBzzBaseTester(t *testing.T, n int, prvkey *ecdsa.PrivateKey, spec *protocols.Spec, run func(*BzzPeer) error) (*bzzTester, error) {
+func newBzzBaseTester(t *testing.T, n int, addr *BzzAddr, spec *protocols.Spec, run func(*BzzPeer) error) *bzzTester {
 	cs := make(map[string]chan bool)
 
 	srv := func(p *BzzPeer) error {
@@ -86,22 +83,9 @@ func newBzzBaseTester(t *testing.T, n int, prvkey *ecdsa.PrivateKey, spec *proto
 		return srv(&BzzPeer{Peer: protocols.NewPeer(p, rw, spec), BzzAddr: NewAddr(p.Node())})
 	}
 
-	s := p2ptest.NewProtocolTester(prvkey, n, protocol)
-	var record enr.Record
-	bzzKey := PrivateKeyToBzzKey(prvkey)
-	record.Set(NewENRAddrEntry(bzzKey))
-	err := enode.SignV4(&record, prvkey)
-	if err != nil {
-		return nil, fmt.Errorf("unable to generate ENR: %v", err)
-	}
-	nod, err := enode.New(enode.V4ID{}, &record)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create enode: %v", err)
-	}
-	addr := getENRBzzAddr(nod)
+	s := p2ptest.NewProtocolTester(addr.ID(), n, protocol)
 
 	for _, node := range s.Nodes {
-		log.Warn("node", "node", node)
 		cs[node.ID().String()] = make(chan bool)
 	}
 
@@ -109,7 +93,7 @@ func newBzzBaseTester(t *testing.T, n int, prvkey *ecdsa.PrivateKey, spec *proto
 		addr:           addr,
 		ProtocolTester: s,
 		cs:             cs,
-	}, nil
+	}
 }
 
 type bzzTester struct {
@@ -132,28 +116,15 @@ func newBzz(addr *BzzAddr, lightNode bool) *Bzz {
 	return bzz
 }
 
-func newBzzHandshakeTester(n int, prvkey *ecdsa.PrivateKey, lightNode bool) (*bzzTester, error) {
-
-	var record enr.Record
-	bzzkey := PrivateKeyToBzzKey(prvkey)
-	record.Set(NewENRAddrEntry(bzzkey))
-	record.Set(ENRLightNodeEntry(lightNode))
-	err := enode.SignV4(&record, prvkey)
-	if err != nil {
-		return nil, err
-	}
-	nod, err := enode.New(enode.V4ID{}, &record)
-	addr := getENRBzzAddr(nod)
-
+func newBzzHandshakeTester(n int, addr *BzzAddr, lightNode bool) *bzzTester {
 	bzz := newBzz(addr, lightNode)
-
-	pt := p2ptest.NewProtocolTester(prvkey, n, bzz.runBzz)
+	pt := p2ptest.NewProtocolTester(addr.ID(), n, bzz.runBzz)
 
 	return &bzzTester{
 		addr:           addr,
 		ProtocolTester: pt,
 		bzz:            bzz,
-	}, nil
+	}
 }
 
 // should test handshakes in one exchange? parallelisation
@@ -194,18 +165,12 @@ func correctBzzHandshake(addr *BzzAddr, lightNode bool) *HandshakeMsg {
 
 func TestBzzHandshakeNetworkIDMismatch(t *testing.T) {
 	lightNode := false
-	prvkey, err := crypto.GenerateKey()
-	if err != nil {
-		t.Fatal(err)
-	}
-	s, err := newBzzHandshakeTester(1, prvkey, lightNode)
-	if err != nil {
-		t.Fatal(err)
-	}
+	addr := RandomAddr()
+	s := newBzzHandshakeTester(1, addr, lightNode)
 	node := s.Nodes[0]
 
-	err = s.testHandshake(
-		correctBzzHandshake(s.addr, lightNode),
+	err := s.testHandshake(
+		correctBzzHandshake(addr, lightNode),
 		&HandshakeMsg{Version: TestProtocolVersion, NetworkID: 321, Addr: NewAddr(node)},
 		&p2ptest.Disconnect{Peer: node.ID(), Error: fmt.Errorf("Handshake error: Message handler error: (msg code 0): network id mismatch 321 (!= 3)")},
 	)
@@ -217,18 +182,12 @@ func TestBzzHandshakeNetworkIDMismatch(t *testing.T) {
 
 func TestBzzHandshakeVersionMismatch(t *testing.T) {
 	lightNode := false
-	prvkey, err := crypto.GenerateKey()
-	if err != nil {
-		t.Fatal(err)
-	}
-	s, err := newBzzHandshakeTester(1, prvkey, lightNode)
-	if err != nil {
-		t.Fatal(err)
-	}
+	addr := RandomAddr()
+	s := newBzzHandshakeTester(1, addr, lightNode)
 	node := s.Nodes[0]
 
-	err = s.testHandshake(
-		correctBzzHandshake(s.addr, lightNode),
+	err := s.testHandshake(
+		correctBzzHandshake(addr, lightNode),
 		&HandshakeMsg{Version: 0, NetworkID: TestProtocolNetworkID, Addr: NewAddr(node)},
 		&p2ptest.Disconnect{Peer: node.ID(), Error: fmt.Errorf("Handshake error: Message handler error: (msg code 0): version mismatch 0 (!= %d)", TestProtocolVersion)},
 	)
@@ -240,18 +199,12 @@ func TestBzzHandshakeVersionMismatch(t *testing.T) {
 
 func TestBzzHandshakeSuccess(t *testing.T) {
 	lightNode := false
-	prvkey, err := crypto.GenerateKey()
-	if err != nil {
-		t.Fatal(err)
-	}
-	s, err := newBzzHandshakeTester(1, prvkey, lightNode)
-	if err != nil {
-		t.Fatal(err)
-	}
+	addr := RandomAddr()
+	s := newBzzHandshakeTester(1, addr, lightNode)
 	node := s.Nodes[0]
 
-	err = s.testHandshake(
-		correctBzzHandshake(s.addr, lightNode),
+	err := s.testHandshake(
+		correctBzzHandshake(addr, lightNode),
 		&HandshakeMsg{Version: TestProtocolVersion, NetworkID: TestProtocolNetworkID, Addr: NewAddr(node)},
 	)
 
@@ -271,20 +224,14 @@ func TestBzzHandshakeLightNode(t *testing.T) {
 
 	for _, test := range lightNodeTests {
 		t.Run(test.name, func(t *testing.T) {
-			prvkey, err := crypto.GenerateKey()
-			if err != nil {
-				t.Fatal(err)
-			}
-			pt, err := newBzzHandshakeTester(1, prvkey, false)
-			if err != nil {
-				t.Fatal(err)
-			}
+			randomAddr := RandomAddr()
+			pt := newBzzHandshakeTester(1, randomAddr, false)
 
 			node := pt.Nodes[0]
 			addr := NewAddr(node)
 
-			err = pt.testHandshake(
-				correctBzzHandshake(pt.addr, false),
+			err := pt.testHandshake(
+				correctBzzHandshake(randomAddr, false),
 				&HandshakeMsg{Version: TestProtocolVersion, NetworkID: TestProtocolNetworkID, Addr: addr, LightNode: test.lightNode},
 			)
 

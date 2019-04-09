@@ -22,43 +22,31 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/crypto"
 	p2ptest "github.com/ethereum/go-ethereum/p2p/testing"
 	"github.com/ethereum/go-ethereum/swarm/state"
 )
 
-func newHiveTester(t *testing.T, params *HiveParams, n int, store state.Store) (*bzzTester, *Hive, error) {
+func newHiveTester(t *testing.T, params *HiveParams, n int, store state.Store) (*bzzTester, *Hive) {
 	// setup
-	prvkey, err := crypto.GenerateKey()
-	if err != nil {
-		return nil, nil, err
-	}
-	addr := PrivateKeyToBzzKey(prvkey)
-	to := NewKademlia(addr, NewKadParams())
+	addr := RandomAddr() // tested peers peer address
+	to := NewKademlia(addr.OAddr, NewKadParams())
 	pp := NewHive(params, to, store) // hive
 
-	bt, err := newBzzBaseTester(t, n, prvkey, DiscoverySpec, pp.Run)
-	if err != nil {
-		return nil, nil, err
-	}
-	return bt, pp, nil
+	return newBzzBaseTester(t, n, addr, DiscoverySpec, pp.Run), pp
 }
 
 // TestRegisterAndConnect verifies that the protocol runs successfully
 // and that the peer connection exists afterwards
 func TestRegisterAndConnect(t *testing.T) {
 	params := NewHiveParams()
-	s, pp, err := newHiveTester(t, params, 1, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	s, pp := newHiveTester(t, params, 1, nil)
 
 	node := s.Nodes[0]
 	raddr := NewAddr(node)
 	pp.Register(raddr)
 
 	// start the hive
-	err = pp.Start(s.Server)
+	err := pp.Start(s.Server)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -121,10 +109,8 @@ func TestHiveStatePersistance(t *testing.T) {
 	}
 
 	params := NewHiveParams()
-	s, pp, err := newHiveTester(t, params, 5, store)
-	if err != nil {
-		t.Fatal(err)
-	}
+	s, pp := newHiveTester(t, params, 5, store)
+
 	peers := make(map[string]bool)
 	for _, node := range s.Nodes {
 		raddr := NewAddr(node)
@@ -147,10 +133,7 @@ func TestHiveStatePersistance(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	s1, pp, err := newHiveTester(t, params, 0, persistedStore)
-	if err != nil {
-		t.Fatal(err)
-	}
+	s1, pp := newHiveTester(t, params, 0, persistedStore)
 
 	// start the hive and check that we know of all expected peers
 	pp.Start(s1.Server)
