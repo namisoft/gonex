@@ -198,9 +198,8 @@ type Dccs struct {
 	signFn SignerFn       // Signer function to authorize hashes with
 	lock   sync.RWMutex   // Protects the signer fields
 
-	feeder     *feeder
-	prices     *lru.Cache
-	priceCount uint64
+	feeder *feeder
+	prices *lru.Cache
 }
 
 // New creates a Dccs proof-of-foundation consensus engine with the initial
@@ -225,15 +224,13 @@ func New(config *params.DccsConfig, db ethdb.Database) *Dccs {
 	}
 
 	var feeder *feeder
-	var pricesCount uint64
 	var prices *lru.Cache
 
 	if conf.EndurioBlock != nil && conf.EndurioBlock.Sign() > 0 {
-		pricesCount := conf.PriceDuration / conf.PriceInterval
 		var err error
-		prices, err = lru.New(int(pricesCount))
+		prices, err = lru.New(int(conf.PriceDuration / conf.PriceInterval))
 		if err != nil {
-			log.Crit("Unable to create price LRU", "Endurio block", conf.EndurioBlock, "pricesCount", pricesCount, "error", err)
+			log.Crit("Unable to create price LRU", "Endurio block", conf.EndurioBlock, "pricesCount", (conf.PriceDuration / conf.PriceInterval), "error", err)
 			return nil
 		}
 		priceInterval := time.Duration(conf.PriceInterval*conf.Period) * time.Second
@@ -253,7 +250,6 @@ func New(config *params.DccsConfig, db ethdb.Database) *Dccs {
 		proposals:  make(map[common.Address]bool),
 		feeder:     feeder,
 		prices:     prices,
-		priceCount: pricesCount,
 	}
 }
 
