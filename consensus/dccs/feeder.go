@@ -50,8 +50,7 @@ type PriceData struct {
 // feeder is the main object which takes care of feeding data from outside to consensus
 // engine and gathering the sealing result.
 type feeder struct {
-	mutex sync.RWMutex
-	data  map[string]*Data
+	data sync.Map
 }
 
 func newFeeder() *feeder {
@@ -60,14 +59,8 @@ func newFeeder() *feeder {
 }
 
 func (f *feeder) getCurrent(url string) *Data {
-	f.mutex.RLock()
-	defer f.mutex.RUnlock()
-
-	var data *Data
-	var ok bool
-	if data, ok = f.data[url]; !ok {
-		return nil
-	}
+	value, _ := f.data.Load(url)
+	data := value.(*Data)
 
 	if data.Value == nil {
 		// data is being fetched the first time
@@ -79,19 +72,8 @@ func (f *feeder) getCurrent(url string) *Data {
 
 // Yielding non-reentrant async request.
 func (f *feeder) requestUpdate(url string) {
-	f.mutex.RLock()
-	defer f.mutex.RUnlock()
-
-	var data *Data
-	var ok bool
-	if data, ok = f.data[url]; !ok {
-		f.mutex.Lock()
-		defer f.mutex.Unlock()
-		data = &Data{
-			RequestTimestamp: time.Now(),
-		}
-		f.data[url] = data
-	}
+	value, _ := f.data.LoadOrStore(url, &Data{RequestTimestamp: time.Now()})
+	data := value.(*Data)
 
 	if !atomic.CompareAndSwapInt64(&data.reentranceFlag, 0, 1) {
 		// one routine for one url only
@@ -127,8 +109,6 @@ func (f *feeder) requestUpdate(url string) {
 			return
 		}
 
-		f.mutex.Lock()
-		defer f.mutex.Unlock()
 		data.Value = &price
 		data.DataTimestamp = time.Unix(priceData.Timestamp, 0)
 		data.ResponseTimestamp = time.Now()
