@@ -21,11 +21,6 @@
 			"revisionTime": "2016-08-11T21:22:31Z"
 		},
 		{
-			"path": "git",
-			"revision": "github.com:apilayer/freegeoip.git",
-			"version": "github.com:apilayer/freegeoip.git"
-		},
-		{
 			"checksumSHA1": "z+M6FYl9EKsoZZMLcT0Ktwfk8pI=",
 			"path": "github.com/Azure/azure-pipeline-go/pipeline",
 			"revision": "7571e8eb0876932ab505918ff7ed5107773e5ee2",
@@ -194,12 +189,6 @@
 			"revisionTime": "2016-08-13T22:13:03Z"
 		},
 		{
-			"checksumSHA1": "ZxzYc1JwJ3U6kZbw/KGuPko5lSY=",
-			"path": "github.com/howeyc/fsnotify",
-			"revision": "f0c08ee9c60704c1879025f2ae0ff3e000082c13",
-			"revisionTime": "2015-10-03T19:46:02Z"
-		},
-		{
 			"checksumSHA1": "f55gR+6YClh0i/FOhdy66SOUiwY=",
 			"path": "github.com/huin/goupnp",
 			"revision": "679507af18f3c7ba2bcc7905392ce23e148661c3",
@@ -346,10 +335,10 @@
 			"revisionTime": "2017-01-28T05:05:32Z"
 		},
 		{
-			"checksumSHA1": "a/DHmc9bdsYlZZcwp6i3xhvV7Pk=",
+			"checksumSHA1": "wIcN7tZiF441h08RHAm4NV8cYO4=",
 			"path": "github.com/opentracing/opentracing-go",
-			"revision": "25a84ff92183e2f8ac018ba1db54f8a07b3c0e04",
-			"revisionTime": "2019-02-18T02:30:34Z"
+			"revision": "bd9c3193394760d98b2fa6ebb2291f0cd1d06a7d",
+			"revisionTime": "2018-06-06T20:41:48Z"
 		},
 		{
 			"checksumSHA1": "uhDxBvLEqRAMZKgpTZ8MFuLIIM8=",
@@ -364,22 +353,16 @@
 			"revisionTime": "2018-06-06T20:41:48Z"
 		},
 		{
-			"checksumSHA1": "a1WxG0wMDGFnjojQghwu1i1SDhk=",
-			"path": "github.com/oschwald/maxminddb-golang",
-			"revision": "277d39ecb83edd90f26a1fb450ab7e710faa203f",
-			"revisionTime": "2018-08-19T23:01:43Z"
-		},
-		{
 			"checksumSHA1": "Se195FlZ160eaEk/uVx4KdTPSxU=",
 			"path": "github.com/pborman/uuid",
 			"revision": "1b00554d822231195d1babd97ff4a781231955c9",
 			"revisionTime": "2017-01-12T15:04:04Z"
 		},
 		{
-			"checksumSHA1": "fGwQlTsml12gzgbWjOyyKPzbMD8=",
+			"checksumSHA1": "lSRg5clrIZUxq4aaExbpnpAgtWA=",
 			"path": "github.com/peterh/liner",
-			"revision": "a2c9a5303de792c7581a3b80a8f10258319bb20e",
-			"revisionTime": "2019-01-23T17:38:45Z"
+			"revision": "a37ad39843113264dae84a5d89fcee28f50b35c6",
+			"revisionTime": "2017-09-02T20:46:57Z"
 		},
 		{
 			"checksumSHA1": "xCv4GBFyw07vZkVtKF/XrUnkHRk=",
@@ -472,10 +455,10 @@
 			"revisionTime": "2017-07-05T02:17:15Z"
 		},
 		{
-			"checksumSHA1": "4NTmfUj7H5J59M2wCnp3/8FWt1I=",
+			"checksumSHA1": "LV0VMVON7xY1ttV+s2ph83ntmDQ=",
 			"path": "github.com/syndtr/goleveldb/leveldb",
-			"revision": "c3a204f8e96543bb0cc090385c001078f184fc46",
-			"revisionTime": "2019-03-18T03:00:20Z"
+			"revision": "b001fa50d6b27f3f0bb175a87d0cb55426d0a0ae",
+			"revisionTime": "2018-11-28T10:09:59Z"
 		},
 		{
 			"checksumSHA1": "mPNraL2edpk/2FYq26rSXfMHbJg=",

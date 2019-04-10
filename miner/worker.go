@@ -469,7 +469,7 @@ func (w *worker) mainLoop() {
 				w.updateSnapshot()
 			} else {
 				// If we're mining, but nothing is being processed, wake on new transactions
-				if w.config.Dccs != nil && w.config.Dccs.Period == 0 {
+				if w.config.Clique != nil && w.config.Clique.Period == 0 {
 					w.commitNewWork(nil, false, time.Now().Unix())
 				} else if w.config.Dccs != nil && w.config.Dccs.Period == 0 {
 					w.commitNewWork(nil, false, time.Now().Unix())
@@ -568,11 +568,6 @@ func (w *worker) resultLoop() {
 				logs     []*types.Log
 			)
 			for i, receipt := range task.receipts {
-				// add block location fields
-				receipt.BlockHash = hash
-				receipt.BlockNumber = block.Number()
-				receipt.TransactionIndex = uint(i)
-
 				receipts[i] = new(types.Receipt)
 				*receipts[i] = *receipt
 				// Update the block hash in all logs since it is now available and not when the
