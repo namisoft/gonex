@@ -23,29 +23,47 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+const (
+	// CanonicalDepth is the confirmation required for a block to be considered canonical.
+	// Also the distant from the ThangLong checkpoint block to it's snapshot.
+	CanonicalDepth = 7
+)
+
 // Genesis hashes to enforce below configs on.
 var (
-	MainnetGenesisHash = common.HexToHash("0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3")
-	TestnetGenesisHash = common.HexToHash("0x41941023680923e0fe4d74a34bdac8141f2540e3ae90623718e47d66d1ca4a2d")
+	MainnetGenesisHash = common.HexToHash("0x080eeb525df0e852343ba13afedf2b256f0991c1b18797e18863fd7b4ab3574b")
+	TestnetGenesisHash = common.HexToHash("0xe53f0441b5f887499e49cb628262c4acc897492a4fe3236bb3c68023ea725f0d")
 	RinkebyGenesisHash = common.HexToHash("0x6341fd3daf94b748c72ced5a5b26028f2474f5f00d824504e4fa37a75767e177")
 	GoerliGenesisHash  = common.HexToHash("0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a")
+	BurnAddress        = common.HexToAddress("0x0000000000000000000000000000000000000000")
+	TokenAddress       = common.HexToAddress("0x2c783ad80ff980ec75468477e3dd9f86123ecbda") // NTF token contract address
 )
 
 var (
 	// MainnetChainConfig is the chain parameters to run a node on the main network.
 	MainnetChainConfig = &ChainConfig{
-		ChainID:             big.NewInt(1),
-		HomesteadBlock:      big.NewInt(1150000),
-		DAOForkBlock:        big.NewInt(1920000),
+		ChainID:             big.NewInt(66666),
+		HomesteadBlock:      big.NewInt(1),
+		DAOForkBlock:        nil,
 		DAOForkSupport:      true,
-		EIP150Block:         big.NewInt(2463000),
-		EIP150Hash:          common.HexToHash("0x2086799aeebeae135c246c65021c82b4e15a2c451340993aacfd2751886514f0"),
-		EIP155Block:         big.NewInt(2675000),
-		EIP158Block:         big.NewInt(2675000),
-		ByzantiumBlock:      big.NewInt(4370000),
-		ConstantinopleBlock: big.NewInt(7280000),
-		PetersburgBlock:     big.NewInt(7280000),
-		Ethash:              new(EthashConfig),
+		EIP150Block:         big.NewInt(2),
+		EIP150Hash:          common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000000"),
+		EIP155Block:         big.NewInt(3),
+		EIP158Block:         big.NewInt(3),
+		ByzantiumBlock:      big.NewInt(4),
+		ConstantinopleBlock: big.NewInt(15360000),
+		PetersburgBlock:     big.NewInt(15360000),
+		Dccs: &DccsConfig{
+			Period: 2,
+			Epoch:  30000,
+			// Governance contract
+			Contract: common.HexToAddress("0x0000000000000000000000000000000000012345"),
+			// ThangLong hard-fork
+			StakeRequire:    50000,
+			StakeLockHeight: 30000,
+			ThangLongBlock:  big.NewInt(15360000),
+			ThangLongEpoch:  3000,
+		},
 	}
 
 	// MainnetTrustedCheckpoint contains the light client trusted checkpoint for the main network.
@@ -57,20 +75,30 @@ var (
 		BloomRoot:    common.HexToHash("0xec1b454d4c6322c78ccedf76ac922a8698c3cac4d98748a84af4995b7bd3d744"),
 	}
 
-	// TestnetChainConfig contains the chain parameters to run a node on the Ropsten test network.
+	// TestnetChainConfig contains the chain parameters to run a node on the Dccs test network.
 	TestnetChainConfig = &ChainConfig{
-		ChainID:             big.NewInt(3),
-		HomesteadBlock:      big.NewInt(0),
+		ChainID:             big.NewInt(111111),
+		HomesteadBlock:      big.NewInt(1),
 		DAOForkBlock:        nil,
 		DAOForkSupport:      true,
-		EIP150Block:         big.NewInt(0),
-		EIP150Hash:          common.HexToHash("0x41941023680923e0fe4d74a34bdac8141f2540e3ae90623718e47d66d1ca4a2d"),
-		EIP155Block:         big.NewInt(10),
-		EIP158Block:         big.NewInt(10),
-		ByzantiumBlock:      big.NewInt(1700000),
-		ConstantinopleBlock: big.NewInt(4230000),
-		PetersburgBlock:     big.NewInt(4939394),
-		Ethash:              new(EthashConfig),
+		EIP150Block:         big.NewInt(2),
+		EIP150Hash:          common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000000"),
+		EIP155Block:         big.NewInt(3),
+		EIP158Block:         big.NewInt(3),
+		ByzantiumBlock:      big.NewInt(4),
+		ConstantinopleBlock: big.NewInt(300000),
+		PetersburgBlock:     big.NewInt(300000),
+		Dccs: &DccsConfig{
+			Period: 2,
+			Epoch:  30000,
+			// Governance contract
+			Contract: common.HexToAddress("0x0000000000000000000000000000000000012345"),
+			// ThangLong hard-fork
+			StakeRequire:    500,
+			StakeLockHeight: 3000,
+			ThangLongBlock:  big.NewInt(300000),
+			ThangLongEpoch:  300,
+		},
 	}
 
 	// TestnetTrustedCheckpoint contains the light client trusted checkpoint for the Ropsten test network.
@@ -97,6 +125,25 @@ var (
 		PetersburgBlock:     big.NewInt(4321234),
 		Clique: &CliqueConfig{
 			Period: 15,
+			Epoch:  30000,
+		},
+	}
+
+	// DccsChainConfig contains the chain parameters to run a node on the Nexty test network.
+	DccsChainConfig = &ChainConfig{
+		ChainID:             big.NewInt(66666),
+		HomesteadBlock:      big.NewInt(1),
+		DAOForkBlock:        nil,
+		DAOForkSupport:      true,
+		EIP150Block:         big.NewInt(2),
+		EIP150Hash:          common.HexToHash("0x9b095b36c15eaf13044373aef8ee0bd3a382a5abb92e402afa44b8249c3a90e9"),
+		EIP155Block:         big.NewInt(3),
+		EIP158Block:         big.NewInt(3),
+		ByzantiumBlock:      big.NewInt(1035301),
+		ConstantinopleBlock: nil,
+		PetersburgBlock:     nil,
+		Dccs: &DccsConfig{
+			Period: 2,
 			Epoch:  30000,
 		},
 	}
@@ -142,16 +189,23 @@ var (
 	//
 	// This configuration is intentionally not using keyed fields to force anyone
 	// adding flags to the config to also have to set these fields.
-	AllEthashProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, new(EthashConfig), nil}
+	AllEthashProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, new(EthashConfig), nil, nil}
 
 	// AllCliqueProtocolChanges contains every protocol change (EIPs) introduced
 	// and accepted by the Ethereum core developers into the Clique consensus.
 	//
 	// This configuration is intentionally not using keyed fields to force anyone
 	// adding flags to the config to also have to set these fields.
-	AllCliqueProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, nil, &CliqueConfig{Period: 0, Epoch: 30000}}
+	AllCliqueProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, nil, &CliqueConfig{Period: 0, Epoch: 30000}, nil}
 
-	TestChainConfig = &ChainConfig{big.NewInt(1), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, new(EthashConfig), nil}
+	// AllDccsProtocolChanges contains every protocol change (EIPs) introduced
+	// and accepted by the Ethereum core developers into the Dccs consensus.
+	//
+	// This configuration is intentionally not using keyed fields to force anyone
+	// adding flags to the config to also have to set these fields.
+	AllDccsProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, nil, nil, &DccsConfig{Period: 0, Epoch: 30000, ThangLongBlock: big.NewInt(0), ThangLongEpoch: 3000, Contract: common.HexToAddress("0x0")}}
+
+	TestChainConfig = &ChainConfig{big.NewInt(1), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, new(EthashConfig), nil, nil}
 	TestRules       = TestChainConfig.Rules(new(big.Int))
 )
 
@@ -195,6 +249,7 @@ type ChainConfig struct {
 	// Various consensus engines
 	Ethash *EthashConfig `json:"ethash,omitempty"`
 	Clique *CliqueConfig `json:"clique,omitempty"`
+	Dccs   *DccsConfig   `json:"dccs,omitempty"`
 }
 
 // EthashConfig is the consensus engine configs for proof-of-work based sealing.
@@ -216,18 +271,75 @@ func (c *CliqueConfig) String() string {
 	return "clique"
 }
 
+// DccsConfig is the consensus engine configs for proof-of-foundation based sealing.
+// All epoch changing hardforks must have the activate block number divisible by both old and new epoch.
+type DccsConfig struct {
+	Period uint64 `json:"period"` // Number of seconds between blocks to enforce
+	Epoch  uint64 `json:"epoch"`  // Epoch length to reset votes and checkpoint
+	// governance smart contract address
+	Contract common.Address `json:"contract,omitempty"`
+	// Governance contract stake params
+	StakeRequire    uint64 `json:"stakeRequire"`    // stake requirement
+	StakeLockHeight uint64 `json:"stakeLockHeight"` // lock time (in blocks) after leaving
+	// ThangLong hardfork
+	ThangLongBlock *big.Int `json:"thangLongBlock,omitempty"` // ThangLong switch block (nil = no fork, 0 = already activated)
+	ThangLongEpoch uint64   `json:"thangLongEpoch"`           // Epoch length to reset votes and checkpoint
+}
+
+// PositionInEpoch returns the offset of a block from the start of an epoch
+func (c *DccsConfig) PositionInEpoch(number uint64) uint64 {
+	if c.IsThangLong(new(big.Int).SetUint64(number)) {
+		return number % c.ThangLongEpoch
+	}
+	return number % c.Epoch
+}
+
+// IsCheckpoint returns whether a block is at the start of an epoch
+func (c *DccsConfig) IsCheckpoint(number uint64) bool {
+	return c.PositionInEpoch(number) == 0
+}
+
+// Checkpoint returns the epoch block for this block
+func (c *DccsConfig) Checkpoint(number uint64) uint64 {
+	return number - c.PositionInEpoch(number)
+}
+
+// Snapshot returns the snapshot block for this block's epoch.
+// Snapshot is (Checkpoint - CanonicalDepth) for ThangLong consensus.
+func (c *DccsConfig) Snapshot(number uint64) uint64 {
+	// Get the checkpoint first
+	cp := c.Checkpoint(number)
+	// Get genesis block as checkpoint for 1st epoch
+	if cp <= CanonicalDepth {
+		return 0
+	}
+	// Get the state from canonical chain to ensure the chain and state are not in sidefork
+	return cp - CanonicalDepth
+}
+
+// String implements the stringer interface, returning the consensus engine details.
+func (c *DccsConfig) String() string {
+	return "dccs"
+}
+
 // String implements the fmt.Stringer interface.
 func (c *ChainConfig) String() string {
+	var thangLongBlock *big.Int
+	var contract string
 	var engine interface{}
 	switch {
 	case c.Ethash != nil:
 		engine = c.Ethash
 	case c.Clique != nil:
 		engine = c.Clique
+	case c.Dccs != nil:
+		engine = c.Dccs
+		thangLongBlock = c.Dccs.ThangLongBlock
+		contract = c.Dccs.Contract.Hex()
 	default:
 		engine = "unknown"
 	}
-	return fmt.Sprintf("{ChainID: %v Homestead: %v DAO: %v DAOSupport: %v EIP150: %v EIP155: %v EIP158: %v Byzantium: %v Constantinople: %v  ConstantinopleFix: %v Engine: %v}",
+	return fmt.Sprintf("{ChainID: %v Homestead: %v DAO: %v DAOSupport: %v EIP150: %v EIP155: %v EIP158: %v Byzantium: %v Constantinople: %v ConstantinopleFix: %v Thang Long: %v Contract: %v Engine: %v}",
 		c.ChainID,
 		c.HomesteadBlock,
 		c.DAOForkBlock,
@@ -238,6 +350,8 @@ func (c *ChainConfig) String() string {
 		c.ByzantiumBlock,
 		c.ConstantinopleBlock,
 		c.PetersburgBlock,
+		thangLongBlock,
+		contract,
 		engine,
 	)
 }
@@ -289,6 +403,44 @@ func (c *ChainConfig) IsEWASM(num *big.Int) bool {
 	return isForked(c.EWASMBlock, num)
 }
 
+// IsThangLongPreparationBlock returns whether num represents a block number exactly at the ThangLong Preparation
+func (c *ChainConfig) IsThangLongPreparationBlock(num *big.Int) bool {
+	return c.Dccs != nil && c.Dccs.ThangLongBlock != nil && c.Dccs.IsThangLongPreparationBlock(num)
+}
+
+// IsSnapshotBlock returns whether num represents a block number exactly at the snapshot block of an epoch.
+func (c *ChainConfig) IsSnapshotBlock(num *big.Int) bool {
+	if c.Dccs == nil || c.Dccs.ThangLongBlock == nil {
+		return false
+	}
+	forBlock := new(big.Int).SetUint64(CanonicalDepth)
+	forBlock.Add(num, forBlock)
+	return c.Dccs.IsThangLong(forBlock) && c.Dccs.IsCheckpoint(forBlock.Uint64())
+}
+
+// IsThangLongPreparationBlock returns whether num represents a block number exactly at the ThangLong Preparation
+// ThangLong preparation block is hard-coded to 32 blocks before the ThangLong hard-fork
+func (c *DccsConfig) IsThangLongPreparationBlock(num *big.Int) bool {
+	if c.ThangLongBlock == nil {
+		return false
+	}
+	preparationBlock := big.NewInt(1)
+	if c.ThangLongBlock.Cmp(common.Big32) > 0 {
+		preparationBlock = preparationBlock.Sub(c.ThangLongBlock, common.Big32)
+	}
+	return preparationBlock.Cmp(num) == 0
+}
+
+// IsThangLong returns whether num represents a block number after the ThangLong fork
+func (c *ChainConfig) IsThangLong(num *big.Int) bool {
+	return c.Dccs != nil && c.Dccs.IsThangLong(num)
+}
+
+// IsThangLong returns whether num represents a block number after the ThangLong fork
+func (c *DccsConfig) IsThangLong(num *big.Int) bool {
+	return isForked(c.ThangLongBlock, num)
+}
+
 // GasTable returns the gas table corresponding to the current phase (homestead or homestead reprice).
 //
 // The returned GasTable's fields shouldn't, under any circumstances, be changed.
@@ -297,6 +449,8 @@ func (c *ChainConfig) GasTable(num *big.Int) GasTable {
 		return GasTableHomestead
 	}
 	switch {
+	case c.IsThangLong(num):
+		return GasTableDccs
 	case c.IsConstantinople(num):
 		return GasTableConstantinople
 	case c.IsEIP158(num):
@@ -359,6 +513,11 @@ func (c *ChainConfig) checkCompatible(newcfg *ChainConfig, head *big.Int) *Confi
 	}
 	if isForkIncompatible(c.EWASMBlock, newcfg.EWASMBlock, head) {
 		return newCompatError("ewasm fork block", c.EWASMBlock, newcfg.EWASMBlock)
+	}
+	if c.Dccs != nil && newcfg.Dccs != nil {
+		if isForkIncompatible(c.Dccs.ThangLongBlock, newcfg.Dccs.ThangLongBlock, head) {
+			return newCompatError("Thang Long fork block", c.Dccs.ThangLongBlock, newcfg.Dccs.ThangLongBlock)
+		}
 	}
 	return nil
 }
@@ -427,6 +586,7 @@ type Rules struct {
 	ChainID                                     *big.Int
 	IsHomestead, IsEIP150, IsEIP155, IsEIP158   bool
 	IsByzantium, IsConstantinople, IsPetersburg bool
+	IsThangLong                                 bool
 }
 
 // Rules ensures c's ChainID is not nil.
@@ -444,5 +604,6 @@ func (c *ChainConfig) Rules(num *big.Int) Rules {
 		IsByzantium:      c.IsByzantium(num),
 		IsConstantinople: c.IsConstantinople(num),
 		IsPetersburg:     c.IsPetersburg(num),
+		IsThangLong:      c.IsThangLong(num),
 	}
 }

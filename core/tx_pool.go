@@ -52,9 +52,17 @@ var (
 	// configured for the transaction pool.
 	ErrUnderpriced = errors.New("transaction underpriced")
 
+	// ErrUnderparity is returned if a transaction's parity is below the minimum
+	// configured for the transaction pool.
+	ErrUnderparity = errors.New("transaction underparity")
+
 	// ErrReplaceUnderpriced is returned if a transaction is attempted to be replaced
 	// with a different one without the required price bump.
 	ErrReplaceUnderpriced = errors.New("replacement transaction underpriced")
+
+	// ErrReplaceUnderparity is returned if a transaction is attempted to be replaced
+	// with a different one without the required parity bump.
+	ErrReplaceUnderparity = errors.New("replacement transaction underparity")
 
 	// ErrInsufficientFunds is returned if the total cost of executing a transaction
 	// is higher than the balance of the user's account.
@@ -131,6 +139,9 @@ type TxPoolConfig struct {
 	PriceLimit uint64 // Minimum gas price to enforce for acceptance into the pool
 	PriceBump  uint64 // Minimum price bump percentage to replace an already existing transaction (nonce)
 
+	ParityLimit uint64 // Minimum parity to enforce for acceptance into the pool
+	ParityPrice uint64 // Price (in wei) for 1 parity unit
+
 	AccountSlots uint64 // Number of executable transaction slots guaranteed per account
 	GlobalSlots  uint64 // Maximum number of executable transaction slots for all accounts
 	AccountQueue uint64 // Maximum number of non-executable transaction slots permitted per account
@@ -148,6 +159,9 @@ var DefaultTxPoolConfig = TxPoolConfig{
 	PriceLimit: 1,
 	PriceBump:  10,
 
+	ParityLimit: types.ParityMax,
+	ParityPrice: 13e15, // ~ 273 NTY ~ 0.01 USD for 21000 Tx Gas
+
 	AccountSlots: 16,
 	GlobalSlots:  4096,
 	AccountQueue: 64,
@@ -164,13 +178,17 @@ func (config *TxPoolConfig) sanitize() TxPoolConfig {
 		log.Warn("Sanitizing invalid txpool journal time", "provided", conf.Rejournal, "updated", time.Second)
 		conf.Rejournal = time.Second
 	}
-	if conf.PriceLimit < 1 {
+	if conf.PriceLimit < 0 {
 		log.Warn("Sanitizing invalid txpool price limit", "provided", conf.PriceLimit, "updated", DefaultTxPoolConfig.PriceLimit)
 		conf.PriceLimit = DefaultTxPoolConfig.PriceLimit
 	}
 	if conf.PriceBump < 1 {
 		log.Warn("Sanitizing invalid txpool price bump", "provided", conf.PriceBump, "updated", DefaultTxPoolConfig.PriceBump)
 		conf.PriceBump = DefaultTxPoolConfig.PriceBump
+	}
+	if conf.ParityPrice < 0 {
+		log.Warn("Sanitizing invalid txpool pairty price", "provided", conf.PriceBump, "updated", DefaultTxPoolConfig.ParityPrice)
+		conf.PriceBump = DefaultTxPoolConfig.ParityPrice
 	}
 	if conf.AccountSlots < 1 {
 		log.Warn("Sanitizing invalid txpool account slots", "provided", conf.AccountSlots, "updated", DefaultTxPoolConfig.AccountSlots)
@@ -207,6 +225,8 @@ type TxPool struct {
 	chainconfig  *params.ChainConfig
 	chain        blockChain
 	gasPrice     *big.Int
+	parityLimit  uint64
+	parityPrice  *big.Int
 	txFeed       event.Feed
 	scope        event.SubscriptionScope
 	chainHeadCh  chan ChainHeadEvent
@@ -250,6 +270,8 @@ func NewTxPool(config TxPoolConfig, chainconfig *params.ChainConfig, chain block
 		all:         newTxLookup(),
 		chainHeadCh: make(chan ChainHeadEvent, chainHeadChanSize),
 		gasPrice:    new(big.Int).SetUint64(config.PriceLimit),
+		parityLimit: config.ParityLimit,
+		parityPrice: new(big.Int).SetUint64(config.ParityPrice),
 	}
 	pool.locals = newAccountSet(pool.signer)
 	for _, addr := range config.Locals {
@@ -442,7 +464,7 @@ func (pool *TxPool) reset(oldHead, newHead *types.Header) {
 	// validate the pool of pending transactions, this will remove
 	// any transactions that have been included in the block or
 	// have been invalidated because of another transaction (e.g.
-	// higher gas price)
+	// higher parity)
 	pool.demoteUnexecutables()
 
 	// Update all accounts to the latest known pending nonce
@@ -491,10 +513,39 @@ func (pool *TxPool) SetGasPrice(price *big.Int) {
 	defer pool.mu.Unlock()
 
 	pool.gasPrice = price
-	for _, tx := range pool.priced.Cap(price, pool.locals) {
+	for _, tx := range pool.priced.Cap(func(tx *types.Transaction) bool {
+		return tx.GasPrice().Cmp(price) >= 0
+	}, pool.locals) {
 		pool.removeTx(tx.Hash(), false)
 	}
 	log.Info("Transaction pool price threshold updated", "price", price)
+}
+
+// ParityLimit returns the current parity enforced by the transaction pool.
+func (pool *TxPool) ParityLimit() uint64 {
+	pool.mu.RLock()
+	defer pool.mu.RUnlock()
+
+	return pool.parityLimit
+}
+
+// SetParityLimit updates the minimum parity required by the transaction pool for a
+// new transaction, and drops all transactions below this threshold.
+func (pool *TxPool) SetParityLimit(parityLimit uint64) {
+	pool.mu.Lock()
+	defer pool.mu.Unlock()
+
+	pool.parityLimit = parityLimit
+	if parityLimit == types.ParityUndefined ||
+		!pool.chainconfig.IsThangLong(pool.chain.CurrentBlock().Number()) {
+		return
+	}
+	for _, tx := range pool.priced.Cap(func(tx *types.Transaction) bool {
+		return tx.Parity() <= parityLimit
+	}, pool.locals) {
+		pool.removeTx(tx.Hash(), false)
+	}
+	log.Info("Transaction pool parity threshold updated", "parityLimit", parityLimit)
 }
 
 // State returns the virtual managed state of the transaction pool.
@@ -583,6 +634,17 @@ func (pool *TxPool) local() map[common.Address]types.Transactions {
 	return txs
 }
 
+// extrinsicParity computes the 'extrinsic parity' for a tx.
+// (intrinsicGas - TxGas) / TxGas (rounding up)
+func extrinsicParity(tx *types.Transaction) uint64 {
+	// The first TxGas (21000) has no extrinsic parity
+	if tx.Gas() <= params.TxGas {
+		return 0
+	}
+
+	return (tx.Gas() - params.TxGas/2) / params.TxGas
+}
+
 // validateTx checks whether a transaction is valid according to the consensus
 // rules and adheres to some heuristic limits of the local node (price and size).
 func (pool *TxPool) validateTx(tx *types.Transaction, local bool) error {
@@ -604,20 +666,26 @@ func (pool *TxPool) validateTx(tx *types.Transaction, local bool) error {
 	if err != nil {
 		return ErrInvalidSender
 	}
+	gasPrice := tx.GasPrice()
 	// Drop non-local transactions under our own minimal accepted gas price
 	local = local || pool.locals.contains(from) // account may be local even if the transaction arrived from the network
-	if !local && pool.gasPrice.Cmp(tx.GasPrice()) > 0 {
+	if !local && pool.gasPrice.Cmp(gasPrice) > 0 {
 		return ErrUnderpriced
 	}
+
+	nonce := pool.currentState.GetNonce(from)
 	// Ensure the transaction adheres to nonce ordering
-	if pool.currentState.GetNonce(from) > tx.Nonce() {
+	if nonce > tx.Nonce() {
 		return ErrNonceTooLow
 	}
+
+	balance := pool.currentState.GetBalance(from)
 	// Transactor should have enough funds to cover the costs
 	// cost == V + GP * GL
-	if pool.currentState.GetBalance(from).Cmp(tx.Cost()) < 0 {
+	if balance.Cmp(tx.Cost()) < 0 {
 		return ErrInsufficientFunds
 	}
+
 	intrGas, err := IntrinsicGas(tx.Data(), tx.To() == nil, pool.homestead)
 	if err != nil {
 		return err
@@ -625,6 +693,41 @@ func (pool *TxPool) validateTx(tx *types.Transaction, local bool) error {
 	if tx.Gas() < intrGas {
 		return ErrIntrinsicGas
 	}
+
+	if pool.chainconfig.IsThangLong(pool.chain.CurrentBlock().Number()) {
+		if !tx.HasParity() {
+			mruNumber := pool.currentState.GetMRUNumber(from)
+			if mruNumber == 0 {
+				if nonce == 0 {
+					// new account is treated as freshly used
+					mruNumber = pool.chain.CurrentBlock().NumberU64()
+				} else {
+					// old account from pre-hardfork
+					mruNumber = pool.chainconfig.Dccs.ThangLongBlock.Uint64()
+				}
+			}
+
+			parity := mruNumber + extrinsicParity(tx)
+
+			if gasPrice.Sign() > 0 {
+				priceParity := gasPrice.Div(gasPrice, pool.parityPrice).Uint64()
+
+				if parity <= priceParity {
+					// ParityMin (1) has the highest priority
+					parity = types.ParityMin
+				} else {
+					parity -= priceParity
+				}
+			}
+
+			tx.SetParity(parity)
+		}
+
+		if !local && pool.parityLimit < tx.Parity() {
+			return ErrUnderparity
+		}
+	}
+
 	return nil
 }
 
@@ -653,14 +756,23 @@ func (pool *TxPool) add(tx *types.Transaction, local bool) (bool, error) {
 	if uint64(pool.all.Count()) >= pool.config.GlobalSlots+pool.config.GlobalQueue {
 		// If the new transaction is underpriced, don't accept it
 		if !local && pool.priced.Underpriced(tx, pool.locals) {
-			log.Trace("Discarding underpriced transaction", "hash", hash, "price", tx.GasPrice())
 			underpricedTxCounter.Inc(1)
-			return false, ErrUnderpriced
+			if tx.HasParity() {
+				log.Trace("Discarding underparity transaction", "hash", hash, "parity", tx.Parity())
+				return false, ErrUnderparity
+			} else {
+				log.Trace("Discarding underpriced transaction", "hash", hash, "price", tx.GasPrice())
+				return false, ErrUnderpriced
+			}
 		}
 		// New transaction is better than our worse ones, make room for it
 		drop := pool.priced.Discard(pool.all.Count()-int(pool.config.GlobalSlots+pool.config.GlobalQueue-1), pool.locals)
 		for _, tx := range drop {
-			log.Trace("Discarding freshly underpriced transaction", "hash", tx.Hash(), "price", tx.GasPrice())
+			if tx.HasParity() {
+				log.Trace("Discarding freshly underparity transaction", "hash", tx.Hash(), "parity", tx.Parity())
+			} else {
+				log.Trace("Discarding freshly underpriced transaction", "hash", tx.Hash(), "price", tx.GasPrice())
+			}
 			underpricedTxCounter.Inc(1)
 			pool.removeTx(tx.Hash(), false)
 		}

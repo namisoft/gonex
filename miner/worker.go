@@ -471,6 +471,8 @@ func (w *worker) mainLoop() {
 				// If we're mining, but nothing is being processed, wake on new transactions
 				if w.config.Clique != nil && w.config.Clique.Period == 0 {
 					w.commitNewWork(nil, false, time.Now().Unix())
+				} else if w.config.Dccs != nil && w.config.Dccs.Period == 0 {
+					w.commitNewWork(nil, false, time.Now().Unix())
 				}
 			}
 			atomic.AddInt32(&w.newTxs, int32(len(ev.Txs)))
@@ -902,7 +904,10 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 	commitUncles(w.localUncles)
 	commitUncles(w.remoteUncles)
 
-	if !noempty {
+	// pre-committing empty block only makes sense for PoW
+	pow := w.config.Ethash != nil
+	preCommitEmpty := !noempty && pow
+	if preCommitEmpty {
 		// Create an empty block based on temporary copied state for sealing in advance without waiting block
 		// execution finished.
 		w.commit(uncles, nil, false, tstart)
@@ -916,6 +921,11 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 	}
 	// Short circuit if there is no available pending transactions
 	if len(pending) == 0 {
+		if !preCommitEmpty {
+			// commit an empty block when there is no pending tx
+			w.commit(uncles, w.fullTaskHook, true, tstart)
+			return
+		}
 		w.updateSnapshot()
 		return
 	}

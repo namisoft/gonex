@@ -90,7 +90,7 @@ type stateObject struct {
 
 // empty returns whether the account is considered empty.
 func (s *stateObject) empty() bool {
-	return s.data.Nonce == 0 && s.data.Balance.Sign() == 0 && bytes.Equal(s.data.CodeHash, emptyCodeHash)
+	return s.data.Nonce == 0 && s.data.Balance.Sign() == 0 && bytes.Equal(s.data.CodeHash, emptyCodeHash) && s.data.MRUNumber == 0
 }
 
 // Account is the Ethereum consensus representation of accounts.
@@ -100,6 +100,8 @@ type Account struct {
 	Balance  *big.Int
 	Root     common.Hash // merkle root of the storage trie
 	CodeHash []byte
+
+	MRUNumber uint64 // most recently used block number
 }
 
 // newObject creates a state object.
@@ -120,9 +122,67 @@ func newObject(db *StateDB, address common.Address, data Account) *stateObject {
 	}
 }
 
+// AccountV1 is the Ethereum first consensus representation of accounts.
+type AccountV1 struct {
+	Nonce    uint64
+	Balance  *big.Int
+	Root     common.Hash // merkle root of the storage trie
+	CodeHash []byte
+}
+
+// DecodeRLP implements rlp.Decoder interface
+func (self *Account) DecodeRLP(s *rlp.Stream) (err error) {
+	if _, err = s.List(); err != nil {
+		return err
+	}
+
+	if self.Nonce, err = s.Uint(); err != nil {
+		return err
+	}
+
+	self.Balance = new(big.Int)
+	if err := s.Decode(self.Balance); err != nil {
+		return err
+	}
+
+	if err = s.Decode(&self.Root); err != nil {
+		return err
+	}
+
+	if self.CodeHash, err = s.Bytes(); err != nil {
+		return err
+	}
+
+	if self.MRUNumber, err = s.Uint(); err != nil {
+		if err != rlp.EOL {
+			return err
+		}
+		// old pre-fork state data, reset the value
+		self.MRUNumber = 0
+	}
+
+	if err = s.ListEnd(); err != nil {
+		return err
+	}
+
+	return err
+}
+
 // EncodeRLP implements rlp.Encoder.
+//
+// Define this instead of (*Account) EncodeRLP(io.Writer) to prevent
+// recusive Encode call, or creating additional rplAccount type.
 func (c *stateObject) EncodeRLP(w io.Writer) error {
-	return rlp.Encode(w, c.data)
+	if c.data.MRUNumber == 0 {
+		// encode in old db format
+		return rlp.Encode(w, &AccountV1{
+			Nonce:    c.data.Nonce,
+			Balance:  c.data.Balance,
+			Root:     c.data.Root,
+			CodeHash: c.data.CodeHash,
+		})
+	}
+	return rlp.Encode(w, &c.data)
 }
 
 // setError remembers the first non-nil error it is called with.
@@ -363,6 +423,18 @@ func (self *stateObject) setNonce(nonce uint64) {
 	self.data.Nonce = nonce
 }
 
+func (self *stateObject) SetMRUNumber(mruNumber uint64) {
+	self.db.journal.append(mruNumberChange{
+		account: &self.address,
+		prev:    self.data.MRUNumber,
+	})
+	self.setMRUNumber(mruNumber)
+}
+
+func (self *stateObject) setMRUNumber(mruNumber uint64) {
+	self.data.MRUNumber = mruNumber
+}
+
 func (self *stateObject) CodeHash() []byte {
 	return self.data.CodeHash
 }
@@ -373,6 +445,10 @@ func (self *stateObject) Balance() *big.Int {
 
 func (self *stateObject) Nonce() uint64 {
 	return self.data.Nonce
+}
+
+func (self *stateObject) MRUNumber() uint64 {
+	return self.data.MRUNumber
 }
 
 // Never called, but must be present to allow stateObject to be used
