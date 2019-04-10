@@ -50,12 +50,25 @@ type PriceData struct {
 // feeder is the main object which takes care of feeding data from outside to consensus
 // engine and gathering the sealing result.
 type feeder struct {
-	data sync.Map
+	data   sync.Map
+	ticker *time.Ticker
 }
 
-func newFeeder() *feeder {
-	feeder := &feeder{}
-	return feeder
+func newFeeder(interval time.Duration) *feeder {
+	f := &feeder{
+		ticker: time.NewTicker(interval),
+	}
+	go f.fetchingLoop()
+	return f
+}
+
+func (f *feeder) fetchingLoop() {
+	for range f.ticker.C {
+		f.data.Range(func(key interface{}, _ interface{}) bool {
+			f.requestUpdate(key.(string))
+			return true
+		})
+	}
 }
 
 func (f *feeder) getCurrent(url string) *Data {

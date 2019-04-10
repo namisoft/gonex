@@ -264,7 +264,9 @@ func New(config *params.DccsConfig, db ethdb.Database) *Dccs {
 			log.Crit("Unable to create price LRU", "Endurio block", conf.EndurioBlock, "pricesCount", pricesCount, "error", err)
 			return nil
 		}
-		feeder = newFeeder()
+		priceInterval := time.Duration(conf.PriceInterval*conf.Period) * time.Second
+		feeder = newFeeder(priceInterval / 3)
+		feeder.Price() // request the first time to init the price key/value
 	}
 
 	// Allocate the snapshot caches and create the engine
