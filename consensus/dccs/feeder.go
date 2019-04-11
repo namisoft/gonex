@@ -17,9 +17,7 @@
 package dccs
 
 import (
-	"encoding/json"
 	"io/ioutil"
-	"math/big"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -27,8 +25,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/log"
 )
-
-const feederServiceURL = "http://localhost:3000/price/NUSD_USD"
 
 // Data represents the external data feeded from outside
 type Data struct {
@@ -40,38 +36,13 @@ type Data struct {
 	reentranceFlag    int64 // prevent request routine to run twice
 }
 
-// PriceData represents the external price feeded from outside
-type PriceData struct {
-	Value     string `json:"price"`
-	Timestamp int64  `json:"timestamp"`
-	Exchange  string `json:"exchange"`
-}
-
-// feeder is the main object which takes care of feeding data from outside to consensus
+// Feeder is the main object which takes care of feeding data from outside to consensus
 // engine and gathering the sealing result.
-type feeder struct {
-	data   sync.Map
-	ticker *time.Ticker
+type Feeder struct {
+	data sync.Map
 }
 
-func newFeeder(interval time.Duration) *feeder {
-	f := &feeder{
-		ticker: time.NewTicker(interval),
-	}
-	go f.fetchingLoop()
-	return f
-}
-
-func (f *feeder) fetchingLoop() {
-	for range f.ticker.C {
-		f.data.Range(func(key interface{}, _ interface{}) bool {
-			f.requestUpdate(key.(string))
-			return true
-		})
-	}
-}
-
-func (f *feeder) getCurrent(url string) *Data {
+func (f *Feeder) getCurrent(url string) *Data {
 	value, _ := f.data.Load(url)
 	data := value.(*Data)
 
@@ -84,7 +55,7 @@ func (f *feeder) getCurrent(url string) *Data {
 }
 
 // Yielding non-reentrant async request.
-func (f *feeder) requestUpdate(url string) {
+func (f *Feeder) requestUpdate(url string, parsePriceFn func([]byte) (*Data, error)) {
 	value, _ := f.data.LoadOrStore(url, &Data{RequestTimestamp: time.Now()})
 	data := value.(*Data)
 
@@ -107,73 +78,15 @@ func (f *feeder) requestUpdate(url string) {
 			return
 		}
 
-		var priceData PriceData
-		err = json.Unmarshal(body, &priceData)
+		parsed, err := parsePriceFn(body)
 		if err != nil {
-			log.Error("Failed to unmarshal price json", "url", url, "error", err, "body", body)
+			log.Error("Failed to parse response data body", "url", url, "error", err)
 			return
 		}
 
-		log.Trace("PriceData", "priceData", priceData)
-
-		price := PriceFromString(priceData.Value)
-		if price == nil {
-			log.Error("Failed to parse price value", "url", url, "error", err, "priceData.Value", priceData.Value)
-			return
-		}
-
-		data.Value = &price
-		data.DataTimestamp = time.Unix(priceData.Timestamp, 0)
-		data.ResponseTimestamp = time.Now()
-		data.Source = priceData.Exchange
+		data.Value = parsed.Value
+		data.DataTimestamp = parsed.DataTimestamp
+		data.ResponseTimestamp = parsed.ResponseTimestamp
+		data.Source = parsed.Source
 	}()
-}
-
-func (f *feeder) Price() *Price {
-	data := f.getCurrent(feederServiceURL)
-	if data == nil {
-		// first request
-		f.requestUpdate(feederServiceURL)
-		return nil
-	}
-	return data.Value.(*Price)
-}
-
-// Price encoded in Rat
-type Price big.Rat
-
-// PriceDecode returns the price derivation encoded in Header's extra
-func PriceDecode(bytes []byte) *Price {
-	if len(bytes) == 0 {
-		return nil
-	}
-	var rat big.Rat
-	err := rat.GobDecode(bytes)
-	if err != nil {
-		log.Info("Input bytes array is not price derivation", "bytes", bytes, "error", err)
-		return nil
-	}
-	return (*Price)(&rat)
-}
-
-// PriceEncode encodes the price derivation in Header's extra
-func PriceEncode(price *Price) []byte {
-	if price == nil || (*big.Rat)(price).Sign() == 0 {
-		return nil
-	}
-	bytes, err := (*big.Rat)(price).GobEncode()
-	if err != nil {
-		log.Info("Failed to encode price derivation", "price", price, "error", err)
-		return nil
-	}
-	return bytes
-}
-
-// PriceFromString decodes the price string fed from feeder service
-func PriceFromString(s string) *Price {
-	price, ok := new(big.Rat).SetString(s)
-	if !ok {
-		return nil
-	}
-	return (*Price)(price)
 }
