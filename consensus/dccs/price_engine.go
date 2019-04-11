@@ -44,7 +44,7 @@ type PriceEngine struct {
 
 func newPriceEngine(conf *params.DccsConfig) *PriceEngine {
 	maxPriceCount := int(conf.PriceDuration / conf.PriceInterval)
-	priceLRU, err := lru.New(maxPriceCount)
+	priceLRU, err := lru.New(maxPriceCount + params.CanonicalDepth) // add some extra buffer for sidechain values
 	if err != nil {
 		log.Crit("Unable to create price LRU", "Endurio block", conf.EndurioBlock, "pricesCount", (conf.PriceDuration / conf.PriceInterval), "error", err)
 		return nil
