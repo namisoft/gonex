@@ -226,8 +226,7 @@ type Dccs struct {
 	signFn SignerFn       // Signer function to authorize hashes with
 	lock   sync.RWMutex   // Protects the signer fields
 
-	feeder *feeder
-	prices *lru.Cache
+	priceEngine *PriceEngine
 }
 
 // New creates a Dccs proof-of-foundation consensus engine with the initial
@@ -251,19 +250,11 @@ func New(config *params.DccsConfig, db ethdb.Database) *Dccs {
 		}
 	}
 
-	var feeder *feeder
-	var prices *lru.Cache
+	var priceEngine *PriceEngine
 
 	if conf.EndurioBlock != nil && conf.EndurioBlock.Sign() > 0 {
-		var err error
-		prices, err = lru.New(int(conf.PriceDuration / conf.PriceInterval))
-		if err != nil {
-			log.Crit("Unable to create price LRU", "Endurio block", conf.EndurioBlock, "pricesCount", (conf.PriceDuration / conf.PriceInterval), "error", err)
-			return nil
-		}
-		priceInterval := time.Duration(conf.PriceInterval*conf.Period) * time.Second
-		feeder = newFeeder(priceInterval / 3)
-		feeder.Price() // request the first time to init the price key/value
+		// Move this part to Prepare and check for conf.IsEndurio(number)
+		priceEngine = newPriceEngine(&conf)
 	}
 
 	// Allocate the snapshot caches and create the engine
@@ -271,13 +262,12 @@ func New(config *params.DccsConfig, db ethdb.Database) *Dccs {
 	signatures, _ := lru.NewARC(inmemorySignatures)
 
 	return &Dccs{
-		config:     &conf,
-		db:         db,
-		recents:    recents,
-		signatures: signatures,
-		proposals:  make(map[common.Address]bool),
-		feeder:     feeder,
-		prices:     prices,
+		config:      &conf,
+		db:          db,
+		recents:     recents,
+		signatures:  signatures,
+		proposals:   make(map[common.Address]bool),
+		priceEngine: priceEngine,
 	}
 }
 
@@ -526,7 +516,6 @@ func (d *Dccs) verifyCascadingFields2(chain consensus.ChainReader, header *types
 		price := PriceDecode(extraBytes)
 		if price != nil {
 			log.Info("Block price derivation found", "number", number, "price", price)
-			d.prices.Add(number, price)
 		}
 	} else {
 		// for regular block: extra = [vanity(32), signature(65)]
@@ -903,7 +892,7 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 			header.Extra = append(header.Extra, signer.Address[:]...)
 		}
 	} else if d.config.IsPriceBlock(number) {
-		var price = d.feeder.Price()
+		var price = d.priceEngine.CurrentPrice()
 		if price != nil {
 			header.Extra = append(header.Extra, PriceEncode(price)...)
 		}
