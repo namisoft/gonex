@@ -511,9 +511,7 @@ func (d *Dccs) verifyCascadingFields2(chain consensus.ChainReader, header *types
 		}
 	} else if d.config.IsPriceBlock(number) {
 		// for price block: extra = [vanity(32), price(...), signature(65)]
-		extraSuffix := len(header.Extra) - extraSeal
-		extraBytes := header.Extra[extraVanity:extraSuffix]
-		price := PriceDecode(extraBytes)
+		price := PriceDecodeFromExtra(header.Extra)
 		if price != nil {
 			log.Info("Block price derivation found", "number", number, "price", price)
 		}

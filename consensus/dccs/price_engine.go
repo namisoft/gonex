@@ -22,12 +22,16 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
 	lru "github.com/hashicorp/golang-lru"
 )
 
-const priceServiceURL = "http://localhost:3000/price/NUSD_USD"
+const (
+	priceServiceURL       = "http://localhost:3000/price/NUSD_USD"
+	nonCanonicalCacheSize = params.CanonicalDepth
+)
 
 // PriceData represents the external price feeded from outside
 type PriceData struct {
@@ -37,25 +41,33 @@ type PriceData struct {
 }
 
 type PriceEngine struct {
-	feeder *Feeder
-	ticker *time.Ticker
-	prices *lru.Cache
+	feeder      *Feeder
+	ticker      *time.Ticker
+	canonPrices *lru.Cache // canonical prices: number -> Price
+	nonacPrices *lru.Cache // non-canonical prices: hash -> Price
 }
 
 func newPriceEngine(conf *params.DccsConfig) *PriceEngine {
-	maxPriceCount := int(conf.PriceDuration / conf.PriceInterval)
-	priceLRU, err := lru.New(maxPriceCount + params.CanonicalDepth) // add some extra buffer for sidechain values
-	if err != nil {
-		log.Crit("Unable to create price LRU", "Endurio block", conf.EndurioBlock, "pricesCount", (conf.PriceDuration / conf.PriceInterval), "error", err)
-		return nil
-	}
-
 	priceInterval := time.Duration(conf.PriceInterval*conf.Period) * time.Second
 
 	e := &PriceEngine{
 		feeder: &Feeder{},
 		ticker: time.NewTicker(priceInterval / 3),
-		prices: priceLRU,
+	}
+
+	var err error
+
+	maxPriceCount := int(conf.PriceDuration / conf.PriceInterval)
+	e.canonPrices, err = lru.New(maxPriceCount) // add some extra buffer for sidechain values
+	if err != nil {
+		log.Crit("Unable to create canonical price cache", "Endurio block", conf.EndurioBlock, "pricesCount", (conf.PriceDuration / conf.PriceInterval), "error", err)
+		return nil
+	}
+
+	e.nonacPrices, err = lru.New(nonCanonicalCacheSize)
+	if err != nil {
+		log.Crit("Unable to create non-canonical price cache", "Endurio block", conf.EndurioBlock, "nonCanonicalCacheSize", nonCanonicalCacheSize, "error", err)
+		return nil
 	}
 
 	go e.fetchingLoop()
@@ -71,13 +83,46 @@ func (e *PriceEngine) fetchingLoop() {
 	}
 }
 
-func (e *PriceEngine) getBlockPrice(number uint64) (*Price, bool) {
-	price, ok := e.prices.Get(number)
-	if !ok {
-		// TODO: read and cache the price from headers
-		return nil, ok
+func (e *PriceEngine) getBlockPrice(chain consensus.ChainReader, number uint64) *Price {
+	currentNumber := chain.CurrentHeader().Number.Uint64()
+	if number >= currentNumber-params.CanonicalDepth {
+		// cache non-canonical price by block hash
+		header := chain.GetHeaderByNumber(number)
+		if header == nil {
+			log.Error("PriceEngine.getBlockPrice: failed to get header by number ", "number", number)
+			return nil
+		}
+		hash := header.Hash()
+		price, ok := e.nonacPrices.Get(hash)
+		if ok {
+			// non-canonical cache found
+			return price.(*Price)
+		}
+		log.Info("Fetching non-canonical block price", "number", number)
+		price = PriceDecodeFromExtra(header.Extra)
+		if price == nil {
+			log.Error("PriceEngine.getBlockPrice: failed to decode price from non-canonical header extra", "number", number, "extra", header.Extra)
+			return nil
+		}
+		e.nonacPrices.Add(hash, price)
+		return price.(*Price)
 	}
-	return price.(*Price), ok
+
+	// cache canonical price by block number
+	price, ok := e.canonPrices.Get(number)
+	if ok {
+		// canonical cache found
+		return price.(*Price)
+	}
+	header := chain.GetHeaderByNumber(number)
+	log.Info("Fetching canonical block price", "number", number)
+	price = PriceDecodeFromExtra(header.Extra)
+	if price == nil {
+		log.Error("PriceEngine.getBlockPrice: failed to decode price from canonical header extra", "number", number, "extra", header.Extra)
+		return nil
+	}
+	e.canonPrices.Add(number, price)
+	return price.(*Price)
 }
 
 func (e *PriceEngine) CurrentPrice() *Price {
@@ -116,6 +161,14 @@ func parsePriceFn(body []byte) (*Data, error) {
 
 // Price encoded in Rat
 type Price big.Rat
+
+// PriceDecodeFromExtra returns the price derivation encoded in Header's extra
+// extra = [vanity(32), price(...), signature(65)]
+func PriceDecodeFromExtra(extra []byte) *Price {
+	extraSuffix := len(extra) - extraSeal
+	extraBytes := extra[extraVanity:extraSuffix]
+	return PriceDecode(extraBytes)
+}
 
 // PriceDecode returns the price derivation encoded in Header's extra
 func PriceDecode(bytes []byte) *Price {
