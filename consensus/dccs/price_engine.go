@@ -128,8 +128,6 @@ func (e *PriceEngine) getBlockPrice(chain consensus.ChainReader, number uint64) 
 func (e *PriceEngine) CurrentPrice() *Price {
 	data := e.feeder.getCurrent(priceServiceURL)
 	if data == nil {
-		// first request
-		e.feeder.requestUpdate(priceServiceURL, parsePriceFn)
 		return nil
 	}
 	return data.Value.(*Price)
