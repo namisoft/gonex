@@ -198,7 +198,15 @@ type Dccs struct {
 	signFn SignerFn       // Signer function to authorize hashes with
 	lock   sync.RWMutex   // Protects the signer fields
 
-	priceEngine *PriceEngine
+	priceEngine     *PriceEngine
+	priceEngineOnce sync.Once
+}
+
+func (d *Dccs) PriceEngine() *PriceEngine {
+	d.priceEngineOnce.Do(func() {
+		d.priceEngine = newPriceEngine(d.config)
+	})
+	return d.priceEngine
 }
 
 // New creates a Dccs proof-of-foundation consensus engine with the initial
@@ -222,24 +230,16 @@ func New(config *params.DccsConfig, db ethdb.Database) *Dccs {
 		}
 	}
 
-	var priceEngine *PriceEngine
-
-	if conf.EndurioBlock != nil && conf.EndurioBlock.Sign() > 0 {
-		// Move this part to Prepare and check for conf.IsEndurio(number)
-		priceEngine = newPriceEngine(&conf)
-	}
-
 	// Allocate the snapshot caches and create the engine
 	recents, _ := lru.NewARC(inmemorySnapshots)
 	signatures, _ := lru.NewARC(inmemorySignatures)
 
 	return &Dccs{
-		config:      &conf,
-		db:          db,
-		recents:     recents,
-		signatures:  signatures,
-		proposals:   make(map[common.Address]bool),
-		priceEngine: priceEngine,
+		config:     &conf,
+		db:         db,
+		recents:    recents,
+		signatures: signatures,
+		proposals:  make(map[common.Address]bool),
 	}
 }
 
@@ -867,7 +867,7 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 			header.Extra = append(header.Extra, signer[:]...)
 		}
 	} else if d.config.IsPriceBlock(number) {
-		var price = d.priceEngine.CurrentPrice()
+		var price = d.PriceEngine().CurrentPrice()
 		if price != nil {
 			header.Extra = append(header.Extra, PriceEncode(price)...)
 		}
