@@ -161,6 +161,10 @@ func parsePriceFn(body []byte) (*Data, error) {
 // Price encoded in Rat
 type Price big.Rat
 
+func (p *Price) Rat() *big.Rat {
+	return (*big.Rat)(p)
+}
+
 // PriceDecodeFromExtra returns the price derivation encoded in Header's extra
 // extra = [vanity(32), price(...), signature(65)]
 func PriceDecodeFromExtra(extra []byte) *Price {

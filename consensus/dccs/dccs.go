@@ -867,6 +867,7 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 	} else if d.config.IsPriceBlock(number) {
 		var price = d.PriceEngine().CurrentPrice()
 		if price != nil {
+			log.Info("Encode price to block extra", "price", price.Rat().RatString())
 			header.Extra = append(header.Extra, PriceEncode(price)...)
 		}
 	}
