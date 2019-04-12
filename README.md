@@ -8,9 +8,6 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 [![Travis](https://travis-ci.org/ethereum/go-ethereum.svg?branch=master)](https://travis-ci.org/ethereum/go-ethereum)
 [![Telegram](https://img.shields.io/badge/telegram-join%20group-blue.svg)](https://t.me/nexty_io)
 
-Automated builds are available for stable releases and the unstable master branch.
-Binary archives are published at https://geth.ethereum.org/downloads/.
-
 ### About Nexty
 
 Nexty aims to be the future of payment that allows people to make purchase without cash and transaction fees anywhere, at any time. Nexty shall support businesses of all sizes and scopes to overcome barriers of trading through three deciding factors: Instant Transfer, Zero Transfer Fees and Price Stabilization System.
