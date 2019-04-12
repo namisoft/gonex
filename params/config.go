@@ -394,13 +394,18 @@ func (c *DccsConfig) Snapshot(number uint64) uint64 {
 
 // String implements the stringer interface, returning the consensus engine details.
 func (c *DccsConfig) String() string {
-	return "dccs"
+	return fmt.Sprintf("dccs {ThangLong: %v Epoch: %v Contract: %v Endurio: %v PriceDuration: %v PriceInterval: %v}",
+		c.ThangLongBlock,
+		c.ThangLongEpoch,
+		c.Contract.String(),
+		c.EndurioBlock,
+		c.PriceDuration,
+		c.PriceInterval,
+	)
 }
 
 // String implements the fmt.Stringer interface.
 func (c *ChainConfig) String() string {
-	var thangLongBlock *big.Int
-	var contract string
 	var engine interface{}
 	switch {
 	case c.Ethash != nil:
@@ -409,12 +414,10 @@ func (c *ChainConfig) String() string {
 		engine = c.Clique
 	case c.Dccs != nil:
 		engine = c.Dccs
-		thangLongBlock = c.Dccs.ThangLongBlock
-		contract = c.Dccs.Contract.Hex()
 	default:
 		engine = "unknown"
 	}
-	return fmt.Sprintf("{ChainID: %v Homestead: %v DAO: %v DAOSupport: %v EIP150: %v EIP155: %v EIP158: %v Byzantium: %v Constantinople: %v ConstantinopleFix: %v Thang Long: %v Contract: %v Engine: %v}",
+	return fmt.Sprintf("{ChainID: %v Homestead: %v DAO: %v DAOSupport: %v EIP150: %v EIP155: %v EIP158: %v Byzantium: %v Constantinople: %v ConstantinopleFix: %v Engine: %v}",
 		c.ChainID,
 		c.HomesteadBlock,
 		c.DAOForkBlock,
@@ -425,8 +428,6 @@ func (c *ChainConfig) String() string {
 		c.ByzantiumBlock,
 		c.ConstantinopleBlock,
 		c.PetersburgBlock,
-		thangLongBlock,
-		contract,
 		engine,
 	)
 }
