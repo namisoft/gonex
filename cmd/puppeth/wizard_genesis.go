@@ -63,6 +63,7 @@ func (w *wizard) makeGenesis() {
 	fmt.Println(" 1. Ethash - proof-of-work")
 	fmt.Println(" 2. Clique - proof-of-authority")
 	fmt.Println(" 3. Dccs   - proof-of-foundation")
+	fmt.Println(" 4. Dccs-E - proof-of-foundation with Endurio hardfork")
 
 	choice := w.read()
 	switch {
@@ -109,7 +110,7 @@ func (w *wizard) makeGenesis() {
 			copy(genesis.ExtraData[32+i*common.AddressLength:], signer[:])
 		}
 
-	case choice == "3":
+	case choice == "3", choice == "4":
 		// In the case of dccs, configure the consensus parameters
 		genesis.GasLimit = 42000000
 		genesis.Difficulty = big.NewInt(1)
@@ -123,6 +124,10 @@ func (w *wizard) makeGenesis() {
 			// ThangLong hardfork
 			ThangLongBlock: common.Big0,
 			ThangLongEpoch: 3000,
+			// Endurio hardfork
+			EndurioBlock:  common.Big0,
+			PriceDuration: 7 * 24 * 60 * 60 / 2,
+			PriceInterval: 10*60/2 - 7,
 		}
 		fmt.Println()
 		fmt.Println("How many seconds should blocks take? (default = 2)")
@@ -203,6 +208,21 @@ func (w *wizard) makeGenesis() {
 				Code:    code,
 				Storage: storage,
 			}
+		}
+
+		if choice == "4" {
+			// Endurio hardfork enabled
+			fmt.Println()
+			fmt.Printf("Which block should Endurio come into effect? (default = %v)\n", genesis.Config.Dccs.EndurioBlock)
+			genesis.Config.Dccs.EndurioBlock = w.readDefaultBigInt(genesis.Config.Dccs.EndurioBlock)
+
+			fmt.Println()
+			fmt.Printf("How long should the price be sampled for supply absorption? (default = %v)\n", genesis.Config.Dccs.PriceDuration)
+			genesis.Config.Dccs.PriceDuration = uint64(w.readDefaultInt(int(genesis.Config.Dccs.PriceDuration)))
+
+			fmt.Println()
+			fmt.Printf("How often should the price be sampled for supply absorption? (default = %v)\n", genesis.Config.Dccs.PriceInterval)
+			genesis.Config.Dccs.PriceInterval = uint64(w.readDefaultInt(int(genesis.Config.Dccs.PriceInterval)))
 		}
 
 	default:
