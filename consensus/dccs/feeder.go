@@ -44,8 +44,12 @@ type Feeder struct {
 
 func (f *Feeder) getCurrent(url string) *Data {
 	value, _ := f.data.Load(url)
-	data := value.(*Data)
+	if value == nil {
+		// data has never be fetched before
+		return nil
+	}
 
+	data := value.(*Data)
 	if data.Value == nil {
 		// data is being fetched the first time
 		return nil
