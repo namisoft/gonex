@@ -35,9 +35,9 @@ const (
 
 // PriceData represents the external price feeded from outside
 type PriceData struct {
-	Value     string `json:"price"`
-	Timestamp int64  `json:"timestamp"`
-	Exchange  string `json:"exchange"`
+	Value     json.Number `json:"price"`
+	Timestamp int64       `json:"timestamp"`
+	Exchange  string      `json:"exchange"`
 }
 
 type PriceEngine struct {
@@ -128,6 +128,7 @@ func (e *PriceEngine) getBlockPrice(chain consensus.ChainReader, number uint64) 
 func (e *PriceEngine) CurrentPrice() *Price {
 	data := e.feeder.getCurrent(priceServiceURL)
 	if data == nil {
+		e.feeder.requestUpdate(priceServiceURL, parsePriceFn)
 		return nil
 	}
 	return data.Value.(*Price)
@@ -137,20 +138,20 @@ func parsePriceFn(body []byte) (*Data, error) {
 	var priceData PriceData
 
 	if err := json.Unmarshal(body, &priceData); err != nil {
-		log.Error("Failed to unmarshal price json", "error", err, "body", body)
+		log.Error("Failed to unmarshal price json", "error", err, "body", string(body))
 		return nil, err
 	}
 
 	log.Trace("PriceData", "priceData", priceData)
 
-	price := PriceFromString(priceData.Value)
+	price := PriceFromString(priceData.Value.String())
 	if price == nil {
 		log.Error("Failed to parse price value", "priceData.Value", priceData.Value)
 		return nil, errors.New("Not a price value")
 	}
 
 	return &Data{
-		Value:             &price,
+		Value:             price,
 		DataTimestamp:     time.Unix(priceData.Timestamp, 0),
 		ResponseTimestamp: time.Now(),
 		Source:            priceData.Exchange,
