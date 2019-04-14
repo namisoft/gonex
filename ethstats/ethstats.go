@@ -30,6 +30,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum/consensus/dccs"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/mclock"
 	"github.com/ethereum/go-ethereum/consensus"
@@ -481,6 +483,7 @@ type blockStats struct {
 	TxHash     common.Hash    `json:"transactionsRoot"`
 	Root       common.Hash    `json:"stateRoot"`
 	Uncles     uncleStats     `json:"uncles"`
+	Price      string         `json:"price"`
 }
 
 // txStats is the information to report about individual transactions.
@@ -526,6 +529,7 @@ func (s *Service) assembleBlockStats(block *types.Block) *blockStats {
 		td     *big.Int
 		txs    []txStats
 		uncles []*types.Header
+		price  string
 	)
 	if s.eth != nil {
 		// Full nodes have all needed information available
@@ -550,6 +554,19 @@ func (s *Service) assembleBlockStats(block *types.Block) *blockStats {
 		td = s.les.BlockChain().GetTd(header.Hash(), header.Number.Uint64())
 		txs = []txStats{}
 	}
+
+	if d, ok := s.engine.(*dccs.Dccs); ok {
+		price = d.PriceStat(header)
+	}
+
+	if len(price) == 0 {
+		log.Debug("Not a price block")
+	} else if price == "0" {
+		log.Debug("Report missing price to ethstats")
+	} else {
+		log.Debug("Report block price to ethstats", "price", price)
+	}
+
 	// Assemble and return the block stats
 	author, _ := s.engine.Author(header)
 
@@ -567,6 +584,7 @@ func (s *Service) assembleBlockStats(block *types.Block) *blockStats {
 		TxHash:     header.TxHash,
 		Root:       header.Root,
 		Uncles:     uncles,
+		Price:      price,
 	}
 }
 

@@ -514,6 +514,8 @@ func (d *Dccs) verifyCascadingFields2(chain consensus.ChainReader, header *types
 		price := PriceDecodeFromExtra(header.Extra)
 		if price != nil {
 			log.Info("Block price derivation found", "number", number, "price", price)
+		} else {
+			log.Warn("Missing price data in block", "number", number)
 		}
 	} else {
 		// for regular block: extra = [vanity(32), signature(65)]
@@ -894,6 +896,8 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 		if price != nil {
 			log.Info("Encode price to block extra", "price", price.Rat().RatString())
 			header.Extra = append(header.Extra, PriceEncode(price)...)
+		} else {
+			log.Warn("Skipping price data in block", "number", number)
 		}
 	}
 	header.Extra = append(header.Extra, make([]byte, extraSeal)...)
@@ -1408,4 +1412,15 @@ func (d *Dccs) GetRecentHeaders(snap *Snapshot, chain consensus.ChainReader, hea
 		num, hash = num-1, h.ParentHash
 	}
 	return headers, nil
+}
+
+func (d *Dccs) PriceStat(header *types.Header) string {
+	if !d.config.IsPriceBlock(header.Number.Uint64()) {
+		return ""
+	}
+	price := PriceDecodeFromExtra(header.Extra)
+	if price == nil {
+		return "0"
+	}
+	return price.Rat().FloatString(4)
 }
