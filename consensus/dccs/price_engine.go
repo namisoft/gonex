@@ -45,14 +45,22 @@ type PriceEngine struct {
 	ticker      *time.Ticker
 	canonPrices *lru.Cache // canonical prices: number -> Price
 	nonacPrices *lru.Cache // non-canonical prices: hash -> Price
+	ttl         time.Duration
 }
 
 func newPriceEngine(conf *params.DccsConfig) *PriceEngine {
 	priceInterval := time.Duration(conf.PriceInterval*conf.Period) * time.Second
 
+	// the longest time for a price to stay valid = max(blocktime, priceInterval / 2)
+	ttl := priceInterval / 2
+	if ttl < time.Duration(conf.Period) {
+		ttl = time.Duration(conf.Period)
+	}
+
 	e := &PriceEngine{
 		feeder: &Feeder{},
 		ticker: time.NewTicker(priceInterval / 3),
+		ttl:    ttl,
 	}
 
 	var err error
@@ -129,6 +137,10 @@ func (e *PriceEngine) CurrentPrice() *Price {
 	data := e.feeder.getCurrent(priceServiceURL)
 	if data == nil {
 		e.feeder.requestUpdate(priceServiceURL, parsePriceFn)
+		return nil
+	}
+	if time.Now().Sub(data.ResponseTimestamp) > e.ttl {
+		// expired data
 		return nil
 	}
 	return data.Value.(*Price)
