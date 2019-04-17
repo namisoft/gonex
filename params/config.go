@@ -345,7 +345,7 @@ type DccsConfig struct {
 	ThangLongEpoch uint64   `json:"thangLongEpoch"`           // Epoch length to reset votes and checkpoint
 	// Endurio hardfork
 	EndurioBlock  *big.Int `json:"endurioBlock,omitempty"`
-	PriceDuration uint64   `json:"priceDuration"` // number of blocks in a price week
+	PriceDuration uint64   `json:"priceDuration"` // number of blocks to take price samples (a week)
 	PriceInterval uint64   `json:"priceInterval"` // the largest prime number of blocks in 10 minutes
 }
 
