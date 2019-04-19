@@ -64,9 +64,9 @@ var (
 			ThangLongBlock:  big.NewInt(15360000),
 			ThangLongEpoch:  3000,
 			// Endurio hard-fork
-			EndurioBlock:  big.NewInt(20000000),
-			PriceDuration: 7 * 24 * 60 * 60 / 2,
-			PriceInterval: 10*60/2 - 7,
+			EndurioBlock:          big.NewInt(20000000),
+			PriceSamplingDuration: 7 * 24 * 60 * 60 / 2,
+			PriceSamplingInterval: 10*60/2 - 7,
 		},
 	}
 
@@ -289,9 +289,9 @@ type DccsConfig struct {
 	ThangLongBlock *big.Int `json:"thangLongBlock,omitempty"` // ThangLong switch block (nil = no fork, 0 = already activated)
 	ThangLongEpoch uint64   `json:"thangLongEpoch"`           // Epoch length to reset votes and checkpoint
 	// Endurio hardfork
-	EndurioBlock  *big.Int `json:"endurioBlock,omitempty"`
-	PriceDuration uint64   `json:"priceDuration"` // number of blocks to take price samples (a week)
-	PriceInterval uint64   `json:"priceInterval"` // the largest prime number of blocks in 10 minutes
+	EndurioBlock          *big.Int `json:"endurioBlock,omitempty"`
+	PriceSamplingDuration uint64   `json:"priceSamplingDuration"` // number of blocks to take price samples (a week)
+	PriceSamplingInterval uint64   `json:"priceSamplingInterval"` // the largest prime number of blocks in 10 minutes
 }
 
 // IsPriceBlock returns whether a block could include a price
@@ -301,7 +301,7 @@ func (c *DccsConfig) IsPriceBlock(number uint64) bool {
 		return false
 	}
 	if c.IsEndurio(new(big.Int).SetUint64(number)) {
-		return number%c.PriceInterval == 0
+		return number%c.PriceSamplingInterval == 0
 	}
 	return false
 }
@@ -344,8 +344,8 @@ func (c *DccsConfig) String() string {
 		c.ThangLongEpoch,
 		c.Contract.String(),
 		c.EndurioBlock,
-		c.PriceDuration,
-		c.PriceInterval,
+		c.PriceSamplingDuration,
+		c.PriceSamplingInterval,
 	)
 }
 
