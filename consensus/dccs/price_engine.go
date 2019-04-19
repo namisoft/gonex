@@ -49,26 +49,26 @@ type PriceEngine struct {
 }
 
 func newPriceEngine(conf *params.DccsConfig) *PriceEngine {
-	priceInterval := time.Duration(conf.PriceInterval*conf.Period) * time.Second
+	priceSamplingInterval := time.Duration(conf.PriceSamplingInterval*conf.Period) * time.Second
 
-	// the longest time for a price to stay valid = max(blocktime, priceInterval / 2)
-	ttl := priceInterval / 2
+	// the longest time for a price to stay valid = max(blocktime, priceSamplingInterval / 2)
+	ttl := priceSamplingInterval / 2
 	if ttl < time.Duration(conf.Period) {
 		ttl = time.Duration(conf.Period)
 	}
 
 	e := &PriceEngine{
 		feeder: &Feeder{},
-		ticker: time.NewTicker(priceInterval / 3),
+		ticker: time.NewTicker(priceSamplingInterval / 3),
 		ttl:    ttl,
 	}
 
 	var err error
 
-	maxPriceCount := int(conf.PriceDuration / conf.PriceInterval)
+	maxPriceCount := int(conf.PriceSamplingDuration / conf.PriceSamplingInterval)
 	e.canonPrices, err = lru.New(maxPriceCount) // add some extra buffer for sidechain values
 	if err != nil {
-		log.Crit("Unable to create canonical price cache", "Endurio block", conf.EndurioBlock, "pricesCount", (conf.PriceDuration / conf.PriceInterval), "error", err)
+		log.Crit("Unable to create canonical price cache", "Endurio block", conf.EndurioBlock, "pricesCount", (conf.PriceSamplingDuration / conf.PriceSamplingInterval), "error", err)
 		return nil
 	}
 
