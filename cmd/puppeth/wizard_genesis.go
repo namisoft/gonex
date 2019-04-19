@@ -125,9 +125,9 @@ func (w *wizard) makeGenesis() {
 			ThangLongBlock: common.Big0,
 			ThangLongEpoch: 3000,
 			// Endurio hardfork
-			EndurioBlock:  common.Big0,
-			PriceDuration: 7 * 24 * 60 * 60 / 2,
-			PriceInterval: 10*60/2 - 7,
+			EndurioBlock:          common.Big0,
+			PriceSamplingDuration: 7 * 24 * 60 * 60 / 2,
+			PriceSamplingInterval: 10*60/2 - 7,
 		}
 		fmt.Println()
 		fmt.Println("How many seconds should blocks take? (default = 2)")
@@ -217,12 +217,12 @@ func (w *wizard) makeGenesis() {
 			genesis.Config.Dccs.EndurioBlock = w.readDefaultBigInt(genesis.Config.Dccs.EndurioBlock)
 
 			fmt.Println()
-			fmt.Printf("How long should the price be sampled for supply absorption? (default = %v)\n", genesis.Config.Dccs.PriceDuration)
-			genesis.Config.Dccs.PriceDuration = uint64(w.readDefaultInt(int(genesis.Config.Dccs.PriceDuration)))
+			fmt.Printf("How long should the price be sampled for supply absorption? (default = %v)\n", genesis.Config.Dccs.PriceSamplingDuration)
+			genesis.Config.Dccs.PriceSamplingDuration = uint64(w.readDefaultInt(int(genesis.Config.Dccs.PriceSamplingDuration)))
 
 			fmt.Println()
-			fmt.Printf("How often should the price be sampled for supply absorption? (default = %v)\n", genesis.Config.Dccs.PriceInterval)
-			genesis.Config.Dccs.PriceInterval = uint64(w.readDefaultInt(int(genesis.Config.Dccs.PriceInterval)))
+			fmt.Printf("How often should the price be sampled for supply absorption? (default = %v)\n", genesis.Config.Dccs.PriceSamplingInterval)
+			genesis.Config.Dccs.PriceSamplingInterval = uint64(w.readDefaultInt(int(genesis.Config.Dccs.PriceSamplingInterval)))
 		}
 
 	default:
