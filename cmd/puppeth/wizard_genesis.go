@@ -127,6 +127,7 @@ func (w *wizard) makeGenesis() {
 			EndurioBlock:          common.Big0,
 			PriceSamplingDuration: 7 * 24 * 60 * 60 / 2,
 			PriceSamplingInterval: 10*60/2 - 7,
+			PriceMedianRange:      13,
 		}
 		fmt.Println()
 		fmt.Println("How many seconds should blocks take? (default = 2)")
@@ -222,6 +223,10 @@ func (w *wizard) makeGenesis() {
 			fmt.Println()
 			fmt.Printf("How often should the price be sampled for supply absorption? (default = %v)\n", genesis.Config.Dccs.PriceSamplingInterval)
 			genesis.Config.Dccs.PriceSamplingInterval = uint64(w.readDefaultInt(int(genesis.Config.Dccs.PriceSamplingInterval)))
+
+			fmt.Println()
+			fmt.Printf("How many price samples are used to calculate the median? (default = %v)\n", genesis.Config.Dccs.PriceMedianRange)
+			genesis.Config.Dccs.PriceMedianRange = uint64(w.readDefaultInt(int(genesis.Config.Dccs.PriceMedianRange)))
 		}
 
 	default:
