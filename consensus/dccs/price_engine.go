@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"math/big"
+	"sort"
 	"time"
 
 	"github.com/ethereum/go-ethereum/consensus"
@@ -46,6 +47,7 @@ type PriceEngine struct {
 	canonPrices *lru.Cache // canonical prices: number -> Price
 	nonacPrices *lru.Cache // non-canonical prices: hash -> Price
 	ttl         time.Duration
+	config      *params.DccsConfig
 }
 
 func newPriceEngine(conf *params.DccsConfig) *PriceEngine {
@@ -61,6 +63,7 @@ func newPriceEngine(conf *params.DccsConfig) *PriceEngine {
 		feeder: &Feeder{},
 		ticker: time.NewTicker(priceSamplingInterval / 3),
 		ttl:    ttl,
+		config: conf,
 	}
 
 	var err error
@@ -91,13 +94,48 @@ func (e *PriceEngine) fetchingLoop() {
 	}
 }
 
-func (e *PriceEngine) getBlockPrice(chain consensus.ChainReader, number uint64) *Price {
+type ByPrice []*Price
+
+func (a ByPrice) Len() int           { return len(a) }
+func (a ByPrice) Less(i, j int) bool { return a[i].Rat().Cmp(a[j].Rat()) < 0 }
+func (a ByPrice) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+
+func (e *PriceEngine) GetMedianPrice(chain consensus.ChainReader, number uint64) *Price {
+	if !e.config.IsPriceBlock(number) {
+		// not a price block
+		return nil
+	}
+	prices := make([]*Price, 0, e.config.PriceMedianRange)
+	for i := uint64(0); i < e.config.PriceMedianRange; i++ {
+		price := e.GetBlockPrice(chain, number-i*e.config.PriceSamplingInterval)
+		if price != nil {
+			prices = append(prices, price)
+		}
+	}
+	count := len(prices)
+	if count == 0 {
+		return nil
+	}
+	sort.Sort(ByPrice(prices))
+	if count&1 == 1 {
+		return prices[count/2]
+	}
+	median := new(big.Rat).Add(prices[count/2-1].Rat(), prices[count/2].Rat())
+	median.Mul(median, big.NewRat(1, 2))
+	return (*Price)(median)
+}
+
+func (e *PriceEngine) GetBlockPrice(chain consensus.ChainReader, number uint64) *Price {
+	if !e.config.IsPriceBlock(number) {
+		// not a price block
+		return nil
+	}
 	currentNumber := chain.CurrentHeader().Number.Uint64()
 	if number >= currentNumber-params.CanonicalDepth {
 		// cache non-canonical price by block hash
 		header := chain.GetHeaderByNumber(number)
 		if header == nil {
-			log.Error("PriceEngine.getBlockPrice: failed to get header by number ", "number", number)
+			log.Error("PriceEngine.GetBlockPrice: failed to get header by number ", "number", number)
 			return nil
 		}
 		hash := header.Hash()
@@ -109,7 +147,7 @@ func (e *PriceEngine) getBlockPrice(chain consensus.ChainReader, number uint64) 
 		log.Info("Fetching non-canonical block price", "number", number)
 		price = PriceDecodeFromExtra(header.Extra)
 		if price == nil {
-			log.Error("PriceEngine.getBlockPrice: failed to decode price from non-canonical header extra", "number", number, "extra", header.Extra)
+			log.Error("PriceEngine.GetBlockPrice: failed to decode price from non-canonical header extra", "number", number, "extra", header.Extra)
 			return nil
 		}
 		e.nonacPrices.Add(hash, price)
@@ -126,7 +164,7 @@ func (e *PriceEngine) getBlockPrice(chain consensus.ChainReader, number uint64) 
 	log.Info("Fetching canonical block price", "number", number)
 	price = PriceDecodeFromExtra(header.Extra)
 	if price == nil {
-		log.Error("PriceEngine.getBlockPrice: failed to decode price from canonical header extra", "number", number, "extra", header.Extra)
+		log.Error("PriceEngine.GetBlockPrice: failed to decode price from canonical header extra", "number", number, "extra", header.Extra)
 		return nil
 	}
 	e.canonPrices.Add(number, price)

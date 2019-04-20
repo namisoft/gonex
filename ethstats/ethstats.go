@@ -484,6 +484,7 @@ type blockStats struct {
 	Root       common.Hash    `json:"stateRoot"`
 	Uncles     uncleStats     `json:"uncles"`
 	Price      string         `json:"price"`
+	PriceMed   string         `json:"priceMedian"`
 }
 
 // txStats is the information to report about individual transactions.
@@ -529,7 +530,9 @@ func (s *Service) assembleBlockStats(block *types.Block) *blockStats {
 		td     *big.Int
 		txs    []txStats
 		uncles []*types.Header
-		price  string
+
+		price       string
+		priceMedian string
 	)
 	if s.eth != nil {
 		// Full nodes have all needed information available
@@ -544,6 +547,11 @@ func (s *Service) assembleBlockStats(block *types.Block) *blockStats {
 			txs[i].Hash = tx.Hash()
 		}
 		uncles = block.Uncles()
+
+		if d, ok := s.engine.(*dccs.Dccs); ok {
+			price = d.BlockPriceStat(s.eth.BlockChain(), header.Number.Uint64())
+			priceMedian = d.MedianPriceStat(s.eth.BlockChain(), header.Number.Uint64())
+		}
 	} else {
 		// Light nodes would need on-demand lookups for transactions/uncles, skip
 		if block != nil {
@@ -553,10 +561,6 @@ func (s *Service) assembleBlockStats(block *types.Block) *blockStats {
 		}
 		td = s.les.BlockChain().GetTd(header.Hash(), header.Number.Uint64())
 		txs = []txStats{}
-	}
-
-	if d, ok := s.engine.(*dccs.Dccs); ok {
-		price = d.PriceStat(header)
 	}
 
 	if len(price) == 0 {
@@ -585,6 +589,7 @@ func (s *Service) assembleBlockStats(block *types.Block) *blockStats {
 		Root:       header.Root,
 		Uncles:     uncles,
 		Price:      price,
+		PriceMed:   priceMedian,
 	}
 }
 

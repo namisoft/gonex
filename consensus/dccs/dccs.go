@@ -1429,11 +1429,22 @@ func (d *Dccs) GetRecentHeaders(snap *Snapshot, chain consensus.ChainReader, hea
 	return headers, nil
 }
 
-func (d *Dccs) PriceStat(header *types.Header) string {
-	if !d.config.IsPriceBlock(header.Number.Uint64()) {
+func (d *Dccs) BlockPriceStat(chain consensus.ChainReader, number uint64) string {
+	if !d.config.IsPriceBlock(number) {
 		return ""
 	}
-	price := PriceDecodeFromExtra(header.Extra)
+	price := d.PriceEngine().GetBlockPrice(chain, number)
+	if price == nil {
+		return "0"
+	}
+	return price.Rat().FloatString(4)
+}
+
+func (d *Dccs) MedianPriceStat(chain consensus.ChainReader, number uint64) string {
+	if !d.config.IsPriceBlock(number) {
+		return ""
+	}
+	price := d.PriceEngine().GetMedianPrice(chain, number)
 	if price == nil {
 		return "0"
 	}
