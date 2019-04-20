@@ -117,11 +117,31 @@ func (e *PriceEngine) GetMedianPrice(chain consensus.ChainReader, number uint64)
 		return nil
 	}
 	sort.Sort(ByPrice(prices))
-	if count&1 == 1 {
-		return prices[count/2]
+
+	targetSize := count - count*2/3
+	for l := len(prices); l > targetSize; l = l(prices) {
+		top := new(big.Rat).Sub(prices[l-1].Rat(), prices[l/2].Rat())
+		top.Abs(top)
+		bot := new(big.Rat).Add(prices[l-l/2].Rat(), prices[0].Rat())
+		bot.Abs(bot)
+		cmp := top.Cmp(bot)
+		if cmp > 0 {
+			prices = prices[:l-1]
+		} else if cmp < 0 {
+			prices = prices[1:]
+		} else if l > 2 {
+			prices = prices[1 : l-1]
+		} else {
+			break
+		}
 	}
-	median := new(big.Rat).Add(prices[count/2-1].Rat(), prices[count/2].Rat())
-	median.Mul(median, big.NewRat(1, 2))
+
+	median := new(big.Rat)
+	for _, price := range prices {
+		median.Add(median, price.Rat())
+	}
+	median.Mul(median, big.NewRat(1, int64(len(prices))))
+
 	return (*Price)(median)
 }
 
