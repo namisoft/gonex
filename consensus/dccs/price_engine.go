@@ -105,9 +105,9 @@ func (e *PriceEngine) GetMedianPrice(chain consensus.ChainReader, number uint64)
 		// not a price block
 		return nil
 	}
-	prices := make([]*Price, 0, e.config.PriceMedianRange)
-	for i := uint64(0); i < e.config.PriceMedianRange; i++ {
-		price := e.GetBlockPrice(chain, number-i*e.config.PriceSamplingInterval)
+	prices := make([]*Price, 0, e.config.PriceSamplingDuration/e.config.PriceSamplingInterval)
+	for n := number; n > number-e.config.PriceSamplingDuration; n -= e.config.PriceSamplingInterval {
+		price := e.GetBlockPrice(chain, n)
 		if price != nil {
 			prices = append(prices, price)
 		}
