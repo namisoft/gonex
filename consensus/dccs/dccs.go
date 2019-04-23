@@ -892,10 +892,36 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 			header.Extra = append(header.Extra, signer.Address[:]...)
 		}
 	} else if d.config.IsPriceBlock(number) {
+		log.Info("Get previous state root", "header.ParentHash", header.ParentHash)
+		root, err := chain.StateAt(parent.Root)
+		if err != nil {
+			log.Error("Error retrieving state root", "error", err)
+			return err
+		}
+
+		// cleaning up old value
+		expiredNumber := new(big.Int).SetUint64(d.config.PriceSamplingDuration)
+		expiredNumber.Sub(header.Number, expiredNumber)
+		expiredNumber.Mod(expiredNumber, new(big.Int).SetUint64(d.config.PriceSamplingInterval))
+		if d.config.IsPriceBlock(expiredNumber.Uint64()) {
+			expiredHash := common.BigToHash(expiredNumber)
+			old := root.GetState(d.config.PriceHistoryAddress, expiredHash)
+			if (old != common.Hash{}) {
+				// clear the expired value if exists
+				log.Info("Cleaning up the expired price value", "number", expiredNumber)
+				root.SetState(d.config.PriceHistoryAddress, expiredHash, common.Hash{})
+			} else {
+				log.Warn("No state at expired price block", "number", expiredNumber)
+			}
+		}
+
 		var price = d.PriceEngine().CurrentPrice()
 		if price != nil {
-			log.Info("Encode price to block extra", "price", price.Rat().RatString())
-			header.Extra = append(header.Extra, PriceEncode(price)...)
+			// record new value
+			priceGob := PriceEncode(price)
+			log.Info("Encode price to block extra and storage trie", "price", price.Rat().RatString())
+			root.SetState(d.config.PriceHistoryAddress, common.BigToHash(header.Number), common.BytesToHash(priceGob))
+			header.Extra = append(header.Extra, priceGob...)
 		} else {
 			log.Warn("Skipping price data in block", "number", number)
 		}

@@ -67,6 +67,8 @@ var (
 			EndurioBlock:          big.NewInt(20000000),
 			PriceSamplingDuration: 7 * 24 * 60 * 60 / 2,
 			PriceSamplingInterval: 10*60/2 - 7,
+			// Endurio consensus state addresses
+			PriceHistoryAddress: common.HexToAddress("0x1234500000000000000000000000000000000000"),
 		},
 	}
 
@@ -292,6 +294,8 @@ type DccsConfig struct {
 	EndurioBlock          *big.Int `json:"endurioBlock,omitempty"`
 	PriceSamplingDuration uint64   `json:"priceSamplingDuration"` // number of blocks to take price samples (a week)
 	PriceSamplingInterval uint64   `json:"priceSamplingInterval"` // the largest prime number of blocks in 10 minutes
+	// Endurio consensus state addresses
+	PriceHistoryAddress common.Address `json:"priceHistoryAddress"`
 }
 
 // IsPriceBlock returns whether a block could include a price
