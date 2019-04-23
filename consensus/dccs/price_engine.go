@@ -23,6 +23,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
@@ -171,6 +172,31 @@ func (e *PriceEngine) GetBlockPrice(chain consensus.ChainReader, number uint64) 
 	return price.(*Price)
 }
 
+// Formalize decrease the price precision until it fits in to 32 bytes hash.
+func (p *Price) Formalize() error {
+	price := p.Rat()
+	// reduce the 'precision' to fit in 32 bytes hash
+	for {
+		gob, err := price.GobEncode()
+		if err != nil {
+			return errors.New("Failed to encode price to gob")
+		}
+		if len(gob) <= common.HashLength {
+			// if it fits, return
+			return nil
+		}
+		num := price.Num()
+		den := price.Denom()
+		if num.Cmp(common.Big1) <= 0 || den.Cmp(common.Big1) <= 0 {
+			// don't return price value that unable to fit in 32 bytes hash
+			return errors.New("Unable to de-precision price value: numerator or denomerator too small")
+		}
+		log.Trace("De-precision-ing price value", "price", price.RatString())
+		num.Rsh(num, 1)
+		den.Rsh(num, 1)
+	}
+}
+
 func (e *PriceEngine) CurrentPrice() *Price {
 	data := e.feeder.getCurrent(priceServiceURL)
 	if data == nil {
@@ -181,7 +207,13 @@ func (e *PriceEngine) CurrentPrice() *Price {
 		// expired data
 		return nil
 	}
-	return data.Value.(*Price)
+	price := data.Value.(*Price)
+	err := price.Formalize()
+	if err != nil {
+		log.Error("Failed to formalize the price", "error", err, "price", price)
+		return nil
+	}
+	return price
 }
 
 func parsePriceFn(body []byte) (*Data, error) {
