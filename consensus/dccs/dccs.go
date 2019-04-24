@@ -35,8 +35,8 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/consensus/misc"
-	"github.com/ethereum/go-ethereum/contracts/nexty/contract"
-	"github.com/ethereum/go-ethereum/contracts/nexty/token"
+	"github.com/ethereum/go-ethereum/contracts/nexty/governance"
+	"github.com/ethereum/go-ethereum/contracts/nexty/ntf"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -938,7 +938,7 @@ func deployConsensusContracts(state *state.StateDB, chainConfig *params.ChainCon
 		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
 			stakeRequire := new(big.Int).Mul(new(big.Int).SetUint64(chainConfig.Dccs.StakeRequire), new(big.Int).SetUint64(1e+18))
 			stakeLockHeight := new(big.Int).SetUint64(chainConfig.Dccs.StakeLockHeight)
-			address, _, _, err := contract.DeployNextyGovernance(auth, sim, params.TokenAddress, stakeRequire, stakeLockHeight, signers)
+			address, _, _, err := governance.DeployNextyGovernance(auth, sim, params.TokenAddress, stakeRequire, stakeLockHeight, signers)
 			return address, err
 		})
 		if err != nil {

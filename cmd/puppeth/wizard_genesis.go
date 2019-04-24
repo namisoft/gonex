@@ -33,7 +33,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/deployer"
-	"github.com/ethereum/go-ethereum/contracts/nexty/token"
+	"github.com/ethereum/go-ethereum/contracts/nexty/ntf"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
@@ -434,3 +434,4 @@ func saveGenesis(folder, network, client string, spec interface{}) {
 	}
 	log.Info("Saved genesis chain spec", "client", client, "path", path)
 }
+
