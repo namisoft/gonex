@@ -48,3 +48,5 @@ profile.cov
 
 # intermediate files
 *.json
+!package.json
+node_modules
