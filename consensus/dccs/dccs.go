@@ -895,8 +895,15 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 		for _, signer := range snap.signers2() {
 			header.Extra = append(header.Extra, signer.Address[:]...)
 		}
+	} else if d.config.IsAbsorptionBlock(number) {
+		price := d.PriceEngine().GetMedianPrice(number - params.CanonicalDepth)
+		if price == nil {
+			log.Warn("No median price at block", "number", number)
+		} else {
+			// TODO
+		}
 	} else if d.config.IsPriceBlock(number) {
-		var price = d.PriceEngine().CurrentPrice()
+		price := d.PriceEngine().CurrentPrice()
 		if price != nil {
 			log.Info("Encode price to block extra", "price", price.Rat().RatString())
 			header.Extra = append(header.Extra, PriceEncode(price)...)
@@ -1546,3 +1553,4 @@ func (d *Dccs) MedianPriceStat(chain consensus.ChainReader, number uint64) strin
 	}
 	return price.Rat().FloatString(4)
 }
+

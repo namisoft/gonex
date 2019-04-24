@@ -23,6 +23,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
@@ -48,6 +49,8 @@ type PriceEngine struct {
 	nonacPrices *lru.Cache // non-canonical prices: hash -> Price
 	ttl         time.Duration
 	config      *params.DccsConfig
+
+	lastAbsorptionBlock *big.Intao
 }
 
 func newPriceEngine(conf *params.DccsConfig) *PriceEngine {
@@ -121,7 +124,7 @@ func (e *PriceEngine) GetMedianPrice(chain consensus.ChainReader, number uint64)
 		return prices[count/2]
 	}
 	median := new(big.Rat).Add(prices[count/2-1].Rat(), prices[count/2].Rat())
-	median.Mul(median, big.NewRat(1, 2))
+	median.Mul(median, common.Rat1_2)
 	return (*Price)(median)
 }
 
@@ -258,3 +261,4 @@ func PriceFromString(s string) *Price {
 	}
 	return (*Price)(price)
 }
+

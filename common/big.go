@@ -28,3 +28,10 @@ var (
 	Big256 = big.NewInt(256)
 	Big257 = big.NewInt(257)
 )
+
+var (
+	Rat0   = big.NewRat(0, 1)
+	Rat1   = big.NewRat(1, 1)
+	Rat2   = big.NewRat(2, 1)
+	Rat1_2 = big.NewRat(1, 2)
+)

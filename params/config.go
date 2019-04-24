@@ -298,6 +298,10 @@ type DccsConfig struct {
 	PriceSamplingInterval uint64   `json:"priceSamplingInterval"` // the largest prime number of blocks in 10 minutes
 }
 
+func (c *DccsConfig) IsAbsorptionBlock(number uint64) bool {
+	return c.IsPriceBlock(number - CanonicalDepth)
+}
+
 // IsPriceBlock returns whether a block could include a price
 func (c *DccsConfig) IsPriceBlock(number uint64) bool {
 	if c.IsCheckpoint(number) {
