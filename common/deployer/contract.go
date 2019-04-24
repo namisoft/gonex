@@ -3,6 +3,7 @@ package deployer
 import (
 	"bytes"
 	"context"
+	"crypto/ecdsa"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -14,10 +15,20 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 )
 
+// EmptyReader is an io.Reader that always read 0 bytes
+type EmptyReader struct{}
+
+func (r *EmptyReader) Read(p []byte) (n int, err error) {
+	for i := range p {
+		p[i] = 0
+	}
+	return len(p), nil
+}
+
 // DeployContract deploy a smart contract to simulated chain to get out the contract's code and state
 func DeployContract(deployCallback func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error)) (code []byte, storage map[common.Hash]common.Hash, err error) {
-	// Generate a new random account and a funded simulator
-	prvKey, _ := crypto.GenerateKey()
+	// Generate a deterministic dummy key
+	prvKey, _ := ecdsa.GenerateKey(crypto.S256(), &EmptyReader{})
 	auth := bind.NewKeyedTransactor(prvKey)
 	auth.GasLimit = 12344321
 	sim := backends.NewSimulatedBackend(core.GenesisAlloc{auth.From: {Balance: new(big.Int).Lsh(big.NewInt(1), 256-7)}}, auth.GasLimit)
