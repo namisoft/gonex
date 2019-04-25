@@ -37,6 +37,10 @@ var (
 	GoerliGenesisHash  = common.HexToHash("0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a")
 	BurnAddress        = common.HexToAddress("0x0000000000000000000000000000000000000000")
 	TokenAddress       = common.HexToAddress("0x2c783ad80ff980ec75468477e3dd9f86123ecbda") // NTF token contract address
+	// Endurio contract addresses
+	PairExAddress        = common.HexToAddress("0x0000000000000000000000000000000000123456") // PairEx contract address
+	VolatileTokenAddress = common.HexToAddress("0x0000000000000000000000000000000001234567") // MNTY token contract address
+	StableTokenAddress   = common.HexToAddress("0x0000000000000000000000000000000012345678") // NUSD token contract address
 )
 
 var (
