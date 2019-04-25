@@ -3,7 +3,6 @@ package deployer
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -24,7 +23,8 @@ func DeployContract(deployCallback func(sim *backends.SimulatedBackend, auth *bi
 	sim := backends.NewSimulatedBackend(core.GenesisAlloc{auth.From: {Balance: new(big.Int).Lsh(big.NewInt(1), 256-7)}}, auth.GasLimit)
 	address, err := deployCallback(sim, auth)
 	if err != nil {
-		fmt.Println("Can't deploy nexty governance smart contract")
+		log.Error("Unable to deploy consensus contract", "error", err)
+		return nil, nil, err
 	}
 	sim.Commit()
 
