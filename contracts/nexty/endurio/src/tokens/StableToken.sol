@@ -2,7 +2,6 @@ pragma solidity ^0.5.2;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./ERC223.sol";
-import "../lib/BytesConvert.sol";
 import "../interfaces/IPairEx.sol";
 
 /*
@@ -13,8 +12,6 @@ contract StableToken is ERC223{
     string public constant name = "Nexty USD";
     string public constant symbol = "NUSD";
     uint8 public constant decimals = 18;
-
-    using BytesConvert for *;
 
     IPairEx internal orderbook;
 

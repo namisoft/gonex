@@ -2,8 +2,6 @@ pragma solidity ^0.5.2;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./ERC223.sol";
-import "../lib/BytesConvert.sol";
-import "../lib/ABI.sol";
 import "../interfaces/IPairEx.sol";
 
 /*
@@ -15,9 +13,6 @@ contract VolatileToken is ERC223 {
     string public constant name = "MNTY";
     string public constant symbol = "Mega NTY";
     uint8 public constant decimals = 24;
-
-    using BytesConvert for *;
-    using ABI for *;
 
     IPairEx internal orderbook;
 

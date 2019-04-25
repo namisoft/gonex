@@ -1,7 +1,7 @@
 // Code generated - DO NOT EDIT.
 // This file is a generated binding and any manual changes will be lost.
 
-package endurio
+package volatile
 
 import (
 	"math/big"
@@ -26,245 +26,6 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 )
-
-// BytesConvertABI is the input ABI used to generate the binding from.
-const BytesConvertABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"b\",\"type\":\"bytes\"},{\"name\":\"offset\",\"type\":\"uint256\"}],\"name\":\"bytesToBytes32\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"x\",\"type\":\"uint256\"}],\"name\":\"uint256ToBytes\",\"outputs\":[{\"name\":\"b\",\"type\":\"bytes\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"b\",\"type\":\"bytes\"}],\"name\":\"bytesToUint256\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"}]"
-
-// BytesConvertBin is the compiled bytecode used for deploying new contracts.
-const BytesConvertBin = `0x610330610026600b82828239805160001a60731461001957fe5b30600052607381538281f3fe730000000000000000000000000000000000000000301460806040526004361061004b5760003560e01c80635358493914610050578063c7559da41461010a578063cc9de25d1461019c575b600080fd5b6100f86004803603604081101561006657600080fd5b81019060208101813564010000000081111561008157600080fd5b82018360208201111561009357600080fd5b803590602001918460018302840111640100000000831117156100b557600080fd5b91908080601f0160208091040260200160405190810160405280939291908181526020018383808284376000920191909152509295505091359250610242915050565b60408051918252519081900360200190f35b6101276004803603602081101561012057600080fd5b5035610290565b6040805160208082528351818301528351919283929083019185019080838360005b83811015610161578181015183820152602001610149565b50505050905090810190601f16801561018e5780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b6100f8600480360360208110156101b257600080fd5b8101906020810181356401000000008111156101cd57600080fd5b8201836020820111156101df57600080fd5b8035906020019184600183028401116401000000008311171561020157600080fd5b91908080601f0160208091040260200160405190810160405280939291908181526020018383808284376000920191909152509295506102ba945050505050565b600080805b60208110156102885780600802858286018151811061026257fe5b01602001516001600160f81b031960f891821c90911b16901c9190911790600101610247565b509392505050565b60408051602080825281830190925260609160208201818038833950505060208101929092525090565b600080805b83518110156102fd578060010184510360080260020a8482815181106102e157fe5b016020015160f890811c811b901c0291909101906001016102bf565b509291505056fea165627a7a72305820fde388bc0c0b5989ee544d5b88c348beaf81bd9a1efea1dd38ac52bbeb496de40029`
-
-// DeployBytesConvert deploys a new Ethereum contract, binding an instance of BytesConvert to it.
-func DeployBytesConvert(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *BytesConvert, error) {
-	parsed, err := abi.JSON(strings.NewReader(BytesConvertABI))
-	if err != nil {
-		return common.Address{}, nil, nil, err
-	}
-	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(BytesConvertBin), backend)
-	if err != nil {
-		return common.Address{}, nil, nil, err
-	}
-	return address, tx, &BytesConvert{BytesConvertCaller: BytesConvertCaller{contract: contract}, BytesConvertTransactor: BytesConvertTransactor{contract: contract}, BytesConvertFilterer: BytesConvertFilterer{contract: contract}}, nil
-}
-
-// BytesConvert is an auto generated Go binding around an Ethereum contract.
-type BytesConvert struct {
-	BytesConvertCaller     // Read-only binding to the contract
-	BytesConvertTransactor // Write-only binding to the contract
-	BytesConvertFilterer   // Log filterer for contract events
-}
-
-// BytesConvertCaller is an auto generated read-only Go binding around an Ethereum contract.
-type BytesConvertCaller struct {
-	contract *bind.BoundContract // Generic contract wrapper for the low level calls
-}
-
-// BytesConvertTransactor is an auto generated write-only Go binding around an Ethereum contract.
-type BytesConvertTransactor struct {
-	contract *bind.BoundContract // Generic contract wrapper for the low level calls
-}
-
-// BytesConvertFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
-type BytesConvertFilterer struct {
-	contract *bind.BoundContract // Generic contract wrapper for the low level calls
-}
-
-// BytesConvertSession is an auto generated Go binding around an Ethereum contract,
-// with pre-set call and transact options.
-type BytesConvertSession struct {
-	Contract     *BytesConvert     // Generic contract binding to set the session for
-	CallOpts     bind.CallOpts     // Call options to use throughout this session
-	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
-}
-
-// BytesConvertCallerSession is an auto generated read-only Go binding around an Ethereum contract,
-// with pre-set call options.
-type BytesConvertCallerSession struct {
-	Contract *BytesConvertCaller // Generic contract caller binding to set the session for
-	CallOpts bind.CallOpts       // Call options to use throughout this session
-}
-
-// BytesConvertTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
-// with pre-set transact options.
-type BytesConvertTransactorSession struct {
-	Contract     *BytesConvertTransactor // Generic contract transactor binding to set the session for
-	TransactOpts bind.TransactOpts       // Transaction auth options to use throughout this session
-}
-
-// BytesConvertRaw is an auto generated low-level Go binding around an Ethereum contract.
-type BytesConvertRaw struct {
-	Contract *BytesConvert // Generic contract binding to access the raw methods on
-}
-
-// BytesConvertCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
-type BytesConvertCallerRaw struct {
-	Contract *BytesConvertCaller // Generic read-only contract binding to access the raw methods on
-}
-
-// BytesConvertTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
-type BytesConvertTransactorRaw struct {
-	Contract *BytesConvertTransactor // Generic write-only contract binding to access the raw methods on
-}
-
-// NewBytesConvert creates a new instance of BytesConvert, bound to a specific deployed contract.
-func NewBytesConvert(address common.Address, backend bind.ContractBackend) (*BytesConvert, error) {
-	contract, err := bindBytesConvert(address, backend, backend, backend)
-	if err != nil {
-		return nil, err
-	}
-	return &BytesConvert{BytesConvertCaller: BytesConvertCaller{contract: contract}, BytesConvertTransactor: BytesConvertTransactor{contract: contract}, BytesConvertFilterer: BytesConvertFilterer{contract: contract}}, nil
-}
-
-// NewBytesConvertCaller creates a new read-only instance of BytesConvert, bound to a specific deployed contract.
-func NewBytesConvertCaller(address common.Address, caller bind.ContractCaller) (*BytesConvertCaller, error) {
-	contract, err := bindBytesConvert(address, caller, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-	return &BytesConvertCaller{contract: contract}, nil
-}
-
-// NewBytesConvertTransactor creates a new write-only instance of BytesConvert, bound to a specific deployed contract.
-func NewBytesConvertTransactor(address common.Address, transactor bind.ContractTransactor) (*BytesConvertTransactor, error) {
-	contract, err := bindBytesConvert(address, nil, transactor, nil)
-	if err != nil {
-		return nil, err
-	}
-	return &BytesConvertTransactor{contract: contract}, nil
-}
-
-// NewBytesConvertFilterer creates a new log filterer instance of BytesConvert, bound to a specific deployed contract.
-func NewBytesConvertFilterer(address common.Address, filterer bind.ContractFilterer) (*BytesConvertFilterer, error) {
-	contract, err := bindBytesConvert(address, nil, nil, filterer)
-	if err != nil {
-		return nil, err
-	}
-	return &BytesConvertFilterer{contract: contract}, nil
-}
-
-// bindBytesConvert binds a generic wrapper to an already deployed contract.
-func bindBytesConvert(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
-	parsed, err := abi.JSON(strings.NewReader(BytesConvertABI))
-	if err != nil {
-		return nil, err
-	}
-	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
-}
-
-// Call invokes the (constant) contract method with params as input values and
-// sets the output to result. The result type might be a single field for simple
-// returns, a slice of interfaces for anonymous returns and a struct for named
-// returns.
-func (_BytesConvert *BytesConvertRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
-	return _BytesConvert.Contract.BytesConvertCaller.contract.Call(opts, result, method, params...)
-}
-
-// Transfer initiates a plain transaction to move funds to the contract, calling
-// its default method if one is available.
-func (_BytesConvert *BytesConvertRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _BytesConvert.Contract.BytesConvertTransactor.contract.Transfer(opts)
-}
-
-// Transact invokes the (paid) contract method with params as input values.
-func (_BytesConvert *BytesConvertRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _BytesConvert.Contract.BytesConvertTransactor.contract.Transact(opts, method, params...)
-}
-
-// Call invokes the (constant) contract method with params as input values and
-// sets the output to result. The result type might be a single field for simple
-// returns, a slice of interfaces for anonymous returns and a struct for named
-// returns.
-func (_BytesConvert *BytesConvertCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
-	return _BytesConvert.Contract.contract.Call(opts, result, method, params...)
-}
-
-// Transfer initiates a plain transaction to move funds to the contract, calling
-// its default method if one is available.
-func (_BytesConvert *BytesConvertTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _BytesConvert.Contract.contract.Transfer(opts)
-}
-
-// Transact invokes the (paid) contract method with params as input values.
-func (_BytesConvert *BytesConvertTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _BytesConvert.Contract.contract.Transact(opts, method, params...)
-}
-
-// BytesToBytes32 is a free data retrieval call binding the contract method 0x53584939.
-//
-// Solidity: function bytesToBytes32(bytes b, uint256 offset) constant returns(bytes32)
-func (_BytesConvert *BytesConvertCaller) BytesToBytes32(opts *bind.CallOpts, b []byte, offset *big.Int) ([32]byte, error) {
-	var (
-		ret0 = new([32]byte)
-	)
-	out := ret0
-	err := _BytesConvert.contract.Call(opts, out, "bytesToBytes32", b, offset)
-	return *ret0, err
-}
-
-// BytesToBytes32 is a free data retrieval call binding the contract method 0x53584939.
-//
-// Solidity: function bytesToBytes32(bytes b, uint256 offset) constant returns(bytes32)
-func (_BytesConvert *BytesConvertSession) BytesToBytes32(b []byte, offset *big.Int) ([32]byte, error) {
-	return _BytesConvert.Contract.BytesToBytes32(&_BytesConvert.CallOpts, b, offset)
-}
-
-// BytesToBytes32 is a free data retrieval call binding the contract method 0x53584939.
-//
-// Solidity: function bytesToBytes32(bytes b, uint256 offset) constant returns(bytes32)
-func (_BytesConvert *BytesConvertCallerSession) BytesToBytes32(b []byte, offset *big.Int) ([32]byte, error) {
-	return _BytesConvert.Contract.BytesToBytes32(&_BytesConvert.CallOpts, b, offset)
-}
-
-// BytesToUint256 is a free data retrieval call binding the contract method 0xcc9de25d.
-//
-// Solidity: function bytesToUint256(bytes b) constant returns(uint256)
-func (_BytesConvert *BytesConvertCaller) BytesToUint256(opts *bind.CallOpts, b []byte) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _BytesConvert.contract.Call(opts, out, "bytesToUint256", b)
-	return *ret0, err
-}
-
-// BytesToUint256 is a free data retrieval call binding the contract method 0xcc9de25d.
-//
-// Solidity: function bytesToUint256(bytes b) constant returns(uint256)
-func (_BytesConvert *BytesConvertSession) BytesToUint256(b []byte) (*big.Int, error) {
-	return _BytesConvert.Contract.BytesToUint256(&_BytesConvert.CallOpts, b)
-}
-
-// BytesToUint256 is a free data retrieval call binding the contract method 0xcc9de25d.
-//
-// Solidity: function bytesToUint256(bytes b) constant returns(uint256)
-func (_BytesConvert *BytesConvertCallerSession) BytesToUint256(b []byte) (*big.Int, error) {
-	return _BytesConvert.Contract.BytesToUint256(&_BytesConvert.CallOpts, b)
-}
-
-// Uint256ToBytes is a free data retrieval call binding the contract method 0xc7559da4.
-//
-// Solidity: function uint256ToBytes(uint256 x) constant returns(bytes b)
-func (_BytesConvert *BytesConvertCaller) Uint256ToBytes(opts *bind.CallOpts, x *big.Int) ([]byte, error) {
-	var (
-		ret0 = new([]byte)
-	)
-	out := ret0
-	err := _BytesConvert.contract.Call(opts, out, "uint256ToBytes", x)
-	return *ret0, err
-}
-
-// Uint256ToBytes is a free data retrieval call binding the contract method 0xc7559da4.
-//
-// Solidity: function uint256ToBytes(uint256 x) constant returns(bytes b)
-func (_BytesConvert *BytesConvertSession) Uint256ToBytes(x *big.Int) ([]byte, error) {
-	return _BytesConvert.Contract.Uint256ToBytes(&_BytesConvert.CallOpts, x)
-}
-
-// Uint256ToBytes is a free data retrieval call binding the contract method 0xc7559da4.
-//
-// Solidity: function uint256ToBytes(uint256 x) constant returns(bytes b)
-func (_BytesConvert *BytesConvertCallerSession) Uint256ToBytes(x *big.Int) ([]byte, error) {
-	return _BytesConvert.Contract.Uint256ToBytes(&_BytesConvert.CallOpts, x)
-}
 
 // ContractReceiverABI is the input ABI used to generate the binding from.
 const ContractReceiverABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"_from\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"},{\"name\":\"_data\",\"type\":\"bytes\"}],\"name\":\"tokenFallback\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
@@ -452,7 +213,7 @@ func (_ContractReceiver *ContractReceiverTransactorSession) TokenFallback(_from 
 const ERC20ABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"spender\",\"type\":\"address\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"from\",\"type\":\"address\"},{\"name\":\"to\",\"type\":\"address\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"spender\",\"type\":\"address\"},{\"name\":\"addedValue\",\"type\":\"uint256\"}],\"name\":\"increaseAllowance\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"spender\",\"type\":\"address\"},{\"name\":\"subtractedValue\",\"type\":\"uint256\"}],\"name\":\"decreaseAllowance\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"to\",\"type\":\"address\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"owner\",\"type\":\"address\"},{\"name\":\"spender\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"spender\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"}]"
 
 // ERC20Bin is the compiled bytecode used for deploying new contracts.
-const ERC20Bin = `0x608060405234801561001057600080fd5b506104e0806100206000396000f3fe608060405234801561001057600080fd5b50600436106100885760003560e01c806370a082311161005b57806370a0823114610149578063a457c2d71461016f578063a9059cbb1461019b578063dd62ed3e146101c757610088565b8063095ea7b31461008d57806318160ddd146100cd57806323b872dd146100e7578063395093511461011d575b600080fd5b6100b9600480360360408110156100a357600080fd5b506001600160a01b0381351690602001356101f5565b604080519115158252519081900360200190f35b6100d561020b565b60408051918252519081900360200190f35b6100b9600480360360608110156100fd57600080fd5b506001600160a01b03813581169160208101359091169060400135610211565b6100b96004803603604081101561013357600080fd5b506001600160a01b038135169060200135610268565b6100d56004803603602081101561015f57600080fd5b50356001600160a01b03166102a4565b6100b96004803603604081101561018557600080fd5b506001600160a01b0381351690602001356102bf565b6100b9600480360360408110156101b157600080fd5b506001600160a01b0381351690602001356102fb565b6100d5600480360360408110156101dd57600080fd5b506001600160a01b0381358116916020013516610308565b6000610202338484610333565b50600192915050565b60025490565b600061021e8484846103bb565b6001600160a01b03841660009081526001602090815260408083203380855292529091205461025e918691610259908663ffffffff61048616565b610333565b5060019392505050565b3360008181526001602090815260408083206001600160a01b03871684529091528120549091610202918590610259908663ffffffff61049b16565b6001600160a01b031660009081526020819052604090205490565b3360008181526001602090815260408083206001600160a01b03871684529091528120549091610202918590610259908663ffffffff61048616565b60006102023384846103bb565b6001600160a01b03918216600090815260016020908152604080832093909416825291909152205490565b6001600160a01b03821661034657600080fd5b6001600160a01b03831661035957600080fd5b6001600160a01b03808416600081815260016020908152604080832094871680845294825291829020859055815185815291517f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b9259281900390910190a3505050565b6001600160a01b0382166103ce57600080fd5b6001600160a01b0383166000908152602081905260409020546103f7908263ffffffff61048616565b6001600160a01b03808516600090815260208190526040808220939093559084168152205461042c908263ffffffff61049b16565b6001600160a01b038084166000818152602081815260409182902094909455805185815290519193928716927fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef92918290030190a3505050565b60008282111561049557600080fd5b50900390565b6000828201838110156104ad57600080fd5b939250505056fea165627a7a723058207f61de5b90b43210f5782719b64f3ba0ab1011e122cc72df5e60e644d8a1b5050029`
+const ERC20Bin = `0x608060405234801561001057600080fd5b506104e0806100206000396000f3fe608060405234801561001057600080fd5b50600436106100885760003560e01c806370a082311161005b57806370a0823114610149578063a457c2d71461016f578063a9059cbb1461019b578063dd62ed3e146101c757610088565b8063095ea7b31461008d57806318160ddd146100cd57806323b872dd146100e7578063395093511461011d575b600080fd5b6100b9600480360360408110156100a357600080fd5b506001600160a01b0381351690602001356101f5565b604080519115158252519081900360200190f35b6100d561020b565b60408051918252519081900360200190f35b6100b9600480360360608110156100fd57600080fd5b506001600160a01b03813581169160208101359091169060400135610211565b6100b96004803603604081101561013357600080fd5b506001600160a01b038135169060200135610268565b6100d56004803603602081101561015f57600080fd5b50356001600160a01b03166102a4565b6100b96004803603604081101561018557600080fd5b506001600160a01b0381351690602001356102bf565b6100b9600480360360408110156101b157600080fd5b506001600160a01b0381351690602001356102fb565b6100d5600480360360408110156101dd57600080fd5b506001600160a01b0381358116916020013516610308565b6000610202338484610333565b50600192915050565b60025490565b600061021e8484846103bb565b6001600160a01b03841660009081526001602090815260408083203380855292529091205461025e918691610259908663ffffffff61048616565b610333565b5060019392505050565b3360008181526001602090815260408083206001600160a01b03871684529091528120549091610202918590610259908663ffffffff61049b16565b6001600160a01b031660009081526020819052604090205490565b3360008181526001602090815260408083206001600160a01b03871684529091528120549091610202918590610259908663ffffffff61048616565b60006102023384846103bb565b6001600160a01b03918216600090815260016020908152604080832093909416825291909152205490565b6001600160a01b03821661034657600080fd5b6001600160a01b03831661035957600080fd5b6001600160a01b03808416600081815260016020908152604080832094871680845294825291829020859055815185815291517f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b9259281900390910190a3505050565b6001600160a01b0382166103ce57600080fd5b6001600160a01b0383166000908152602081905260409020546103f7908263ffffffff61048616565b6001600160a01b03808516600090815260208190526040808220939093559084168152205461042c908263ffffffff61049b16565b6001600160a01b038084166000818152602081815260409182902094909455805185815290519193928716927fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef92918290030190a3505050565b60008282111561049557600080fd5b50900390565b6000828201838110156104ad57600080fd5b939250505056fea165627a7a72305820ee2cebcc8bea6c3ffe1bbe48f651cf02ddbb0dec5d46150f514a96a93342bd050029`
 
 // DeployERC20 deploys a new Ethereum contract, binding an instance of ERC20 to it.
 func DeployERC20(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *ERC20, error) {
@@ -1080,7 +841,7 @@ func (_ERC20 *ERC20Filterer) WatchTransfer(opts *bind.WatchOpts, sink chan<- *ER
 const ERC223ABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"spender\",\"type\":\"address\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"from\",\"type\":\"address\"},{\"name\":\"to\",\"type\":\"address\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"spender\",\"type\":\"address\"},{\"name\":\"addedValue\",\"type\":\"uint256\"}],\"name\":\"increaseAllowance\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"mintToOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isOwner\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"spender\",\"type\":\"address\"},{\"name\":\"subtractedValue\",\"type\":\"uint256\"}],\"name\":\"decreaseAllowance\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"to\",\"type\":\"address\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"burnFromOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_to\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"},{\"name\":\"_data\",\"type\":\"bytes\"}],\"name\":\"transfer\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"owner\",\"type\":\"address\"},{\"name\":\"spender\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_to\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_value\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"_data\",\"type\":\"bytes\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"spender\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"}]"
 
 // ERC223Bin is the compiled bytecode used for deploying new contracts.
-const ERC223Bin = `0x608060405234801561001057600080fd5b50610d3f806100206000396000f3fe608060405234801561001057600080fd5b50600436106101005760003560e01c80638f32d59b11610097578063be45fd6211610066578063be45fd62146102af578063c4d66de81461036a578063dd62ed3e14610390578063f2fde38b146103be57610100565b80638f32d59b14610232578063a457c2d71461023a578063a9059cbb14610266578063b5f07ea11461029257610100565b806348043f0d116100d357806348043f0d146101c157806370a08231146101e0578063715018a6146102065780638da5cb5b1461020e57610100565b8063095ea7b31461010557806318160ddd1461014557806323b872dd1461015f5780633950935114610195575b600080fd5b6101316004803603604081101561011b57600080fd5b506001600160a01b0381351690602001356103e4565b604080519115158252519081900360200190f35b61014d6103fa565b60408051918252519081900360200190f35b6101316004803603606081101561017557600080fd5b506001600160a01b03813581169160208101359091169060400135610400565b610131600480360360408110156101ab57600080fd5b506001600160a01b038135169060200135610458565b6101de600480360360208110156101d757600080fd5b5035610494565b005b61014d600480360360208110156101f657600080fd5b50356001600160a01b03166104b9565b6101de6104d4565b61021661052f565b604080516001600160a01b039092168252519081900360200190f35b61013161053e565b6101316004803603604081101561025057600080fd5b506001600160a01b03813516906020013561054f565b6101316004803603604081101561027c57600080fd5b506001600160a01b03813516906020013561058b565b6101de600480360360208110156102a857600080fd5b5035610598565b610131600480360360608110156102c557600080fd5b6001600160a01b03823516916020810135918101906060810160408201356401000000008111156102f557600080fd5b82018360208201111561030757600080fd5b8035906020019184600183028401116401000000008311171561032957600080fd5b91908080601f0160208091040260200160405190810160405280939291908181526020018383808284376000920191909152509295506105ba945050505050565b6101de6004803603602081101561038057600080fd5b50356001600160a01b03166105e7565b61014d600480360360408110156103a657600080fd5b506001600160a01b03813581169160200135166106da565b6101de600480360360208110156103d457600080fd5b50356001600160a01b0316610705565b60006103f133848461071f565b50600192915050565b60025490565b600061040d8484846107a7565b6001600160a01b03841660009081526001602090815260408083203380855292529091205461044d918691610448908663ffffffff61087216565b61071f565b5060015b9392505050565b3360008181526001602090815260408083206001600160a01b038716845290915281205490916103f1918590610448908663ffffffff61088716565b61049c61053e565b6104a557600080fd5b6104b66104b061052f565b82610899565b50565b6001600160a01b031660009081526020819052604090205490565b6104dc61053e565b6104e557600080fd5b6036546040516000916001600160a01b0316907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908390a3603680546001600160a01b0319169055565b6036546001600160a01b031690565b6036546001600160a01b0316331490565b3360008181526001602090815260408083206001600160a01b038716845290915281205490916103f1918590610448908663ffffffff61087216565b60006103f13384846107a7565b6105a061053e565b6105a957600080fd5b6104b66105b461052f565b82610941565b60006105c5846109e8565b156105dc576105d58484846109ee565b9050610451565b6105d5848484610b9b565b600354610100900460ff16806106005750610600610c70565b8061060e575060035460ff16155b61064c57604051600160e51b62461bcd02815260040180806020018281038252602e815260200180610ce6602e913960400191505060405180910390fd5b60038054600161010061ff00198316811760ff191691909117909255603680546001600160a01b0319166001600160a01b0385811691909117918290556040519390920460ff16929116906000907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908290a3600380549115156101000261ff001990921691909117905550565b6001600160a01b03918216600090815260016020908152604080832093909416825291909152205490565b61070d61053e565b61071657600080fd5b6104b681610c76565b6001600160a01b03821661073257600080fd5b6001600160a01b03831661074557600080fd5b6001600160a01b03808416600081815260016020908152604080832094871680845294825291829020859055815185815291517f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b9259281900390910190a3505050565b6001600160a01b0382166107ba57600080fd5b6001600160a01b0383166000908152602081905260409020546107e3908263ffffffff61087216565b6001600160a01b038085166000908152602081905260408082209390935590841681522054610818908263ffffffff61088716565b6001600160a01b038084166000818152602081815260409182902094909455805185815290519193928716927fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef92918290030190a3505050565b60008282111561088157600080fd5b50900390565b60008282018381101561045157600080fd5b6001600160a01b0382166108ac57600080fd5b6002546108bf908263ffffffff61088716565b6002556001600160a01b0382166000908152602081905260409020546108eb908263ffffffff61088716565b6001600160a01b0383166000818152602081815260408083209490945583518581529351929391927fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef9281900390910190a35050565b6001600160a01b03821661095457600080fd5b600254610967908263ffffffff61087216565b6002556001600160a01b038216600090815260208190526040902054610993908263ffffffff61087216565b6001600160a01b038316600081815260208181526040808320949094558351858152935191937fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef929081900390910190a35050565b3b151590565b60006109fa3384610941565b610a048484610899565b604051600160e11b63607705c502815233600482018181526024830186905260606044840190815285516064850152855188946001600160a01b0386169463c0ee0b8a9490938a938a9360840190602085019080838360005b83811015610a75578181015183820152602001610a5d565b50505050905090810190601f168015610aa25780820380516001836020036101000a031916815260200191505b50945050505050600060405180830381600087803b158015610ac357600080fd5b505af1158015610ad7573d6000803e3d6000fd5b50505050846001600160a01b0316336001600160a01b03167fe19260aff97b920c7df27010903aeb9c8d2be5d310a2c67824cf3f15396e4c1686866040518083815260200180602001828103825283818151815260200191508051906020019080838360005b83811015610b55578181015183820152602001610b3d565b50505050905090810190601f168015610b825780820380516001836020036101000a031916815260200191505b50935050505060405180910390a3506001949350505050565b6000610ba73384610941565b610bb18484610899565b836001600160a01b0316336001600160a01b03167fe19260aff97b920c7df27010903aeb9c8d2be5d310a2c67824cf3f15396e4c1685856040518083815260200180602001828103825283818151815260200191508051906020019080838360005b83811015610c2b578181015183820152602001610c13565b50505050905090810190601f168015610c585780820380516001836020036101000a031916815260200191505b50935050505060405180910390a35060019392505050565b303b1590565b6001600160a01b038116610c8957600080fd5b6036546040516001600160a01b038084169216907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e090600090a3603680546001600160a01b0319166001600160a01b039290921691909117905556fe436f6e747261637420696e7374616e63652068617320616c7265616479206265656e20696e697469616c697a6564a165627a7a723058201663e1c7cce70adfe6e4c5eaa5d6dcd0db58fae1c767e68be28058c1d7773ff70029`
+const ERC223Bin = `0x608060405234801561001057600080fd5b50610d3f806100206000396000f3fe608060405234801561001057600080fd5b50600436106101005760003560e01c80638f32d59b11610097578063be45fd6211610066578063be45fd62146102af578063c4d66de81461036a578063dd62ed3e14610390578063f2fde38b146103be57610100565b80638f32d59b14610232578063a457c2d71461023a578063a9059cbb14610266578063b5f07ea11461029257610100565b806348043f0d116100d357806348043f0d146101c157806370a08231146101e0578063715018a6146102065780638da5cb5b1461020e57610100565b8063095ea7b31461010557806318160ddd1461014557806323b872dd1461015f5780633950935114610195575b600080fd5b6101316004803603604081101561011b57600080fd5b506001600160a01b0381351690602001356103e4565b604080519115158252519081900360200190f35b61014d6103fa565b60408051918252519081900360200190f35b6101316004803603606081101561017557600080fd5b506001600160a01b03813581169160208101359091169060400135610400565b610131600480360360408110156101ab57600080fd5b506001600160a01b038135169060200135610458565b6101de600480360360208110156101d757600080fd5b5035610494565b005b61014d600480360360208110156101f657600080fd5b50356001600160a01b03166104b9565b6101de6104d4565b61021661052f565b604080516001600160a01b039092168252519081900360200190f35b61013161053e565b6101316004803603604081101561025057600080fd5b506001600160a01b03813516906020013561054f565b6101316004803603604081101561027c57600080fd5b506001600160a01b03813516906020013561058b565b6101de600480360360208110156102a857600080fd5b5035610598565b610131600480360360608110156102c557600080fd5b6001600160a01b03823516916020810135918101906060810160408201356401000000008111156102f557600080fd5b82018360208201111561030757600080fd5b8035906020019184600183028401116401000000008311171561032957600080fd5b91908080601f0160208091040260200160405190810160405280939291908181526020018383808284376000920191909152509295506105ba945050505050565b6101de6004803603602081101561038057600080fd5b50356001600160a01b03166105e7565b61014d600480360360408110156103a657600080fd5b506001600160a01b03813581169160200135166106da565b6101de600480360360208110156103d457600080fd5b50356001600160a01b0316610705565b60006103f133848461071f565b50600192915050565b60025490565b600061040d8484846107a7565b6001600160a01b03841660009081526001602090815260408083203380855292529091205461044d918691610448908663ffffffff61087216565b61071f565b5060015b9392505050565b3360008181526001602090815260408083206001600160a01b038716845290915281205490916103f1918590610448908663ffffffff61088716565b61049c61053e565b6104a557600080fd5b6104b66104b061052f565b82610899565b50565b6001600160a01b031660009081526020819052604090205490565b6104dc61053e565b6104e557600080fd5b6036546040516000916001600160a01b0316907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908390a3603680546001600160a01b0319169055565b6036546001600160a01b031690565b6036546001600160a01b0316331490565b3360008181526001602090815260408083206001600160a01b038716845290915281205490916103f1918590610448908663ffffffff61087216565b60006103f13384846107a7565b6105a061053e565b6105a957600080fd5b6104b66105b461052f565b82610941565b60006105c5846109e8565b156105dc576105d58484846109ee565b9050610451565b6105d5848484610b9b565b600354610100900460ff16806106005750610600610c70565b8061060e575060035460ff16155b61064c57604051600160e51b62461bcd02815260040180806020018281038252602e815260200180610ce6602e913960400191505060405180910390fd5b60038054600161010061ff00198316811760ff191691909117909255603680546001600160a01b0319166001600160a01b0385811691909117918290556040519390920460ff16929116906000907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908290a3600380549115156101000261ff001990921691909117905550565b6001600160a01b03918216600090815260016020908152604080832093909416825291909152205490565b61070d61053e565b61071657600080fd5b6104b681610c76565b6001600160a01b03821661073257600080fd5b6001600160a01b03831661074557600080fd5b6001600160a01b03808416600081815260016020908152604080832094871680845294825291829020859055815185815291517f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b9259281900390910190a3505050565b6001600160a01b0382166107ba57600080fd5b6001600160a01b0383166000908152602081905260409020546107e3908263ffffffff61087216565b6001600160a01b038085166000908152602081905260408082209390935590841681522054610818908263ffffffff61088716565b6001600160a01b038084166000818152602081815260409182902094909455805185815290519193928716927fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef92918290030190a3505050565b60008282111561088157600080fd5b50900390565b60008282018381101561045157600080fd5b6001600160a01b0382166108ac57600080fd5b6002546108bf908263ffffffff61088716565b6002556001600160a01b0382166000908152602081905260409020546108eb908263ffffffff61088716565b6001600160a01b0383166000818152602081815260408083209490945583518581529351929391927fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef9281900390910190a35050565b6001600160a01b03821661095457600080fd5b600254610967908263ffffffff61087216565b6002556001600160a01b038216600090815260208190526040902054610993908263ffffffff61087216565b6001600160a01b038316600081815260208181526040808320949094558351858152935191937fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef929081900390910190a35050565b3b151590565b60006109fa3384610941565b610a048484610899565b604051600160e11b63607705c502815233600482018181526024830186905260606044840190815285516064850152855188946001600160a01b0386169463c0ee0b8a9490938a938a9360840190602085019080838360005b83811015610a75578181015183820152602001610a5d565b50505050905090810190601f168015610aa25780820380516001836020036101000a031916815260200191505b50945050505050600060405180830381600087803b158015610ac357600080fd5b505af1158015610ad7573d6000803e3d6000fd5b50505050846001600160a01b0316336001600160a01b03167fe19260aff97b920c7df27010903aeb9c8d2be5d310a2c67824cf3f15396e4c1686866040518083815260200180602001828103825283818151815260200191508051906020019080838360005b83811015610b55578181015183820152602001610b3d565b50505050905090810190601f168015610b825780820380516001836020036101000a031916815260200191505b50935050505060405180910390a3506001949350505050565b6000610ba73384610941565b610bb18484610899565b836001600160a01b0316336001600160a01b03167fe19260aff97b920c7df27010903aeb9c8d2be5d310a2c67824cf3f15396e4c1685856040518083815260200180602001828103825283818151815260200191508051906020019080838360005b83811015610c2b578181015183820152602001610c13565b50505050905090810190601f168015610c585780820380516001836020036101000a031916815260200191505b50935050505060405180910390a35060019392505050565b303b1590565b6001600160a01b038116610c8957600080fd5b6036546040516001600160a01b038084169216907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e090600090a3603680546001600160a01b0319166001600160a01b039290921691909117905556fe436f6e747261637420696e7374616e63652068617320616c7265616479206265656e20696e697469616c697a6564a165627a7a7230582069fadd662dc5eb0cfe87bcb4a3ef254d7206f8c96b0be21e28e28518dfe5f6c50029`
 
 // DeployERC223 deploys a new Ethereum contract, binding an instance of ERC223 to it.
 func DeployERC223(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *ERC223, error) {
@@ -2837,7 +2598,7 @@ func (_IPairEx *IPairExTransactorSession) VolatileTokenRegister() (*types.Transa
 const InitializableABI = "[]"
 
 // InitializableBin is the compiled bytecode used for deploying new contracts.
-const InitializableBin = `0x6080604052348015600f57600080fd5b50603580601d6000396000f3fe6080604052600080fdfea165627a7a723058206e5ed1e4c489c047573b0461037df6848019a0c7ee60c8284eb802ebac9585140029`
+const InitializableBin = `0x6080604052348015600f57600080fd5b50603580601d6000396000f3fe6080604052600080fdfea165627a7a7230582037f206389aea959e1fc6e4161b24b3770dea24a692f9b9460c881d1a39be6b0a0029`
 
 // DeployInitializable deploys a new Ethereum contract, binding an instance of Initializable to it.
 func DeployInitializable(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *Initializable, error) {
@@ -2998,7 +2759,7 @@ func (_Initializable *InitializableTransactorRaw) Transact(opts *bind.TransactOp
 const OwnableABI = "[{\"constant\":false,\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isOwner\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"}]"
 
 // OwnableBin is the compiled bytecode used for deploying new contracts.
-const OwnableBin = `0x608060405234801561001057600080fd5b50610349806100206000396000f3fe608060405234801561001057600080fd5b50600436106100575760003560e01c8063715018a61461005c5780638da5cb5b146100665780638f32d59b1461008a578063c4d66de8146100a6578063f2fde38b146100cc575b600080fd5b6100646100f2565b005b61006e61014d565b604080516001600160a01b039092168252519081900360200190f35b61009261015c565b604080519115158252519081900360200190f35b610064600480360360208110156100bc57600080fd5b50356001600160a01b031661016d565b610064600480360360208110156100e257600080fd5b50356001600160a01b031661025d565b6100fa61015c565b61010357600080fd5b6033546040516000916001600160a01b0316907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908390a3603380546001600160a01b0319169055565b6033546001600160a01b031690565b6033546001600160a01b0316331490565b600054610100900460ff1680610186575061018661027a565b80610194575060005460ff16155b6101d257604051600160e51b62461bcd02815260040180806020018281038252602e8152602001806102f0602e913960400191505060405180910390fd5b60008054600161010061ff00198316811760ff1916919091178355603380546001600160a01b0319166001600160a01b0386811691909117918290556040519290930460ff1693921691907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908290a3600080549115156101000261ff001990921691909117905550565b61026561015c565b61026e57600080fd5b61027781610280565b50565b303b1590565b6001600160a01b03811661029357600080fd5b6033546040516001600160a01b038084169216907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e090600090a3603380546001600160a01b0319166001600160a01b039290921691909117905556fe436f6e747261637420696e7374616e63652068617320616c7265616479206265656e20696e697469616c697a6564a165627a7a723058207b5d40f765083775dc20e397aba8a5949777370cdbdf0a84885c5d522af0a3280029`
+const OwnableBin = `0x608060405234801561001057600080fd5b50610349806100206000396000f3fe608060405234801561001057600080fd5b50600436106100575760003560e01c8063715018a61461005c5780638da5cb5b146100665780638f32d59b1461008a578063c4d66de8146100a6578063f2fde38b146100cc575b600080fd5b6100646100f2565b005b61006e61014d565b604080516001600160a01b039092168252519081900360200190f35b61009261015c565b604080519115158252519081900360200190f35b610064600480360360208110156100bc57600080fd5b50356001600160a01b031661016d565b610064600480360360208110156100e257600080fd5b50356001600160a01b031661025d565b6100fa61015c565b61010357600080fd5b6033546040516000916001600160a01b0316907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908390a3603380546001600160a01b0319169055565b6033546001600160a01b031690565b6033546001600160a01b0316331490565b600054610100900460ff1680610186575061018661027a565b80610194575060005460ff16155b6101d257604051600160e51b62461bcd02815260040180806020018281038252602e8152602001806102f0602e913960400191505060405180910390fd5b60008054600161010061ff00198316811760ff1916919091178355603380546001600160a01b0319166001600160a01b0386811691909117918290556040519290930460ff1693921691907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908290a3600080549115156101000261ff001990921691909117905550565b61026561015c565b61026e57600080fd5b61027781610280565b50565b303b1590565b6001600160a01b03811661029357600080fd5b6033546040516001600160a01b038084169216907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e090600090a3603380546001600160a01b0319166001600160a01b039290921691909117905556fe436f6e747261637420696e7374616e63652068617320616c7265616479206265656e20696e697469616c697a6564a165627a7a72305820c6cc89a6a428fbea9749ac9e94b603881f4cf5f3b3abb3b8486c3b62e9011f280029`
 
 // DeployOwnable deploys a new Ethereum contract, binding an instance of Ownable to it.
 func DeployOwnable(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *Ownable, error) {
@@ -3415,7 +3176,7 @@ func (_Ownable *OwnableFilterer) WatchOwnershipTransferred(opts *bind.WatchOpts,
 const SafeMathABI = "[]"
 
 // SafeMathBin is the compiled bytecode used for deploying new contracts.
-const SafeMathBin = `0x604c6023600b82828239805160001a607314601657fe5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea165627a7a723058207aa0f872b3fb9f91df8848f3481038e0c504933eee23cfb378f54b01ace0a2030029`
+const SafeMathBin = `0x604c6023600b82828239805160001a607314601657fe5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea165627a7a7230582018008e0fe5b89cf47c024e466b408a090556148afa61c992314243fccf3cc13b0029`
 
 // DeploySafeMath deploys a new Ethereum contract, binding an instance of SafeMath to it.
 func DeploySafeMath(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *SafeMath, error) {
@@ -3572,123 +3333,123 @@ func (_SafeMath *SafeMathTransactorRaw) Transact(opts *bind.TransactOpts, method
 	return _SafeMath.Contract.contract.Transact(opts, method, params...)
 }
 
-// StableTokenABI is the input ABI used to generate the binding from.
-const StableTokenABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"spender\",\"type\":\"address\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"from\",\"type\":\"address\"},{\"name\":\"to\",\"type\":\"address\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"decimals\",\"outputs\":[{\"name\":\"\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"spender\",\"type\":\"address\"},{\"name\":\"addedValue\",\"type\":\"uint256\"}],\"name\":\"increaseAllowance\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"mintToOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isOwner\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"spender\",\"type\":\"address\"},{\"name\":\"subtractedValue\",\"type\":\"uint256\"}],\"name\":\"decreaseAllowance\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"to\",\"type\":\"address\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"burnFromOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_to\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"},{\"name\":\"_data\",\"type\":\"bytes\"}],\"name\":\"transfer\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_value\",\"type\":\"uint256\"},{\"name\":\"_wantAmount\",\"type\":\"uint256\"},{\"name\":\"_assistingID\",\"type\":\"bytes32\"}],\"name\":\"simpleBuy\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"owner\",\"type\":\"address\"},{\"name\":\"spender\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_orderbook\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_to\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_value\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"_data\",\"type\":\"bytes\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"spender\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"}]"
+// VolatileTokenABI is the input ABI used to generate the binding from.
+const VolatileTokenABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"spender\",\"type\":\"address\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"from\",\"type\":\"address\"},{\"name\":\"to\",\"type\":\"address\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"decimals\",\"outputs\":[{\"name\":\"\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"spender\",\"type\":\"address\"},{\"name\":\"addedValue\",\"type\":\"uint256\"}],\"name\":\"increaseAllowance\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"mintToOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_to\",\"type\":\"address\"}],\"name\":\"buyFor\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_value\",\"type\":\"uint256\"},{\"name\":\"_data\",\"type\":\"bytes\"}],\"name\":\"buy\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isOwner\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"spender\",\"type\":\"address\"},{\"name\":\"subtractedValue\",\"type\":\"uint256\"}],\"name\":\"decreaseAllowance\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"buy\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"to\",\"type\":\"address\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"burnFromOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_to\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"},{\"name\":\"_data\",\"type\":\"bytes\"}],\"name\":\"transfer\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_value\",\"type\":\"uint256\"},{\"name\":\"_wantAmount\",\"type\":\"uint256\"},{\"name\":\"_assistingID\",\"type\":\"bytes32\"}],\"name\":\"simpleBuy\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"owner\",\"type\":\"address\"},{\"name\":\"spender\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"sell\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_amount\",\"type\":\"uint256\"},{\"name\":\"_to\",\"type\":\"address\"}],\"name\":\"sellTo\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_orderbook\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_to\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_value\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"_data\",\"type\":\"bytes\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"spender\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"}]"
 
-// StableTokenBin is the compiled bytecode used for deploying new contracts.
-const StableTokenBin = `0x60806040523480156200001157600080fd5b50604051602080620012d2833981018060405260208110156200003357600080fd5b5051606980546001600160a01b0319166001600160a01b038084169190911791829055604080517f1264a99000000000000000000000000000000000000000000000000000000000815290519290911691631264a9909160048082019260009290919082900301818387803b158015620000ac57600080fd5b505af1158015620000c1573d6000803e3d6000fd5b50505050620000d681620000f960201b60201c565b620000f23369d3c21bcecceda10000006200020f60201b60201c565b50620002e8565b600354610100900460ff16806200011b57506200011b620002c860201b60201c565b806200012a575060035460ff16155b62000181576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252602e815260200180620012a4602e913960400191505060405180910390fd5b60038054600161010061ff00198316811760ff191691909117909255603680546001600160a01b0319166001600160a01b0385811691909117918290556040519390920460ff16929116906000907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908290a3600380549115156101000261ff001990921691909117905550565b6001600160a01b0382166200022357600080fd5b6200023f81600254620002ce60201b62000af41790919060201c565b6002556001600160a01b038216600090815260208181526040909120546200027291839062000af4620002ce821b17901c565b6001600160a01b0383166000818152602081815260408083209490945583518581529351929391927fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef9281900390910190a35050565b303b1590565b600082820183811015620002e157600080fd5b9392505050565b610fac80620002f86000396000f3fe60806040526004361061011f5760003560e01c80638f32d59b116100a0578063be45fd6211610064578063be45fd6214610434578063c4582fa1146104fc578063c4d66de814610525578063dd62ed3e14610558578063f2fde38b146105935761011f565b80638f32d59b1461036e57806395d89b4114610383578063a457c2d714610398578063a9059cbb146103d1578063b5f07ea11461040a5761011f565b806339509351116100e7578063395093511461029057806348043f0d146102c957806370a08231146102f5578063715018a6146103285780638da5cb5b1461033d5761011f565b806306fdde0314610124578063095ea7b3146101ae57806318160ddd146101fb57806323b872dd14610222578063313ce56714610265575b600080fd5b34801561013057600080fd5b506101396105c6565b6040805160208082528351818301528351919283929083019185019080838360005b8381101561017357818101518382015260200161015b565b50505050905090810190601f1680156101a05780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b3480156101ba57600080fd5b506101e7600480360360408110156101d157600080fd5b506001600160a01b0381351690602001356105ee565b604080519115158252519081900360200190f35b34801561020757600080fd5b50610210610604565b60408051918252519081900360200190f35b34801561022e57600080fd5b506101e76004803603606081101561024557600080fd5b506001600160a01b0381358116916020810135909116906040013561060a565b34801561027157600080fd5b5061027a610662565b6040805160ff9092168252519081900360200190f35b34801561029c57600080fd5b506101e7600480360360408110156102b357600080fd5b506001600160a01b038135169060200135610667565b3480156102d557600080fd5b506102f3600480360360208110156102ec57600080fd5b50356106a3565b005b34801561030157600080fd5b506102106004803603602081101561031857600080fd5b50356001600160a01b03166106c8565b34801561033457600080fd5b506102f36106e3565b34801561034957600080fd5b5061035261073e565b604080516001600160a01b039092168252519081900360200190f35b34801561037a57600080fd5b506101e761074d565b34801561038f57600080fd5b5061013961075e565b3480156103a457600080fd5b506101e7600480360360408110156103bb57600080fd5b506001600160a01b038135169060200135610781565b3480156103dd57600080fd5b506101e7600480360360408110156103f457600080fd5b506001600160a01b0381351690602001356107bd565b34801561041657600080fd5b506102f36004803603602081101561042d57600080fd5b50356107ca565b34801561044057600080fd5b506101e76004803603606081101561045757600080fd5b6001600160a01b038235169160208101359181019060608101604082013564010000000081111561048757600080fd5b82018360208201111561049957600080fd5b803590602001918460018302840111640100000000831117156104bb57600080fd5b91908080601f0160208091040260200160405190810160405280939291908181526020018383808284376000920191909152509295506107ec945050505050565b6102f36004803603606081101561051257600080fd5b5080359060208101359060400135610819565b34801561053157600080fd5b506102f36004803603602081101561054857600080fd5b50356001600160a01b0316610854565b34801561056457600080fd5b506102106004803603604081101561057b57600080fd5b506001600160a01b0381358116916020013516610947565b34801561059f57600080fd5b506102f3600480360360208110156105b657600080fd5b50356001600160a01b0316610972565b604051806040016040528060098152602001600160ba1b6813995e1d1e481554d10281525081565b60006105fb33848461098c565b50600192915050565b60025490565b6000610617848484610a14565b6001600160a01b038416600090815260016020908152604080832033808552925290912054610657918691610652908663ffffffff610adf16565b61098c565b5060015b9392505050565b601281565b3360008181526001602090815260408083206001600160a01b038716845290915281205490916105fb918590610652908663ffffffff610af416565b6106ab61074d565b6106b457600080fd5b6106c56106bf61073e565b82610b06565b50565b6001600160a01b031660009081526020819052604090205490565b6106eb61074d565b6106f457600080fd5b6036546040516000916001600160a01b0316907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908390a3603680546001600160a01b0319169055565b6036546001600160a01b031690565b6036546001600160a01b0316331490565b604051806040016040528060048152602001600160e21b63139554d10281525081565b3360008181526001602090815260408083206001600160a01b038716845290915281205490916105fb918590610652908663ffffffff610adf16565b60006105fb338484610a14565b6107d261074d565b6107db57600080fd5b6106c56107e661073e565b82610bae565b60006107f784610c55565b1561080e57610807848484610c5b565b905061065b565b610807848484610e08565b6040805160208101849052808201839052815180820383018152606090910190915261084d61084661073e565b85836107ec565b5050505050565b600354610100900460ff168061086d575061086d610edd565b8061087b575060035460ff16155b6108b957604051600160e51b62461bcd02815260040180806020018281038252602e815260200180610f53602e913960400191505060405180910390fd5b60038054600161010061ff00198316811760ff191691909117909255603680546001600160a01b0319166001600160a01b0385811691909117918290556040519390920460ff16929116906000907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908290a3600380549115156101000261ff001990921691909117905550565b6001600160a01b03918216600090815260016020908152604080832093909416825291909152205490565b61097a61074d565b61098357600080fd5b6106c581610ee3565b6001600160a01b03821661099f57600080fd5b6001600160a01b0383166109b257600080fd5b6001600160a01b03808416600081815260016020908152604080832094871680845294825291829020859055815185815291517f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b9259281900390910190a3505050565b6001600160a01b038216610a2757600080fd5b6001600160a01b038316600090815260208190526040902054610a50908263ffffffff610adf16565b6001600160a01b038085166000908152602081905260408082209390935590841681522054610a85908263ffffffff610af416565b6001600160a01b038084166000818152602081815260409182902094909455805185815290519193928716927fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef92918290030190a3505050565b600082821115610aee57600080fd5b50900390565b60008282018381101561065b57600080fd5b6001600160a01b038216610b1957600080fd5b600254610b2c908263ffffffff610af416565b6002556001600160a01b038216600090815260208190526040902054610b58908263ffffffff610af416565b6001600160a01b0383166000818152602081815260408083209490945583518581529351929391927fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef9281900390910190a35050565b6001600160a01b038216610bc157600080fd5b600254610bd4908263ffffffff610adf16565b6002556001600160a01b038216600090815260208190526040902054610c00908263ffffffff610adf16565b6001600160a01b038316600081815260208181526040808320949094558351858152935191937fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef929081900390910190a35050565b3b151590565b6000610c673384610bae565b610c718484610b06565b604051600160e11b63607705c502815233600482018181526024830186905260606044840190815285516064850152855188946001600160a01b0386169463c0ee0b8a9490938a938a9360840190602085019080838360005b83811015610ce2578181015183820152602001610cca565b50505050905090810190601f168015610d0f5780820380516001836020036101000a031916815260200191505b50945050505050600060405180830381600087803b158015610d3057600080fd5b505af1158015610d44573d6000803e3d6000fd5b50505050846001600160a01b0316336001600160a01b03167fe19260aff97b920c7df27010903aeb9c8d2be5d310a2c67824cf3f15396e4c1686866040518083815260200180602001828103825283818151815260200191508051906020019080838360005b83811015610dc2578181015183820152602001610daa565b50505050905090810190601f168015610def5780820380516001836020036101000a031916815260200191505b50935050505060405180910390a3506001949350505050565b6000610e143384610bae565b610e1e8484610b06565b836001600160a01b0316336001600160a01b03167fe19260aff97b920c7df27010903aeb9c8d2be5d310a2c67824cf3f15396e4c1685856040518083815260200180602001828103825283818151815260200191508051906020019080838360005b83811015610e98578181015183820152602001610e80565b50505050905090810190601f168015610ec55780820380516001836020036101000a031916815260200191505b50935050505060405180910390a35060019392505050565b303b1590565b6001600160a01b038116610ef657600080fd5b6036546040516001600160a01b038084169216907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e090600090a3603680546001600160a01b0319166001600160a01b039290921691909117905556fe436f6e747261637420696e7374616e63652068617320616c7265616479206265656e20696e697469616c697a6564a165627a7a7230582034cdcae09c57b43f94f70643374babb3cfa57fb5063c942fb5b5e49d4d1c7b250029436f6e747261637420696e7374616e63652068617320616c7265616479206265656e20696e697469616c697a6564`
+// VolatileTokenBin is the compiled bytecode used for deploying new contracts.
+const VolatileTokenBin = `0x608060405234801561001057600080fd5b50604051602080620013eb8339810180604052602081101561003157600080fd5b5051606980546001600160a01b0319166001600160a01b038084169190911791829055604080517f4f657bb100000000000000000000000000000000000000000000000000000000815290519290911691634f657bb19160048082019260009290919082900301818387803b1580156100a957600080fd5b505af11580156100bd573d6000803e3d6000fd5b505050506100d0816100d660201b60201c565b506101ed565b600354610100900460ff16806100f557506100f56101e760201b60201c565b80610103575060035460ff16155b610159576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252602e815260200180620013bd602e913960400191505060405180910390fd5b60038054600161010061ff00198316811760ff191691909117909255603680546001600160a01b0319166001600160a01b0385811691909117918290556040519390920460ff16929116906000907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908290a3600380549115156101000261ff001990921691909117905550565b303b1590565b6111c080620001fd6000396000f3fe6080604052600436106101665760003560e01c80638f32d59b116100d1578063be45fd621161008a578063dd62ed3e11610064578063dd62ed3e1461067a578063e4849b32146106b5578063f2fde38b146106df578063f542c8671461071257610166565b8063be45fd6214610556578063c4582fa11461061e578063c4d66de81461064757610166565b80638f32d59b1461048857806395d89b411461049d578063a457c2d7146104b2578063a6f2ae3a146104eb578063a9059cbb146104f3578063b5f07ea11461052c57610166565b806348043f0d1161012357806348043f0d146103105780636f0b51801461033c57806370a0823114610362578063715018a61461039557806382189551146103aa5780638da5cb5b1461045757610166565b806306fdde031461016b578063095ea7b3146101f557806318160ddd1461024257806323b872dd14610269578063313ce567146102ac57806339509351146102d7575b600080fd5b34801561017757600080fd5b5061018061074b565b6040805160208082528351818301528351919283929083019185019080838360005b838110156101ba5781810151838201526020016101a2565b50505050905090810190601f1680156101e75780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b34801561020157600080fd5b5061022e6004803603604081101561021857600080fd5b506001600160a01b03813516906020013561076e565b604080519115158252519081900360200190f35b34801561024e57600080fd5b50610257610784565b60408051918252519081900360200190f35b34801561027557600080fd5b5061022e6004803603606081101561028c57600080fd5b506001600160a01b0381358116916020810135909116906040013561078a565b3480156102b857600080fd5b506102c16107e2565b6040805160ff9092168252519081900360200190f35b3480156102e357600080fd5b5061022e600480360360408110156102fa57600080fd5b506001600160a01b0381351690602001356107e7565b34801561031c57600080fd5b5061033a6004803603602081101561033357600080fd5b5035610823565b005b61022e6004803603602081101561035257600080fd5b50356001600160a01b0316610848565b34801561036e57600080fd5b506102576004803603602081101561038557600080fd5b50356001600160a01b0316610855565b3480156103a157600080fd5b5061033a610870565b61033a600480360360408110156103c057600080fd5b813591908101906040810160208201356401000000008111156103e257600080fd5b8201836020820111156103f457600080fd5b8035906020019184600183028401116401000000008311171561041657600080fd5b91908080601f0160208091040260200160405190810160405280939291908181526020018383808284376000920191909152509295506108cb945050505050565b34801561046357600080fd5b5061046c6108eb565b604080516001600160a01b039092168252519081900360200190f35b34801561049457600080fd5b5061022e6108fa565b3480156104a957600080fd5b5061018061090b565b3480156104be57600080fd5b5061022e600480360360408110156104d557600080fd5b506001600160a01b038135169060200135610932565b61022e61096e565b3480156104ff57600080fd5b5061022e6004803603604081101561051657600080fd5b506001600160a01b03813516906020013561097d565b34801561053857600080fd5b5061033a6004803603602081101561054f57600080fd5b503561098a565b34801561056257600080fd5b5061022e6004803603606081101561057957600080fd5b6001600160a01b03823516916020810135918101906060810160408201356401000000008111156105a957600080fd5b8201836020820111156105bb57600080fd5b803590602001918460018302840111640100000000831117156105dd57600080fd5b91908080601f0160208091040260200160405190810160405280939291908181526020018383808284376000920191909152509295506109ac945050505050565b61033a6004803603606081101561063457600080fd5b50803590602081013590604001356109d9565b34801561065357600080fd5b5061033a6004803603602081101561066a57600080fd5b50356001600160a01b0316610a0b565b34801561068657600080fd5b506102576004803603604081101561069d57600080fd5b506001600160a01b0381358116916020013516610afe565b3480156106c157600080fd5b5061022e600480360360208110156106d857600080fd5b5035610b29565b3480156106eb57600080fd5b5061033a6004803603602081101561070257600080fd5b50356001600160a01b0316610b3b565b34801561071e57600080fd5b5061022e6004803603604081101561073557600080fd5b50803590602001356001600160a01b0316610b55565b604051806040016040528060048152602001600160e01b634d4e54590281525081565b600061077b338484610ba0565b50600192915050565b60025490565b6000610797848484610c28565b6001600160a01b0384166000908152600160209081526040808320338085529252909120546107d79186916107d2908663ffffffff610cf316565b610ba0565b5060015b9392505050565b601881565b3360008181526001602090815260408083206001600160a01b0387168452909152812054909161077b9185906107d2908663ffffffff610d0816565b61082b6108fa565b61083457600080fd5b61084561083f6108eb565b82610d1a565b50565b60003461077b8382610d1a565b6001600160a01b031660009081526020819052604090205490565b6108786108fa565b61088157600080fd5b6036546040516000916001600160a01b0316907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908390a3603680546001600160a01b0319169055565b6108d361096e565b506108e66108df6108eb565b83836109ac565b505050565b6036546001600160a01b031690565b6036546001600160a01b0316331490565b604051806040016040528060088152602001600160c01b674d656761204e54590281525081565b3360008181526001602090815260408083206001600160a01b0387168452909152812054909161077b9185906107d2908663ffffffff610cf316565b600061097933610848565b5090565b600061077b338484610c28565b6109926108fa565b61099b57600080fd5b6108456109a66108eb565b82610dc2565b60006109b784610e69565b156109ce576109c7848484610e6f565b90506107db565b6109c784848461101c565b60408051602081018490528082018390528151808203830181526060909101909152610a0584826108cb565b50505050565b600354610100900460ff1680610a245750610a246110f1565b80610a32575060035460ff16155b610a7057604051600160e51b62461bcd02815260040180806020018281038252602e815260200180611167602e913960400191505060405180910390fd5b60038054600161010061ff00198316811760ff191691909117909255603680546001600160a01b0319166001600160a01b0385811691909117918290556040519390920460ff16929116906000907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908290a3600380549115156101000261ff001990921691909117905550565b6001600160a01b03918216600090815260016020908152604080832093909416825291909152205490565b6000610b358233610b55565b50919050565b610b436108fa565b610b4c57600080fd5b610845816110f7565b600033610b628185610dc2565b6040516001600160a01b0384169085156108fc029086906000818181858888f19350505050158015610b98573d6000803e3d6000fd5b505092915050565b6001600160a01b038216610bb357600080fd5b6001600160a01b038316610bc657600080fd5b6001600160a01b03808416600081815260016020908152604080832094871680845294825291829020859055815185815291517f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b9259281900390910190a3505050565b6001600160a01b038216610c3b57600080fd5b6001600160a01b038316600090815260208190526040902054610c64908263ffffffff610cf316565b6001600160a01b038085166000908152602081905260408082209390935590841681522054610c99908263ffffffff610d0816565b6001600160a01b038084166000818152602081815260409182902094909455805185815290519193928716927fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef92918290030190a3505050565b600082821115610d0257600080fd5b50900390565b6000828201838110156107db57600080fd5b6001600160a01b038216610d2d57600080fd5b600254610d40908263ffffffff610d0816565b6002556001600160a01b038216600090815260208190526040902054610d6c908263ffffffff610d0816565b6001600160a01b0383166000818152602081815260408083209490945583518581529351929391927fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef9281900390910190a35050565b6001600160a01b038216610dd557600080fd5b600254610de8908263ffffffff610cf316565b6002556001600160a01b038216600090815260208190526040902054610e14908263ffffffff610cf316565b6001600160a01b038316600081815260208181526040808320949094558351858152935191937fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef929081900390910190a35050565b3b151590565b6000610e7b3384610dc2565b610e858484610d1a565b604051600160e11b63607705c502815233600482018181526024830186905260606044840190815285516064850152855188946001600160a01b0386169463c0ee0b8a9490938a938a9360840190602085019080838360005b83811015610ef6578181015183820152602001610ede565b50505050905090810190601f168015610f235780820380516001836020036101000a031916815260200191505b50945050505050600060405180830381600087803b158015610f4457600080fd5b505af1158015610f58573d6000803e3d6000fd5b50505050846001600160a01b0316336001600160a01b03167fe19260aff97b920c7df27010903aeb9c8d2be5d310a2c67824cf3f15396e4c1686866040518083815260200180602001828103825283818151815260200191508051906020019080838360005b83811015610fd6578181015183820152602001610fbe565b50505050905090810190601f1680156110035780820380516001836020036101000a031916815260200191505b50935050505060405180910390a3506001949350505050565b60006110283384610dc2565b6110328484610d1a565b836001600160a01b0316336001600160a01b03167fe19260aff97b920c7df27010903aeb9c8d2be5d310a2c67824cf3f15396e4c1685856040518083815260200180602001828103825283818151815260200191508051906020019080838360005b838110156110ac578181015183820152602001611094565b50505050905090810190601f1680156110d95780820380516001836020036101000a031916815260200191505b50935050505060405180910390a35060019392505050565b303b1590565b6001600160a01b03811661110a57600080fd5b6036546040516001600160a01b038084169216907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e090600090a3603680546001600160a01b0319166001600160a01b039290921691909117905556fe436f6e747261637420696e7374616e63652068617320616c7265616479206265656e20696e697469616c697a6564a165627a7a7230582070b03462a62efc6ffd788d3bb4e317068a3ea6d209e22935fbb19beece5c06030029436f6e747261637420696e7374616e63652068617320616c7265616479206265656e20696e697469616c697a6564`
 
-// DeployStableToken deploys a new Ethereum contract, binding an instance of StableToken to it.
-func DeployStableToken(auth *bind.TransactOpts, backend bind.ContractBackend, _orderbook common.Address) (common.Address, *types.Transaction, *StableToken, error) {
-	parsed, err := abi.JSON(strings.NewReader(StableTokenABI))
+// DeployVolatileToken deploys a new Ethereum contract, binding an instance of VolatileToken to it.
+func DeployVolatileToken(auth *bind.TransactOpts, backend bind.ContractBackend, _orderbook common.Address) (common.Address, *types.Transaction, *VolatileToken, error) {
+	parsed, err := abi.JSON(strings.NewReader(VolatileTokenABI))
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
-	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(StableTokenBin), backend, _orderbook)
+	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(VolatileTokenBin), backend, _orderbook)
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
-	return address, tx, &StableToken{StableTokenCaller: StableTokenCaller{contract: contract}, StableTokenTransactor: StableTokenTransactor{contract: contract}, StableTokenFilterer: StableTokenFilterer{contract: contract}}, nil
+	return address, tx, &VolatileToken{VolatileTokenCaller: VolatileTokenCaller{contract: contract}, VolatileTokenTransactor: VolatileTokenTransactor{contract: contract}, VolatileTokenFilterer: VolatileTokenFilterer{contract: contract}}, nil
 }
 
-// StableToken is an auto generated Go binding around an Ethereum contract.
-type StableToken struct {
-	StableTokenCaller     // Read-only binding to the contract
-	StableTokenTransactor // Write-only binding to the contract
-	StableTokenFilterer   // Log filterer for contract events
+// VolatileToken is an auto generated Go binding around an Ethereum contract.
+type VolatileToken struct {
+	VolatileTokenCaller     // Read-only binding to the contract
+	VolatileTokenTransactor // Write-only binding to the contract
+	VolatileTokenFilterer   // Log filterer for contract events
 }
 
-// StableTokenCaller is an auto generated read-only Go binding around an Ethereum contract.
-type StableTokenCaller struct {
+// VolatileTokenCaller is an auto generated read-only Go binding around an Ethereum contract.
+type VolatileTokenCaller struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// StableTokenTransactor is an auto generated write-only Go binding around an Ethereum contract.
-type StableTokenTransactor struct {
+// VolatileTokenTransactor is an auto generated write-only Go binding around an Ethereum contract.
+type VolatileTokenTransactor struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// StableTokenFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
-type StableTokenFilterer struct {
+// VolatileTokenFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+type VolatileTokenFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// StableTokenSession is an auto generated Go binding around an Ethereum contract,
+// VolatileTokenSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.
-type StableTokenSession struct {
-	Contract     *StableToken      // Generic contract binding to set the session for
+type VolatileTokenSession struct {
+	Contract     *VolatileToken    // Generic contract binding to set the session for
 	CallOpts     bind.CallOpts     // Call options to use throughout this session
 	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
 }
 
-// StableTokenCallerSession is an auto generated read-only Go binding around an Ethereum contract,
+// VolatileTokenCallerSession is an auto generated read-only Go binding around an Ethereum contract,
 // with pre-set call options.
-type StableTokenCallerSession struct {
-	Contract *StableTokenCaller // Generic contract caller binding to set the session for
-	CallOpts bind.CallOpts      // Call options to use throughout this session
+type VolatileTokenCallerSession struct {
+	Contract *VolatileTokenCaller // Generic contract caller binding to set the session for
+	CallOpts bind.CallOpts        // Call options to use throughout this session
 }
 
-// StableTokenTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
+// VolatileTokenTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
 // with pre-set transact options.
-type StableTokenTransactorSession struct {
-	Contract     *StableTokenTransactor // Generic contract transactor binding to set the session for
-	TransactOpts bind.TransactOpts      // Transaction auth options to use throughout this session
+type VolatileTokenTransactorSession struct {
+	Contract     *VolatileTokenTransactor // Generic contract transactor binding to set the session for
+	TransactOpts bind.TransactOpts        // Transaction auth options to use throughout this session
 }
 
-// StableTokenRaw is an auto generated low-level Go binding around an Ethereum contract.
-type StableTokenRaw struct {
-	Contract *StableToken // Generic contract binding to access the raw methods on
+// VolatileTokenRaw is an auto generated low-level Go binding around an Ethereum contract.
+type VolatileTokenRaw struct {
+	Contract *VolatileToken // Generic contract binding to access the raw methods on
 }
 
-// StableTokenCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
-type StableTokenCallerRaw struct {
-	Contract *StableTokenCaller // Generic read-only contract binding to access the raw methods on
+// VolatileTokenCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
+type VolatileTokenCallerRaw struct {
+	Contract *VolatileTokenCaller // Generic read-only contract binding to access the raw methods on
 }
 
-// StableTokenTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
-type StableTokenTransactorRaw struct {
-	Contract *StableTokenTransactor // Generic write-only contract binding to access the raw methods on
+// VolatileTokenTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
+type VolatileTokenTransactorRaw struct {
+	Contract *VolatileTokenTransactor // Generic write-only contract binding to access the raw methods on
 }
 
-// NewStableToken creates a new instance of StableToken, bound to a specific deployed contract.
-func NewStableToken(address common.Address, backend bind.ContractBackend) (*StableToken, error) {
-	contract, err := bindStableToken(address, backend, backend, backend)
+// NewVolatileToken creates a new instance of VolatileToken, bound to a specific deployed contract.
+func NewVolatileToken(address common.Address, backend bind.ContractBackend) (*VolatileToken, error) {
+	contract, err := bindVolatileToken(address, backend, backend, backend)
 	if err != nil {
 		return nil, err
 	}
-	return &StableToken{StableTokenCaller: StableTokenCaller{contract: contract}, StableTokenTransactor: StableTokenTransactor{contract: contract}, StableTokenFilterer: StableTokenFilterer{contract: contract}}, nil
+	return &VolatileToken{VolatileTokenCaller: VolatileTokenCaller{contract: contract}, VolatileTokenTransactor: VolatileTokenTransactor{contract: contract}, VolatileTokenFilterer: VolatileTokenFilterer{contract: contract}}, nil
 }
 
-// NewStableTokenCaller creates a new read-only instance of StableToken, bound to a specific deployed contract.
-func NewStableTokenCaller(address common.Address, caller bind.ContractCaller) (*StableTokenCaller, error) {
-	contract, err := bindStableToken(address, caller, nil, nil)
+// NewVolatileTokenCaller creates a new read-only instance of VolatileToken, bound to a specific deployed contract.
+func NewVolatileTokenCaller(address common.Address, caller bind.ContractCaller) (*VolatileTokenCaller, error) {
+	contract, err := bindVolatileToken(address, caller, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	return &StableTokenCaller{contract: contract}, nil
+	return &VolatileTokenCaller{contract: contract}, nil
 }
 
-// NewStableTokenTransactor creates a new write-only instance of StableToken, bound to a specific deployed contract.
-func NewStableTokenTransactor(address common.Address, transactor bind.ContractTransactor) (*StableTokenTransactor, error) {
-	contract, err := bindStableToken(address, nil, transactor, nil)
+// NewVolatileTokenTransactor creates a new write-only instance of VolatileToken, bound to a specific deployed contract.
+func NewVolatileTokenTransactor(address common.Address, transactor bind.ContractTransactor) (*VolatileTokenTransactor, error) {
+	contract, err := bindVolatileToken(address, nil, transactor, nil)
 	if err != nil {
 		return nil, err
 	}
-	return &StableTokenTransactor{contract: contract}, nil
+	return &VolatileTokenTransactor{contract: contract}, nil
 }
 
-// NewStableTokenFilterer creates a new log filterer instance of StableToken, bound to a specific deployed contract.
-func NewStableTokenFilterer(address common.Address, filterer bind.ContractFilterer) (*StableTokenFilterer, error) {
-	contract, err := bindStableToken(address, nil, nil, filterer)
+// NewVolatileTokenFilterer creates a new log filterer instance of VolatileToken, bound to a specific deployed contract.
+func NewVolatileTokenFilterer(address common.Address, filterer bind.ContractFilterer) (*VolatileTokenFilterer, error) {
+	contract, err := bindVolatileToken(address, nil, nil, filterer)
 	if err != nil {
 		return nil, err
 	}
-	return &StableTokenFilterer{contract: contract}, nil
+	return &VolatileTokenFilterer{contract: contract}, nil
 }
 
-// bindStableToken binds a generic wrapper to an already deployed contract.
-func bindStableToken(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
-	parsed, err := abi.JSON(strings.NewReader(StableTokenABI))
+// bindVolatileToken binds a generic wrapper to an already deployed contract.
+func bindVolatileToken(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
+	parsed, err := abi.JSON(strings.NewReader(VolatileTokenABI))
 	if err != nil {
 		return nil, err
 	}
@@ -3699,482 +3460,566 @@ func bindStableToken(address common.Address, caller bind.ContractCaller, transac
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_StableToken *StableTokenRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
-	return _StableToken.Contract.StableTokenCaller.contract.Call(opts, result, method, params...)
+func (_VolatileToken *VolatileTokenRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+	return _VolatileToken.Contract.VolatileTokenCaller.contract.Call(opts, result, method, params...)
 }
 
 // Transfer initiates a plain transaction to move funds to the contract, calling
 // its default method if one is available.
-func (_StableToken *StableTokenRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _StableToken.Contract.StableTokenTransactor.contract.Transfer(opts)
+func (_VolatileToken *VolatileTokenRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _VolatileToken.Contract.VolatileTokenTransactor.contract.Transfer(opts)
 }
 
 // Transact invokes the (paid) contract method with params as input values.
-func (_StableToken *StableTokenRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _StableToken.Contract.StableTokenTransactor.contract.Transact(opts, method, params...)
+func (_VolatileToken *VolatileTokenRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _VolatileToken.Contract.VolatileTokenTransactor.contract.Transact(opts, method, params...)
 }
 
 // Call invokes the (constant) contract method with params as input values and
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_StableToken *StableTokenCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
-	return _StableToken.Contract.contract.Call(opts, result, method, params...)
+func (_VolatileToken *VolatileTokenCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+	return _VolatileToken.Contract.contract.Call(opts, result, method, params...)
 }
 
 // Transfer initiates a plain transaction to move funds to the contract, calling
 // its default method if one is available.
-func (_StableToken *StableTokenTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _StableToken.Contract.contract.Transfer(opts)
+func (_VolatileToken *VolatileTokenTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _VolatileToken.Contract.contract.Transfer(opts)
 }
 
 // Transact invokes the (paid) contract method with params as input values.
-func (_StableToken *StableTokenTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _StableToken.Contract.contract.Transact(opts, method, params...)
+func (_VolatileToken *VolatileTokenTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _VolatileToken.Contract.contract.Transact(opts, method, params...)
 }
 
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
 // Solidity: function allowance(address owner, address spender) constant returns(uint256)
-func (_StableToken *StableTokenCaller) Allowance(opts *bind.CallOpts, owner common.Address, spender common.Address) (*big.Int, error) {
+func (_VolatileToken *VolatileTokenCaller) Allowance(opts *bind.CallOpts, owner common.Address, spender common.Address) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
 	)
 	out := ret0
-	err := _StableToken.contract.Call(opts, out, "allowance", owner, spender)
+	err := _VolatileToken.contract.Call(opts, out, "allowance", owner, spender)
 	return *ret0, err
 }
 
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
 // Solidity: function allowance(address owner, address spender) constant returns(uint256)
-func (_StableToken *StableTokenSession) Allowance(owner common.Address, spender common.Address) (*big.Int, error) {
-	return _StableToken.Contract.Allowance(&_StableToken.CallOpts, owner, spender)
+func (_VolatileToken *VolatileTokenSession) Allowance(owner common.Address, spender common.Address) (*big.Int, error) {
+	return _VolatileToken.Contract.Allowance(&_VolatileToken.CallOpts, owner, spender)
 }
 
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
 // Solidity: function allowance(address owner, address spender) constant returns(uint256)
-func (_StableToken *StableTokenCallerSession) Allowance(owner common.Address, spender common.Address) (*big.Int, error) {
-	return _StableToken.Contract.Allowance(&_StableToken.CallOpts, owner, spender)
+func (_VolatileToken *VolatileTokenCallerSession) Allowance(owner common.Address, spender common.Address) (*big.Int, error) {
+	return _VolatileToken.Contract.Allowance(&_VolatileToken.CallOpts, owner, spender)
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
 // Solidity: function balanceOf(address owner) constant returns(uint256)
-func (_StableToken *StableTokenCaller) BalanceOf(opts *bind.CallOpts, owner common.Address) (*big.Int, error) {
+func (_VolatileToken *VolatileTokenCaller) BalanceOf(opts *bind.CallOpts, owner common.Address) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
 	)
 	out := ret0
-	err := _StableToken.contract.Call(opts, out, "balanceOf", owner)
+	err := _VolatileToken.contract.Call(opts, out, "balanceOf", owner)
 	return *ret0, err
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
 // Solidity: function balanceOf(address owner) constant returns(uint256)
-func (_StableToken *StableTokenSession) BalanceOf(owner common.Address) (*big.Int, error) {
-	return _StableToken.Contract.BalanceOf(&_StableToken.CallOpts, owner)
+func (_VolatileToken *VolatileTokenSession) BalanceOf(owner common.Address) (*big.Int, error) {
+	return _VolatileToken.Contract.BalanceOf(&_VolatileToken.CallOpts, owner)
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
 // Solidity: function balanceOf(address owner) constant returns(uint256)
-func (_StableToken *StableTokenCallerSession) BalanceOf(owner common.Address) (*big.Int, error) {
-	return _StableToken.Contract.BalanceOf(&_StableToken.CallOpts, owner)
+func (_VolatileToken *VolatileTokenCallerSession) BalanceOf(owner common.Address) (*big.Int, error) {
+	return _VolatileToken.Contract.BalanceOf(&_VolatileToken.CallOpts, owner)
 }
 
 // Decimals is a free data retrieval call binding the contract method 0x313ce567.
 //
 // Solidity: function decimals() constant returns(uint8)
-func (_StableToken *StableTokenCaller) Decimals(opts *bind.CallOpts) (uint8, error) {
+func (_VolatileToken *VolatileTokenCaller) Decimals(opts *bind.CallOpts) (uint8, error) {
 	var (
 		ret0 = new(uint8)
 	)
 	out := ret0
-	err := _StableToken.contract.Call(opts, out, "decimals")
+	err := _VolatileToken.contract.Call(opts, out, "decimals")
 	return *ret0, err
 }
 
 // Decimals is a free data retrieval call binding the contract method 0x313ce567.
 //
 // Solidity: function decimals() constant returns(uint8)
-func (_StableToken *StableTokenSession) Decimals() (uint8, error) {
-	return _StableToken.Contract.Decimals(&_StableToken.CallOpts)
+func (_VolatileToken *VolatileTokenSession) Decimals() (uint8, error) {
+	return _VolatileToken.Contract.Decimals(&_VolatileToken.CallOpts)
 }
 
 // Decimals is a free data retrieval call binding the contract method 0x313ce567.
 //
 // Solidity: function decimals() constant returns(uint8)
-func (_StableToken *StableTokenCallerSession) Decimals() (uint8, error) {
-	return _StableToken.Contract.Decimals(&_StableToken.CallOpts)
+func (_VolatileToken *VolatileTokenCallerSession) Decimals() (uint8, error) {
+	return _VolatileToken.Contract.Decimals(&_VolatileToken.CallOpts)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
 // Solidity: function isOwner() constant returns(bool)
-func (_StableToken *StableTokenCaller) IsOwner(opts *bind.CallOpts) (bool, error) {
+func (_VolatileToken *VolatileTokenCaller) IsOwner(opts *bind.CallOpts) (bool, error) {
 	var (
 		ret0 = new(bool)
 	)
 	out := ret0
-	err := _StableToken.contract.Call(opts, out, "isOwner")
+	err := _VolatileToken.contract.Call(opts, out, "isOwner")
 	return *ret0, err
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
 // Solidity: function isOwner() constant returns(bool)
-func (_StableToken *StableTokenSession) IsOwner() (bool, error) {
-	return _StableToken.Contract.IsOwner(&_StableToken.CallOpts)
+func (_VolatileToken *VolatileTokenSession) IsOwner() (bool, error) {
+	return _VolatileToken.Contract.IsOwner(&_VolatileToken.CallOpts)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
 // Solidity: function isOwner() constant returns(bool)
-func (_StableToken *StableTokenCallerSession) IsOwner() (bool, error) {
-	return _StableToken.Contract.IsOwner(&_StableToken.CallOpts)
+func (_VolatileToken *VolatileTokenCallerSession) IsOwner() (bool, error) {
+	return _VolatileToken.Contract.IsOwner(&_VolatileToken.CallOpts)
 }
 
 // Name is a free data retrieval call binding the contract method 0x06fdde03.
 //
 // Solidity: function name() constant returns(string)
-func (_StableToken *StableTokenCaller) Name(opts *bind.CallOpts) (string, error) {
+func (_VolatileToken *VolatileTokenCaller) Name(opts *bind.CallOpts) (string, error) {
 	var (
 		ret0 = new(string)
 	)
 	out := ret0
-	err := _StableToken.contract.Call(opts, out, "name")
+	err := _VolatileToken.contract.Call(opts, out, "name")
 	return *ret0, err
 }
 
 // Name is a free data retrieval call binding the contract method 0x06fdde03.
 //
 // Solidity: function name() constant returns(string)
-func (_StableToken *StableTokenSession) Name() (string, error) {
-	return _StableToken.Contract.Name(&_StableToken.CallOpts)
+func (_VolatileToken *VolatileTokenSession) Name() (string, error) {
+	return _VolatileToken.Contract.Name(&_VolatileToken.CallOpts)
 }
 
 // Name is a free data retrieval call binding the contract method 0x06fdde03.
 //
 // Solidity: function name() constant returns(string)
-func (_StableToken *StableTokenCallerSession) Name() (string, error) {
-	return _StableToken.Contract.Name(&_StableToken.CallOpts)
+func (_VolatileToken *VolatileTokenCallerSession) Name() (string, error) {
+	return _VolatileToken.Contract.Name(&_VolatileToken.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
 // Solidity: function owner() constant returns(address)
-func (_StableToken *StableTokenCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
+func (_VolatileToken *VolatileTokenCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
 	)
 	out := ret0
-	err := _StableToken.contract.Call(opts, out, "owner")
+	err := _VolatileToken.contract.Call(opts, out, "owner")
 	return *ret0, err
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
 // Solidity: function owner() constant returns(address)
-func (_StableToken *StableTokenSession) Owner() (common.Address, error) {
-	return _StableToken.Contract.Owner(&_StableToken.CallOpts)
+func (_VolatileToken *VolatileTokenSession) Owner() (common.Address, error) {
+	return _VolatileToken.Contract.Owner(&_VolatileToken.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
 // Solidity: function owner() constant returns(address)
-func (_StableToken *StableTokenCallerSession) Owner() (common.Address, error) {
-	return _StableToken.Contract.Owner(&_StableToken.CallOpts)
+func (_VolatileToken *VolatileTokenCallerSession) Owner() (common.Address, error) {
+	return _VolatileToken.Contract.Owner(&_VolatileToken.CallOpts)
 }
 
 // Symbol is a free data retrieval call binding the contract method 0x95d89b41.
 //
 // Solidity: function symbol() constant returns(string)
-func (_StableToken *StableTokenCaller) Symbol(opts *bind.CallOpts) (string, error) {
+func (_VolatileToken *VolatileTokenCaller) Symbol(opts *bind.CallOpts) (string, error) {
 	var (
 		ret0 = new(string)
 	)
 	out := ret0
-	err := _StableToken.contract.Call(opts, out, "symbol")
+	err := _VolatileToken.contract.Call(opts, out, "symbol")
 	return *ret0, err
 }
 
 // Symbol is a free data retrieval call binding the contract method 0x95d89b41.
 //
 // Solidity: function symbol() constant returns(string)
-func (_StableToken *StableTokenSession) Symbol() (string, error) {
-	return _StableToken.Contract.Symbol(&_StableToken.CallOpts)
+func (_VolatileToken *VolatileTokenSession) Symbol() (string, error) {
+	return _VolatileToken.Contract.Symbol(&_VolatileToken.CallOpts)
 }
 
 // Symbol is a free data retrieval call binding the contract method 0x95d89b41.
 //
 // Solidity: function symbol() constant returns(string)
-func (_StableToken *StableTokenCallerSession) Symbol() (string, error) {
-	return _StableToken.Contract.Symbol(&_StableToken.CallOpts)
+func (_VolatileToken *VolatileTokenCallerSession) Symbol() (string, error) {
+	return _VolatileToken.Contract.Symbol(&_VolatileToken.CallOpts)
 }
 
 // TotalSupply is a free data retrieval call binding the contract method 0x18160ddd.
 //
 // Solidity: function totalSupply() constant returns(uint256)
-func (_StableToken *StableTokenCaller) TotalSupply(opts *bind.CallOpts) (*big.Int, error) {
+func (_VolatileToken *VolatileTokenCaller) TotalSupply(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
 	)
 	out := ret0
-	err := _StableToken.contract.Call(opts, out, "totalSupply")
+	err := _VolatileToken.contract.Call(opts, out, "totalSupply")
 	return *ret0, err
 }
 
 // TotalSupply is a free data retrieval call binding the contract method 0x18160ddd.
 //
 // Solidity: function totalSupply() constant returns(uint256)
-func (_StableToken *StableTokenSession) TotalSupply() (*big.Int, error) {
-	return _StableToken.Contract.TotalSupply(&_StableToken.CallOpts)
+func (_VolatileToken *VolatileTokenSession) TotalSupply() (*big.Int, error) {
+	return _VolatileToken.Contract.TotalSupply(&_VolatileToken.CallOpts)
 }
 
 // TotalSupply is a free data retrieval call binding the contract method 0x18160ddd.
 //
 // Solidity: function totalSupply() constant returns(uint256)
-func (_StableToken *StableTokenCallerSession) TotalSupply() (*big.Int, error) {
-	return _StableToken.Contract.TotalSupply(&_StableToken.CallOpts)
+func (_VolatileToken *VolatileTokenCallerSession) TotalSupply() (*big.Int, error) {
+	return _VolatileToken.Contract.TotalSupply(&_VolatileToken.CallOpts)
 }
 
 // Approve is a paid mutator transaction binding the contract method 0x095ea7b3.
 //
 // Solidity: function approve(address spender, uint256 value) returns(bool)
-func (_StableToken *StableTokenTransactor) Approve(opts *bind.TransactOpts, spender common.Address, value *big.Int) (*types.Transaction, error) {
-	return _StableToken.contract.Transact(opts, "approve", spender, value)
+func (_VolatileToken *VolatileTokenTransactor) Approve(opts *bind.TransactOpts, spender common.Address, value *big.Int) (*types.Transaction, error) {
+	return _VolatileToken.contract.Transact(opts, "approve", spender, value)
 }
 
 // Approve is a paid mutator transaction binding the contract method 0x095ea7b3.
 //
 // Solidity: function approve(address spender, uint256 value) returns(bool)
-func (_StableToken *StableTokenSession) Approve(spender common.Address, value *big.Int) (*types.Transaction, error) {
-	return _StableToken.Contract.Approve(&_StableToken.TransactOpts, spender, value)
+func (_VolatileToken *VolatileTokenSession) Approve(spender common.Address, value *big.Int) (*types.Transaction, error) {
+	return _VolatileToken.Contract.Approve(&_VolatileToken.TransactOpts, spender, value)
 }
 
 // Approve is a paid mutator transaction binding the contract method 0x095ea7b3.
 //
 // Solidity: function approve(address spender, uint256 value) returns(bool)
-func (_StableToken *StableTokenTransactorSession) Approve(spender common.Address, value *big.Int) (*types.Transaction, error) {
-	return _StableToken.Contract.Approve(&_StableToken.TransactOpts, spender, value)
+func (_VolatileToken *VolatileTokenTransactorSession) Approve(spender common.Address, value *big.Int) (*types.Transaction, error) {
+	return _VolatileToken.Contract.Approve(&_VolatileToken.TransactOpts, spender, value)
 }
 
 // BurnFromOwner is a paid mutator transaction binding the contract method 0xb5f07ea1.
 //
 // Solidity: function burnFromOwner(uint256 _amount) returns()
-func (_StableToken *StableTokenTransactor) BurnFromOwner(opts *bind.TransactOpts, _amount *big.Int) (*types.Transaction, error) {
-	return _StableToken.contract.Transact(opts, "burnFromOwner", _amount)
+func (_VolatileToken *VolatileTokenTransactor) BurnFromOwner(opts *bind.TransactOpts, _amount *big.Int) (*types.Transaction, error) {
+	return _VolatileToken.contract.Transact(opts, "burnFromOwner", _amount)
 }
 
 // BurnFromOwner is a paid mutator transaction binding the contract method 0xb5f07ea1.
 //
 // Solidity: function burnFromOwner(uint256 _amount) returns()
-func (_StableToken *StableTokenSession) BurnFromOwner(_amount *big.Int) (*types.Transaction, error) {
-	return _StableToken.Contract.BurnFromOwner(&_StableToken.TransactOpts, _amount)
+func (_VolatileToken *VolatileTokenSession) BurnFromOwner(_amount *big.Int) (*types.Transaction, error) {
+	return _VolatileToken.Contract.BurnFromOwner(&_VolatileToken.TransactOpts, _amount)
 }
 
 // BurnFromOwner is a paid mutator transaction binding the contract method 0xb5f07ea1.
 //
 // Solidity: function burnFromOwner(uint256 _amount) returns()
-func (_StableToken *StableTokenTransactorSession) BurnFromOwner(_amount *big.Int) (*types.Transaction, error) {
-	return _StableToken.Contract.BurnFromOwner(&_StableToken.TransactOpts, _amount)
+func (_VolatileToken *VolatileTokenTransactorSession) BurnFromOwner(_amount *big.Int) (*types.Transaction, error) {
+	return _VolatileToken.Contract.BurnFromOwner(&_VolatileToken.TransactOpts, _amount)
+}
+
+// Buy is a paid mutator transaction binding the contract method 0xa6f2ae3a.
+//
+// Solidity: function buy() returns(bool)
+func (_VolatileToken *VolatileTokenTransactor) Buy(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _VolatileToken.contract.Transact(opts, "buy")
+}
+
+// Buy is a paid mutator transaction binding the contract method 0xa6f2ae3a.
+//
+// Solidity: function buy() returns(bool)
+func (_VolatileToken *VolatileTokenSession) Buy() (*types.Transaction, error) {
+	return _VolatileToken.Contract.Buy(&_VolatileToken.TransactOpts)
+}
+
+// Buy is a paid mutator transaction binding the contract method 0xa6f2ae3a.
+//
+// Solidity: function buy() returns(bool)
+func (_VolatileToken *VolatileTokenTransactorSession) Buy() (*types.Transaction, error) {
+	return _VolatileToken.Contract.Buy(&_VolatileToken.TransactOpts)
+}
+
+// BuyFor is a paid mutator transaction binding the contract method 0x6f0b5180.
+//
+// Solidity: function buyFor(address _to) returns(bool)
+func (_VolatileToken *VolatileTokenTransactor) BuyFor(opts *bind.TransactOpts, _to common.Address) (*types.Transaction, error) {
+	return _VolatileToken.contract.Transact(opts, "buyFor", _to)
+}
+
+// BuyFor is a paid mutator transaction binding the contract method 0x6f0b5180.
+//
+// Solidity: function buyFor(address _to) returns(bool)
+func (_VolatileToken *VolatileTokenSession) BuyFor(_to common.Address) (*types.Transaction, error) {
+	return _VolatileToken.Contract.BuyFor(&_VolatileToken.TransactOpts, _to)
+}
+
+// BuyFor is a paid mutator transaction binding the contract method 0x6f0b5180.
+//
+// Solidity: function buyFor(address _to) returns(bool)
+func (_VolatileToken *VolatileTokenTransactorSession) BuyFor(_to common.Address) (*types.Transaction, error) {
+	return _VolatileToken.Contract.BuyFor(&_VolatileToken.TransactOpts, _to)
 }
 
 // DecreaseAllowance is a paid mutator transaction binding the contract method 0xa457c2d7.
 //
 // Solidity: function decreaseAllowance(address spender, uint256 subtractedValue) returns(bool)
-func (_StableToken *StableTokenTransactor) DecreaseAllowance(opts *bind.TransactOpts, spender common.Address, subtractedValue *big.Int) (*types.Transaction, error) {
-	return _StableToken.contract.Transact(opts, "decreaseAllowance", spender, subtractedValue)
+func (_VolatileToken *VolatileTokenTransactor) DecreaseAllowance(opts *bind.TransactOpts, spender common.Address, subtractedValue *big.Int) (*types.Transaction, error) {
+	return _VolatileToken.contract.Transact(opts, "decreaseAllowance", spender, subtractedValue)
 }
 
 // DecreaseAllowance is a paid mutator transaction binding the contract method 0xa457c2d7.
 //
 // Solidity: function decreaseAllowance(address spender, uint256 subtractedValue) returns(bool)
-func (_StableToken *StableTokenSession) DecreaseAllowance(spender common.Address, subtractedValue *big.Int) (*types.Transaction, error) {
-	return _StableToken.Contract.DecreaseAllowance(&_StableToken.TransactOpts, spender, subtractedValue)
+func (_VolatileToken *VolatileTokenSession) DecreaseAllowance(spender common.Address, subtractedValue *big.Int) (*types.Transaction, error) {
+	return _VolatileToken.Contract.DecreaseAllowance(&_VolatileToken.TransactOpts, spender, subtractedValue)
 }
 
 // DecreaseAllowance is a paid mutator transaction binding the contract method 0xa457c2d7.
 //
 // Solidity: function decreaseAllowance(address spender, uint256 subtractedValue) returns(bool)
-func (_StableToken *StableTokenTransactorSession) DecreaseAllowance(spender common.Address, subtractedValue *big.Int) (*types.Transaction, error) {
-	return _StableToken.Contract.DecreaseAllowance(&_StableToken.TransactOpts, spender, subtractedValue)
+func (_VolatileToken *VolatileTokenTransactorSession) DecreaseAllowance(spender common.Address, subtractedValue *big.Int) (*types.Transaction, error) {
+	return _VolatileToken.Contract.DecreaseAllowance(&_VolatileToken.TransactOpts, spender, subtractedValue)
 }
 
 // IncreaseAllowance is a paid mutator transaction binding the contract method 0x39509351.
 //
 // Solidity: function increaseAllowance(address spender, uint256 addedValue) returns(bool)
-func (_StableToken *StableTokenTransactor) IncreaseAllowance(opts *bind.TransactOpts, spender common.Address, addedValue *big.Int) (*types.Transaction, error) {
-	return _StableToken.contract.Transact(opts, "increaseAllowance", spender, addedValue)
+func (_VolatileToken *VolatileTokenTransactor) IncreaseAllowance(opts *bind.TransactOpts, spender common.Address, addedValue *big.Int) (*types.Transaction, error) {
+	return _VolatileToken.contract.Transact(opts, "increaseAllowance", spender, addedValue)
 }
 
 // IncreaseAllowance is a paid mutator transaction binding the contract method 0x39509351.
 //
 // Solidity: function increaseAllowance(address spender, uint256 addedValue) returns(bool)
-func (_StableToken *StableTokenSession) IncreaseAllowance(spender common.Address, addedValue *big.Int) (*types.Transaction, error) {
-	return _StableToken.Contract.IncreaseAllowance(&_StableToken.TransactOpts, spender, addedValue)
+func (_VolatileToken *VolatileTokenSession) IncreaseAllowance(spender common.Address, addedValue *big.Int) (*types.Transaction, error) {
+	return _VolatileToken.Contract.IncreaseAllowance(&_VolatileToken.TransactOpts, spender, addedValue)
 }
 
 // IncreaseAllowance is a paid mutator transaction binding the contract method 0x39509351.
 //
 // Solidity: function increaseAllowance(address spender, uint256 addedValue) returns(bool)
-func (_StableToken *StableTokenTransactorSession) IncreaseAllowance(spender common.Address, addedValue *big.Int) (*types.Transaction, error) {
-	return _StableToken.Contract.IncreaseAllowance(&_StableToken.TransactOpts, spender, addedValue)
+func (_VolatileToken *VolatileTokenTransactorSession) IncreaseAllowance(spender common.Address, addedValue *big.Int) (*types.Transaction, error) {
+	return _VolatileToken.Contract.IncreaseAllowance(&_VolatileToken.TransactOpts, spender, addedValue)
 }
 
 // Initialize is a paid mutator transaction binding the contract method 0xc4d66de8.
 //
 // Solidity: function initialize(address sender) returns()
-func (_StableToken *StableTokenTransactor) Initialize(opts *bind.TransactOpts, sender common.Address) (*types.Transaction, error) {
-	return _StableToken.contract.Transact(opts, "initialize", sender)
+func (_VolatileToken *VolatileTokenTransactor) Initialize(opts *bind.TransactOpts, sender common.Address) (*types.Transaction, error) {
+	return _VolatileToken.contract.Transact(opts, "initialize", sender)
 }
 
 // Initialize is a paid mutator transaction binding the contract method 0xc4d66de8.
 //
 // Solidity: function initialize(address sender) returns()
-func (_StableToken *StableTokenSession) Initialize(sender common.Address) (*types.Transaction, error) {
-	return _StableToken.Contract.Initialize(&_StableToken.TransactOpts, sender)
+func (_VolatileToken *VolatileTokenSession) Initialize(sender common.Address) (*types.Transaction, error) {
+	return _VolatileToken.Contract.Initialize(&_VolatileToken.TransactOpts, sender)
 }
 
 // Initialize is a paid mutator transaction binding the contract method 0xc4d66de8.
 //
 // Solidity: function initialize(address sender) returns()
-func (_StableToken *StableTokenTransactorSession) Initialize(sender common.Address) (*types.Transaction, error) {
-	return _StableToken.Contract.Initialize(&_StableToken.TransactOpts, sender)
+func (_VolatileToken *VolatileTokenTransactorSession) Initialize(sender common.Address) (*types.Transaction, error) {
+	return _VolatileToken.Contract.Initialize(&_VolatileToken.TransactOpts, sender)
 }
 
 // MintToOwner is a paid mutator transaction binding the contract method 0x48043f0d.
 //
 // Solidity: function mintToOwner(uint256 _amount) returns()
-func (_StableToken *StableTokenTransactor) MintToOwner(opts *bind.TransactOpts, _amount *big.Int) (*types.Transaction, error) {
-	return _StableToken.contract.Transact(opts, "mintToOwner", _amount)
+func (_VolatileToken *VolatileTokenTransactor) MintToOwner(opts *bind.TransactOpts, _amount *big.Int) (*types.Transaction, error) {
+	return _VolatileToken.contract.Transact(opts, "mintToOwner", _amount)
 }
 
 // MintToOwner is a paid mutator transaction binding the contract method 0x48043f0d.
 //
 // Solidity: function mintToOwner(uint256 _amount) returns()
-func (_StableToken *StableTokenSession) MintToOwner(_amount *big.Int) (*types.Transaction, error) {
-	return _StableToken.Contract.MintToOwner(&_StableToken.TransactOpts, _amount)
+func (_VolatileToken *VolatileTokenSession) MintToOwner(_amount *big.Int) (*types.Transaction, error) {
+	return _VolatileToken.Contract.MintToOwner(&_VolatileToken.TransactOpts, _amount)
 }
 
 // MintToOwner is a paid mutator transaction binding the contract method 0x48043f0d.
 //
 // Solidity: function mintToOwner(uint256 _amount) returns()
-func (_StableToken *StableTokenTransactorSession) MintToOwner(_amount *big.Int) (*types.Transaction, error) {
-	return _StableToken.Contract.MintToOwner(&_StableToken.TransactOpts, _amount)
+func (_VolatileToken *VolatileTokenTransactorSession) MintToOwner(_amount *big.Int) (*types.Transaction, error) {
+	return _VolatileToken.Contract.MintToOwner(&_VolatileToken.TransactOpts, _amount)
 }
 
 // RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
 //
 // Solidity: function renounceOwnership() returns()
-func (_StableToken *StableTokenTransactor) RenounceOwnership(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _StableToken.contract.Transact(opts, "renounceOwnership")
+func (_VolatileToken *VolatileTokenTransactor) RenounceOwnership(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _VolatileToken.contract.Transact(opts, "renounceOwnership")
 }
 
 // RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
 //
 // Solidity: function renounceOwnership() returns()
-func (_StableToken *StableTokenSession) RenounceOwnership() (*types.Transaction, error) {
-	return _StableToken.Contract.RenounceOwnership(&_StableToken.TransactOpts)
+func (_VolatileToken *VolatileTokenSession) RenounceOwnership() (*types.Transaction, error) {
+	return _VolatileToken.Contract.RenounceOwnership(&_VolatileToken.TransactOpts)
 }
 
 // RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
 //
 // Solidity: function renounceOwnership() returns()
-func (_StableToken *StableTokenTransactorSession) RenounceOwnership() (*types.Transaction, error) {
-	return _StableToken.Contract.RenounceOwnership(&_StableToken.TransactOpts)
+func (_VolatileToken *VolatileTokenTransactorSession) RenounceOwnership() (*types.Transaction, error) {
+	return _VolatileToken.Contract.RenounceOwnership(&_VolatileToken.TransactOpts)
+}
+
+// Sell is a paid mutator transaction binding the contract method 0xe4849b32.
+//
+// Solidity: function sell(uint256 _amount) returns(bool)
+func (_VolatileToken *VolatileTokenTransactor) Sell(opts *bind.TransactOpts, _amount *big.Int) (*types.Transaction, error) {
+	return _VolatileToken.contract.Transact(opts, "sell", _amount)
+}
+
+// Sell is a paid mutator transaction binding the contract method 0xe4849b32.
+//
+// Solidity: function sell(uint256 _amount) returns(bool)
+func (_VolatileToken *VolatileTokenSession) Sell(_amount *big.Int) (*types.Transaction, error) {
+	return _VolatileToken.Contract.Sell(&_VolatileToken.TransactOpts, _amount)
+}
+
+// Sell is a paid mutator transaction binding the contract method 0xe4849b32.
+//
+// Solidity: function sell(uint256 _amount) returns(bool)
+func (_VolatileToken *VolatileTokenTransactorSession) Sell(_amount *big.Int) (*types.Transaction, error) {
+	return _VolatileToken.Contract.Sell(&_VolatileToken.TransactOpts, _amount)
+}
+
+// SellTo is a paid mutator transaction binding the contract method 0xf542c867.
+//
+// Solidity: function sellTo(uint256 _amount, address _to) returns(bool)
+func (_VolatileToken *VolatileTokenTransactor) SellTo(opts *bind.TransactOpts, _amount *big.Int, _to common.Address) (*types.Transaction, error) {
+	return _VolatileToken.contract.Transact(opts, "sellTo", _amount, _to)
+}
+
+// SellTo is a paid mutator transaction binding the contract method 0xf542c867.
+//
+// Solidity: function sellTo(uint256 _amount, address _to) returns(bool)
+func (_VolatileToken *VolatileTokenSession) SellTo(_amount *big.Int, _to common.Address) (*types.Transaction, error) {
+	return _VolatileToken.Contract.SellTo(&_VolatileToken.TransactOpts, _amount, _to)
+}
+
+// SellTo is a paid mutator transaction binding the contract method 0xf542c867.
+//
+// Solidity: function sellTo(uint256 _amount, address _to) returns(bool)
+func (_VolatileToken *VolatileTokenTransactorSession) SellTo(_amount *big.Int, _to common.Address) (*types.Transaction, error) {
+	return _VolatileToken.Contract.SellTo(&_VolatileToken.TransactOpts, _amount, _to)
 }
 
 // SimpleBuy is a paid mutator transaction binding the contract method 0xc4582fa1.
 //
 // Solidity: function simpleBuy(uint256 _value, uint256 _wantAmount, bytes32 _assistingID) returns()
-func (_StableToken *StableTokenTransactor) SimpleBuy(opts *bind.TransactOpts, _value *big.Int, _wantAmount *big.Int, _assistingID [32]byte) (*types.Transaction, error) {
-	return _StableToken.contract.Transact(opts, "simpleBuy", _value, _wantAmount, _assistingID)
+func (_VolatileToken *VolatileTokenTransactor) SimpleBuy(opts *bind.TransactOpts, _value *big.Int, _wantAmount *big.Int, _assistingID [32]byte) (*types.Transaction, error) {
+	return _VolatileToken.contract.Transact(opts, "simpleBuy", _value, _wantAmount, _assistingID)
 }
 
 // SimpleBuy is a paid mutator transaction binding the contract method 0xc4582fa1.
 //
 // Solidity: function simpleBuy(uint256 _value, uint256 _wantAmount, bytes32 _assistingID) returns()
-func (_StableToken *StableTokenSession) SimpleBuy(_value *big.Int, _wantAmount *big.Int, _assistingID [32]byte) (*types.Transaction, error) {
-	return _StableToken.Contract.SimpleBuy(&_StableToken.TransactOpts, _value, _wantAmount, _assistingID)
+func (_VolatileToken *VolatileTokenSession) SimpleBuy(_value *big.Int, _wantAmount *big.Int, _assistingID [32]byte) (*types.Transaction, error) {
+	return _VolatileToken.Contract.SimpleBuy(&_VolatileToken.TransactOpts, _value, _wantAmount, _assistingID)
 }
 
 // SimpleBuy is a paid mutator transaction binding the contract method 0xc4582fa1.
 //
 // Solidity: function simpleBuy(uint256 _value, uint256 _wantAmount, bytes32 _assistingID) returns()
-func (_StableToken *StableTokenTransactorSession) SimpleBuy(_value *big.Int, _wantAmount *big.Int, _assistingID [32]byte) (*types.Transaction, error) {
-	return _StableToken.Contract.SimpleBuy(&_StableToken.TransactOpts, _value, _wantAmount, _assistingID)
+func (_VolatileToken *VolatileTokenTransactorSession) SimpleBuy(_value *big.Int, _wantAmount *big.Int, _assistingID [32]byte) (*types.Transaction, error) {
+	return _VolatileToken.Contract.SimpleBuy(&_VolatileToken.TransactOpts, _value, _wantAmount, _assistingID)
 }
 
 // Transfer is a paid mutator transaction binding the contract method 0xbe45fd62.
 //
 // Solidity: function transfer(address _to, uint256 _value, bytes _data) returns(bool success)
-func (_StableToken *StableTokenTransactor) Transfer(opts *bind.TransactOpts, _to common.Address, _value *big.Int, _data []byte) (*types.Transaction, error) {
-	return _StableToken.contract.Transact(opts, "transfer", _to, _value, _data)
+func (_VolatileToken *VolatileTokenTransactor) Transfer(opts *bind.TransactOpts, _to common.Address, _value *big.Int, _data []byte) (*types.Transaction, error) {
+	return _VolatileToken.contract.Transact(opts, "transfer", _to, _value, _data)
 }
 
 // Transfer is a paid mutator transaction binding the contract method 0xbe45fd62.
 //
 // Solidity: function transfer(address _to, uint256 _value, bytes _data) returns(bool success)
-func (_StableToken *StableTokenSession) Transfer(_to common.Address, _value *big.Int, _data []byte) (*types.Transaction, error) {
-	return _StableToken.Contract.Transfer(&_StableToken.TransactOpts, _to, _value, _data)
+func (_VolatileToken *VolatileTokenSession) Transfer(_to common.Address, _value *big.Int, _data []byte) (*types.Transaction, error) {
+	return _VolatileToken.Contract.Transfer(&_VolatileToken.TransactOpts, _to, _value, _data)
 }
 
 // Transfer is a paid mutator transaction binding the contract method 0xbe45fd62.
 //
 // Solidity: function transfer(address _to, uint256 _value, bytes _data) returns(bool success)
-func (_StableToken *StableTokenTransactorSession) Transfer(_to common.Address, _value *big.Int, _data []byte) (*types.Transaction, error) {
-	return _StableToken.Contract.Transfer(&_StableToken.TransactOpts, _to, _value, _data)
+func (_VolatileToken *VolatileTokenTransactorSession) Transfer(_to common.Address, _value *big.Int, _data []byte) (*types.Transaction, error) {
+	return _VolatileToken.Contract.Transfer(&_VolatileToken.TransactOpts, _to, _value, _data)
 }
 
 // TransferFrom is a paid mutator transaction binding the contract method 0x23b872dd.
 //
 // Solidity: function transferFrom(address from, address to, uint256 value) returns(bool)
-func (_StableToken *StableTokenTransactor) TransferFrom(opts *bind.TransactOpts, from common.Address, to common.Address, value *big.Int) (*types.Transaction, error) {
-	return _StableToken.contract.Transact(opts, "transferFrom", from, to, value)
+func (_VolatileToken *VolatileTokenTransactor) TransferFrom(opts *bind.TransactOpts, from common.Address, to common.Address, value *big.Int) (*types.Transaction, error) {
+	return _VolatileToken.contract.Transact(opts, "transferFrom", from, to, value)
 }
 
 // TransferFrom is a paid mutator transaction binding the contract method 0x23b872dd.
 //
 // Solidity: function transferFrom(address from, address to, uint256 value) returns(bool)
-func (_StableToken *StableTokenSession) TransferFrom(from common.Address, to common.Address, value *big.Int) (*types.Transaction, error) {
-	return _StableToken.Contract.TransferFrom(&_StableToken.TransactOpts, from, to, value)
+func (_VolatileToken *VolatileTokenSession) TransferFrom(from common.Address, to common.Address, value *big.Int) (*types.Transaction, error) {
+	return _VolatileToken.Contract.TransferFrom(&_VolatileToken.TransactOpts, from, to, value)
 }
 
 // TransferFrom is a paid mutator transaction binding the contract method 0x23b872dd.
 //
 // Solidity: function transferFrom(address from, address to, uint256 value) returns(bool)
-func (_StableToken *StableTokenTransactorSession) TransferFrom(from common.Address, to common.Address, value *big.Int) (*types.Transaction, error) {
-	return _StableToken.Contract.TransferFrom(&_StableToken.TransactOpts, from, to, value)
+func (_VolatileToken *VolatileTokenTransactorSession) TransferFrom(from common.Address, to common.Address, value *big.Int) (*types.Transaction, error) {
+	return _VolatileToken.Contract.TransferFrom(&_VolatileToken.TransactOpts, from, to, value)
 }
 
 // TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
 //
 // Solidity: function transferOwnership(address newOwner) returns()
-func (_StableToken *StableTokenTransactor) TransferOwnership(opts *bind.TransactOpts, newOwner common.Address) (*types.Transaction, error) {
-	return _StableToken.contract.Transact(opts, "transferOwnership", newOwner)
+func (_VolatileToken *VolatileTokenTransactor) TransferOwnership(opts *bind.TransactOpts, newOwner common.Address) (*types.Transaction, error) {
+	return _VolatileToken.contract.Transact(opts, "transferOwnership", newOwner)
 }
 
 // TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
 //
 // Solidity: function transferOwnership(address newOwner) returns()
-func (_StableToken *StableTokenSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
-	return _StableToken.Contract.TransferOwnership(&_StableToken.TransactOpts, newOwner)
+func (_VolatileToken *VolatileTokenSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
+	return _VolatileToken.Contract.TransferOwnership(&_VolatileToken.TransactOpts, newOwner)
 }
 
 // TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
 //
 // Solidity: function transferOwnership(address newOwner) returns()
-func (_StableToken *StableTokenTransactorSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
-	return _StableToken.Contract.TransferOwnership(&_StableToken.TransactOpts, newOwner)
+func (_VolatileToken *VolatileTokenTransactorSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
+	return _VolatileToken.Contract.TransferOwnership(&_VolatileToken.TransactOpts, newOwner)
 }
 
-// StableTokenApprovalIterator is returned from FilterApproval and is used to iterate over the raw logs and unpacked data for Approval events raised by the StableToken contract.
-type StableTokenApprovalIterator struct {
-	Event *StableTokenApproval // Event containing the contract specifics and raw log
+// VolatileTokenApprovalIterator is returned from FilterApproval and is used to iterate over the raw logs and unpacked data for Approval events raised by the VolatileToken contract.
+type VolatileTokenApprovalIterator struct {
+	Event *VolatileTokenApproval // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -4188,7 +4033,7 @@ type StableTokenApprovalIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *StableTokenApprovalIterator) Next() bool {
+func (it *VolatileTokenApprovalIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -4197,7 +4042,7 @@ func (it *StableTokenApprovalIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(StableTokenApproval)
+			it.Event = new(VolatileTokenApproval)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -4212,7 +4057,7 @@ func (it *StableTokenApprovalIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(StableTokenApproval)
+		it.Event = new(VolatileTokenApproval)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -4228,19 +4073,19 @@ func (it *StableTokenApprovalIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *StableTokenApprovalIterator) Error() error {
+func (it *VolatileTokenApprovalIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *StableTokenApprovalIterator) Close() error {
+func (it *VolatileTokenApprovalIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// StableTokenApproval represents a Approval event raised by the StableToken contract.
-type StableTokenApproval struct {
+// VolatileTokenApproval represents a Approval event raised by the VolatileToken contract.
+type VolatileTokenApproval struct {
 	Owner   common.Address
 	Spender common.Address
 	Value   *big.Int
@@ -4250,7 +4095,7 @@ type StableTokenApproval struct {
 // FilterApproval is a free log retrieval operation binding the contract event 0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925.
 //
 // Solidity: event Approval(address indexed owner, address indexed spender, uint256 value)
-func (_StableToken *StableTokenFilterer) FilterApproval(opts *bind.FilterOpts, owner []common.Address, spender []common.Address) (*StableTokenApprovalIterator, error) {
+func (_VolatileToken *VolatileTokenFilterer) FilterApproval(opts *bind.FilterOpts, owner []common.Address, spender []common.Address) (*VolatileTokenApprovalIterator, error) {
 
 	var ownerRule []interface{}
 	for _, ownerItem := range owner {
@@ -4261,17 +4106,17 @@ func (_StableToken *StableTokenFilterer) FilterApproval(opts *bind.FilterOpts, o
 		spenderRule = append(spenderRule, spenderItem)
 	}
 
-	logs, sub, err := _StableToken.contract.FilterLogs(opts, "Approval", ownerRule, spenderRule)
+	logs, sub, err := _VolatileToken.contract.FilterLogs(opts, "Approval", ownerRule, spenderRule)
 	if err != nil {
 		return nil, err
 	}
-	return &StableTokenApprovalIterator{contract: _StableToken.contract, event: "Approval", logs: logs, sub: sub}, nil
+	return &VolatileTokenApprovalIterator{contract: _VolatileToken.contract, event: "Approval", logs: logs, sub: sub}, nil
 }
 
 // WatchApproval is a free log subscription operation binding the contract event 0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925.
 //
 // Solidity: event Approval(address indexed owner, address indexed spender, uint256 value)
-func (_StableToken *StableTokenFilterer) WatchApproval(opts *bind.WatchOpts, sink chan<- *StableTokenApproval, owner []common.Address, spender []common.Address) (event.Subscription, error) {
+func (_VolatileToken *VolatileTokenFilterer) WatchApproval(opts *bind.WatchOpts, sink chan<- *VolatileTokenApproval, owner []common.Address, spender []common.Address) (event.Subscription, error) {
 
 	var ownerRule []interface{}
 	for _, ownerItem := range owner {
@@ -4282,7 +4127,7 @@ func (_StableToken *StableTokenFilterer) WatchApproval(opts *bind.WatchOpts, sin
 		spenderRule = append(spenderRule, spenderItem)
 	}
 
-	logs, sub, err := _StableToken.contract.WatchLogs(opts, "Approval", ownerRule, spenderRule)
+	logs, sub, err := _VolatileToken.contract.WatchLogs(opts, "Approval", ownerRule, spenderRule)
 	if err != nil {
 		return nil, err
 	}
@@ -4292,8 +4137,8 @@ func (_StableToken *StableTokenFilterer) WatchApproval(opts *bind.WatchOpts, sin
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(StableTokenApproval)
-				if err := _StableToken.contract.UnpackLog(event, "Approval", log); err != nil {
+				event := new(VolatileTokenApproval)
+				if err := _VolatileToken.contract.UnpackLog(event, "Approval", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -4314,9 +4159,9 @@ func (_StableToken *StableTokenFilterer) WatchApproval(opts *bind.WatchOpts, sin
 	}), nil
 }
 
-// StableTokenOwnershipTransferredIterator is returned from FilterOwnershipTransferred and is used to iterate over the raw logs and unpacked data for OwnershipTransferred events raised by the StableToken contract.
-type StableTokenOwnershipTransferredIterator struct {
-	Event *StableTokenOwnershipTransferred // Event containing the contract specifics and raw log
+// VolatileTokenOwnershipTransferredIterator is returned from FilterOwnershipTransferred and is used to iterate over the raw logs and unpacked data for OwnershipTransferred events raised by the VolatileToken contract.
+type VolatileTokenOwnershipTransferredIterator struct {
+	Event *VolatileTokenOwnershipTransferred // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -4330,7 +4175,7 @@ type StableTokenOwnershipTransferredIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *StableTokenOwnershipTransferredIterator) Next() bool {
+func (it *VolatileTokenOwnershipTransferredIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -4339,7 +4184,7 @@ func (it *StableTokenOwnershipTransferredIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(StableTokenOwnershipTransferred)
+			it.Event = new(VolatileTokenOwnershipTransferred)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -4354,7 +4199,7 @@ func (it *StableTokenOwnershipTransferredIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(StableTokenOwnershipTransferred)
+		it.Event = new(VolatileTokenOwnershipTransferred)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -4370,19 +4215,19 @@ func (it *StableTokenOwnershipTransferredIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *StableTokenOwnershipTransferredIterator) Error() error {
+func (it *VolatileTokenOwnershipTransferredIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *StableTokenOwnershipTransferredIterator) Close() error {
+func (it *VolatileTokenOwnershipTransferredIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// StableTokenOwnershipTransferred represents a OwnershipTransferred event raised by the StableToken contract.
-type StableTokenOwnershipTransferred struct {
+// VolatileTokenOwnershipTransferred represents a OwnershipTransferred event raised by the VolatileToken contract.
+type VolatileTokenOwnershipTransferred struct {
 	PreviousOwner common.Address
 	NewOwner      common.Address
 	Raw           types.Log // Blockchain specific contextual infos
@@ -4391,7 +4236,7 @@ type StableTokenOwnershipTransferred struct {
 // FilterOwnershipTransferred is a free log retrieval operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
 //
 // Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_StableToken *StableTokenFilterer) FilterOwnershipTransferred(opts *bind.FilterOpts, previousOwner []common.Address, newOwner []common.Address) (*StableTokenOwnershipTransferredIterator, error) {
+func (_VolatileToken *VolatileTokenFilterer) FilterOwnershipTransferred(opts *bind.FilterOpts, previousOwner []common.Address, newOwner []common.Address) (*VolatileTokenOwnershipTransferredIterator, error) {
 
 	var previousOwnerRule []interface{}
 	for _, previousOwnerItem := range previousOwner {
@@ -4402,17 +4247,17 @@ func (_StableToken *StableTokenFilterer) FilterOwnershipTransferred(opts *bind.F
 		newOwnerRule = append(newOwnerRule, newOwnerItem)
 	}
 
-	logs, sub, err := _StableToken.contract.FilterLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
+	logs, sub, err := _VolatileToken.contract.FilterLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
 	if err != nil {
 		return nil, err
 	}
-	return &StableTokenOwnershipTransferredIterator{contract: _StableToken.contract, event: "OwnershipTransferred", logs: logs, sub: sub}, nil
+	return &VolatileTokenOwnershipTransferredIterator{contract: _VolatileToken.contract, event: "OwnershipTransferred", logs: logs, sub: sub}, nil
 }
 
 // WatchOwnershipTransferred is a free log subscription operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
 //
 // Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_StableToken *StableTokenFilterer) WatchOwnershipTransferred(opts *bind.WatchOpts, sink chan<- *StableTokenOwnershipTransferred, previousOwner []common.Address, newOwner []common.Address) (event.Subscription, error) {
+func (_VolatileToken *VolatileTokenFilterer) WatchOwnershipTransferred(opts *bind.WatchOpts, sink chan<- *VolatileTokenOwnershipTransferred, previousOwner []common.Address, newOwner []common.Address) (event.Subscription, error) {
 
 	var previousOwnerRule []interface{}
 	for _, previousOwnerItem := range previousOwner {
@@ -4423,7 +4268,7 @@ func (_StableToken *StableTokenFilterer) WatchOwnershipTransferred(opts *bind.Wa
 		newOwnerRule = append(newOwnerRule, newOwnerItem)
 	}
 
-	logs, sub, err := _StableToken.contract.WatchLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
+	logs, sub, err := _VolatileToken.contract.WatchLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
 	if err != nil {
 		return nil, err
 	}
@@ -4433,8 +4278,8 @@ func (_StableToken *StableTokenFilterer) WatchOwnershipTransferred(opts *bind.Wa
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(StableTokenOwnershipTransferred)
-				if err := _StableToken.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+				event := new(VolatileTokenOwnershipTransferred)
+				if err := _VolatileToken.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -4455,9 +4300,9 @@ func (_StableToken *StableTokenFilterer) WatchOwnershipTransferred(opts *bind.Wa
 	}), nil
 }
 
-// StableTokenTransferIterator is returned from FilterTransfer and is used to iterate over the raw logs and unpacked data for Transfer events raised by the StableToken contract.
-type StableTokenTransferIterator struct {
-	Event *StableTokenTransfer // Event containing the contract specifics and raw log
+// VolatileTokenTransferIterator is returned from FilterTransfer and is used to iterate over the raw logs and unpacked data for Transfer events raised by the VolatileToken contract.
+type VolatileTokenTransferIterator struct {
+	Event *VolatileTokenTransfer // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -4471,7 +4316,7 @@ type StableTokenTransferIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *StableTokenTransferIterator) Next() bool {
+func (it *VolatileTokenTransferIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -4480,7 +4325,7 @@ func (it *StableTokenTransferIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(StableTokenTransfer)
+			it.Event = new(VolatileTokenTransfer)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -4495,7 +4340,7 @@ func (it *StableTokenTransferIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(StableTokenTransfer)
+		it.Event = new(VolatileTokenTransfer)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -4511,19 +4356,19 @@ func (it *StableTokenTransferIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *StableTokenTransferIterator) Error() error {
+func (it *VolatileTokenTransferIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *StableTokenTransferIterator) Close() error {
+func (it *VolatileTokenTransferIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// StableTokenTransfer represents a Transfer event raised by the StableToken contract.
-type StableTokenTransfer struct {
+// VolatileTokenTransfer represents a Transfer event raised by the VolatileToken contract.
+type VolatileTokenTransfer struct {
 	From  common.Address
 	To    common.Address
 	Value *big.Int
@@ -4533,7 +4378,7 @@ type StableTokenTransfer struct {
 // FilterTransfer is a free log retrieval operation binding the contract event 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef.
 //
 // Solidity: event Transfer(address indexed from, address indexed to, uint256 value)
-func (_StableToken *StableTokenFilterer) FilterTransfer(opts *bind.FilterOpts, from []common.Address, to []common.Address) (*StableTokenTransferIterator, error) {
+func (_VolatileToken *VolatileTokenFilterer) FilterTransfer(opts *bind.FilterOpts, from []common.Address, to []common.Address) (*VolatileTokenTransferIterator, error) {
 
 	var fromRule []interface{}
 	for _, fromItem := range from {
@@ -4544,17 +4389,17 @@ func (_StableToken *StableTokenFilterer) FilterTransfer(opts *bind.FilterOpts, f
 		toRule = append(toRule, toItem)
 	}
 
-	logs, sub, err := _StableToken.contract.FilterLogs(opts, "Transfer", fromRule, toRule)
+	logs, sub, err := _VolatileToken.contract.FilterLogs(opts, "Transfer", fromRule, toRule)
 	if err != nil {
 		return nil, err
 	}
-	return &StableTokenTransferIterator{contract: _StableToken.contract, event: "Transfer", logs: logs, sub: sub}, nil
+	return &VolatileTokenTransferIterator{contract: _VolatileToken.contract, event: "Transfer", logs: logs, sub: sub}, nil
 }
 
 // WatchTransfer is a free log subscription operation binding the contract event 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef.
 //
 // Solidity: event Transfer(address indexed from, address indexed to, uint256 value)
-func (_StableToken *StableTokenFilterer) WatchTransfer(opts *bind.WatchOpts, sink chan<- *StableTokenTransfer, from []common.Address, to []common.Address) (event.Subscription, error) {
+func (_VolatileToken *VolatileTokenFilterer) WatchTransfer(opts *bind.WatchOpts, sink chan<- *VolatileTokenTransfer, from []common.Address, to []common.Address) (event.Subscription, error) {
 
 	var fromRule []interface{}
 	for _, fromItem := range from {
@@ -4565,7 +4410,7 @@ func (_StableToken *StableTokenFilterer) WatchTransfer(opts *bind.WatchOpts, sin
 		toRule = append(toRule, toItem)
 	}
 
-	logs, sub, err := _StableToken.contract.WatchLogs(opts, "Transfer", fromRule, toRule)
+	logs, sub, err := _VolatileToken.contract.WatchLogs(opts, "Transfer", fromRule, toRule)
 	if err != nil {
 		return nil, err
 	}
@@ -4575,8 +4420,8 @@ func (_StableToken *StableTokenFilterer) WatchTransfer(opts *bind.WatchOpts, sin
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(StableTokenTransfer)
-				if err := _StableToken.contract.UnpackLog(event, "Transfer", log); err != nil {
+				event := new(VolatileTokenTransfer)
+				if err := _VolatileToken.contract.UnpackLog(event, "Transfer", log); err != nil {
 					return err
 				}
 				event.Raw = log
