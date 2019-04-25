@@ -194,7 +194,7 @@ func (w *wizard) makeGenesis() {
 		}
 		if onwer != nil {
 			code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
-				address, _, _, err := token.DeployNtfToken(auth, sim, *onwer)
+				address, _, _, err := ntf.DeployNtfToken(auth, sim, *onwer)
 				return address, err
 			})
 			if err != nil {
@@ -437,4 +437,3 @@ func saveGenesis(folder, network, client string, spec interface{}) {
 	}
 	log.Info("Saved genesis chain spec", "client", client, "path", path)
 }
-

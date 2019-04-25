@@ -943,7 +943,7 @@ func deployConsensusContracts(state *state.StateDB, chainConfig *params.ChainCon
 		owner := common.HexToAddress("0x000000270840d8ebdffc7d162193cc5ba1ad8707")
 		// Generate contract code and data using a simulated backend
 		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
-			address, _, _, err := token.DeployNtfToken(auth, sim, owner)
+			address, _, _, err := ntf.DeployNtfToken(auth, sim, owner)
 			return address, err
 		})
 		if err != nil {
