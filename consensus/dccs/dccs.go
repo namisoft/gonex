@@ -28,6 +28,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/contracts/nexty/endurio/pairex"
+	"github.com/ethereum/go-ethereum/contracts/nexty/endurio/stable"
+	"github.com/ethereum/go-ethereum/contracts/nexty/endurio/volatile"
+
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
@@ -955,6 +959,7 @@ func deployConsensusContracts(state *state.StateDB, chainConfig *params.ChainCon
 
 		// Deploy only, no upgrade
 		deployContract(state, params.TokenAddress, code, storage, false)
+		log.Info("⚙ Contract deployed successful", "contract", "NTFToken")
 	}
 
 	// Deploy Nexty Governance Contract
@@ -971,6 +976,59 @@ func deployConsensusContracts(state *state.StateDB, chainConfig *params.ChainCon
 		}
 		// Deploy or update
 		deployContract(state, chainConfig.Dccs.Contract, code, storage, true)
+		log.Info("⚙ Contract deployed successful", "contract", "NextyGovernance")
+	}
+
+	return nil
+}
+
+func deployEndurioContracts(state *state.StateDB, chainConfig *params.ChainConfig) error {
+	// Deploy PairEx Contract
+	{
+		// Generate contract code and data using a simulated backend
+		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
+			address, _, _, err := pairex.DeployPairEx(auth, sim)
+			return address, err
+		})
+		if err != nil {
+			return err
+		}
+
+		// Deploy only, no upgrade
+		deployContract(state, params.PairExAddress, code, storage, false)
+		log.Info("⚙ Contract deployed successful", "contract", "PairEx")
+	}
+
+	// Deploy VolatileToken Contract
+	{
+		// Generate contract code and data using a simulated backend
+		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
+			address, _, _, err := volatile.DeployVolatileToken(auth, sim, params.PairExAddress)
+			return address, err
+		})
+		if err != nil {
+			return err
+		}
+
+		// Deploy only, no upgrade
+		deployContract(state, params.VolatileTokenAddress, code, storage, false)
+		log.Info("⚙ Contract deployed successful", "contract", "VolatileToken")
+	}
+
+	// Deploy StableToken Contract
+	{
+		// Generate contract code and data using a simulated backend
+		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
+			address, _, _, err := stable.DeployStableToken(auth, sim, params.PairExAddress)
+			return address, err
+		})
+		if err != nil {
+			return err
+		}
+
+		// Deploy only, no upgrade
+		deployContract(state, params.StableTokenAddress, code, storage, false)
+		log.Info("⚙ Contract deployed successful", "contract", "StableToken")
 	}
 
 	return nil
@@ -1013,6 +1071,13 @@ func (d *Dccs) finalize(chain consensus.ChainReader, header *types.Header, state
 // finalize2 implements consensus.Engine, ensuring no uncles are set, nor block
 // rewards given, and returns the final block.
 func (d *Dccs) finalize2(chain consensus.ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
+	if header.Number.Cmp(d.config.EndurioBlock) == 0 {
+		if deployEndurioContracts(state, chain.Config()) != nil {
+			return nil, errors.New("Unable to deploy Endurio stablecoin contracts")
+		}
+		log.Info("⚙ Successfully deploy Endurio stablecoin contracts")
+	}
+
 	// Calculate any block reward for the sealer and commit the final state root
 	d.calculateRewards(chain, state, header)
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
