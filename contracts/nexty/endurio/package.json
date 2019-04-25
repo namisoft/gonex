@@ -4,9 +4,9 @@
   "description": "Endurio Stablecoin Contract",
   "scripts": {
     "build": "npm run build-pairex && npm run build-volatile && npm run build-stable",
-    "build-pairex": "cp -pruv src/. node_modules; cd node_modules; ../../../../build/bin/abigen -sol=PairEx.sol --pkg=endurio -out=../PairEx.go",
-    "build-stable": "cp -pruv src/tokens/. node_modules; cd node_modules; ../../../../build/bin/abigen -sol=StableToken.sol --pkg=endurio -out=../StableToken.go",
-    "build-volatile": "cp -pruv src/tokens/. node_modules; cd node_modules; ../../../../build/bin/abigen -sol=VolatileToken.sol --pkg=endurio -out=../VolatileToken.go"
+    "build-pairex": "cp -pruv src/. node_modules; cd node_modules; ../../../../build/bin/abigen -sol=PairEx.sol --pkg=pairex -out=../pairex/PairEx.go",
+    "build-stable": "cp -pruv src/tokens/. node_modules; cd node_modules; ../../../../build/bin/abigen -sol=StableToken.sol --pkg=stable -out=../stable/StableToken.go",
+    "build-volatile": "cp -pruv src/tokens/. node_modules; cd node_modules; ../../../../build/bin/abigen -sol=VolatileToken.sol --pkg=volatile -out=../volatile/VolatileToken.go"
   },
   "author": "nexty.io",
   "dependencies": {

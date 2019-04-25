@@ -3,12 +3,8 @@ pragma solidity ^0.5.2;
 import "openzeppelin-solidity/contracts/math/Math.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./OrderBook.sol";
-import "./lib/BytesConvert.sol";
-import "./lib/ABI.sol";
 
 contract PairEx is OrderBook {
-    using BytesConvert for *;
-    using ABI for *;
 
     constructor () 
         public
