@@ -964,7 +964,7 @@ func deployConsensusContracts(state *state.StateDB, chainConfig *params.ChainCon
 	return nil
 }
 
-func deployEndurioContracts(state *state.StateDB, chainConfig *params.ChainConfig) error {
+func deployEndurioContracts(state *state.StateDB) error {
 	// Deploy PairEx Contract
 	{
 		// Generate contract code and data using a simulated backend
@@ -1018,6 +1018,16 @@ func deployEndurioContracts(state *state.StateDB, chainConfig *params.ChainConfi
 
 // Initialize implements the consensus.Engine
 func (d *Dccs) Initialize(chain consensus.ChainReader, header *types.Header, state *state.StateDB) (types.Transactions, types.Receipts, error) {
+	if !chain.Config().IsEndurio(header.Number) {
+		return nil, nil, nil
+	}
+	if header.Number.Cmp(d.config.EndurioBlock) == 0 {
+		if err := deployEndurioContracts(state); err != nil {
+			log.Error("Failed to deploy Endurio stablecoin contracts", "err", err)
+			return nil, nil, err
+		}
+		log.Info("⚙ Successfully deploy Endurio stablecoin contracts")
+	}
 	return nil, nil, nil
 }
 
@@ -1089,12 +1099,6 @@ func (d *Dccs) finalizeAndAssemble(chain consensus.ChainReader, header *types.He
 // finalize2 implements consensus.Engine, ensuring no uncles are set, nor block
 // rewards given, and returns the final block.
 func (d *Dccs) finalize2(chain consensus.ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header) {
-	if header.Number.Cmp(d.config.EndurioBlock) == 0 {
-		if deployEndurioContracts(state, chain.Config()) != nil {
-			return
-		}
-	}
-
 	// Calculate any block reward for the sealer and commit the final state root
 	d.calculateRewards(chain, state, header)
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
@@ -1104,13 +1108,6 @@ func (d *Dccs) finalize2(chain consensus.ChainReader, header *types.Header, stat
 // finalizeAndAssemble2 implements consensus.Engine, ensuring no uncles are set, nor block
 // rewards given, and returns the final block.
 func (d *Dccs) finalizeAndAssemble2(chain consensus.ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
-	if header.Number.Cmp(d.config.EndurioBlock) == 0 {
-		if deployEndurioContracts(state, chain.Config()) != nil {
-			return nil, errors.New("Unable to deploy Endurio stablecoin contracts")
-		}
-		log.Info("⚙ Successfully deploy Endurio stablecoin contracts")
-	}
-
 	// Calculate any block reward for the sealer and commit the final state root
 	d.calculateRewards(chain, state, header)
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
@@ -1533,4 +1530,3 @@ func (d *Dccs) MedianPriceStat(chain consensus.ChainReader, number uint64) strin
 	}
 	return price.Rat().FloatString(4)
 }
-
