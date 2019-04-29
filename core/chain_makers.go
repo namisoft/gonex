@@ -204,6 +204,9 @@ func GenerateChain(config *params.ChainConfig, parent *types.Block, engine conse
 				}
 			}
 		}
+		if b.engine != nil {
+			b.engine.Initialize(chainreader, b.header, statedb)
+		}
 		if config.DAOForkSupport && config.DAOForkBlock != nil && config.DAOForkBlock.Cmp(b.header.Number) == 0 {
 			misc.ApplyDAOHardFork(statedb)
 		}
