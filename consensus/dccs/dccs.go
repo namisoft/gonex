@@ -1041,6 +1041,11 @@ func deployEndurioContracts(state *state.StateDB, chainConfig *params.ChainConfi
 	return nil
 }
 
+// Initialize implements the consensus.Engine
+func (d *Dccs) Initialize(chain consensus.ChainReader, header *types.Header, state *state.StateDB) (types.Transactions, types.Receipts, error) {
+	return nil, nil, nil
+}
+
 // Finalize implements consensus.Engine, ensuring no uncles are set, nor block
 // rewards given, and returns the final block.
 func (d *Dccs) Finalize(chain consensus.ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header) {
