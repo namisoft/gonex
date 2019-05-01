@@ -33,6 +33,7 @@ import (
 const (
 	priceServiceURL       = "http://localhost:3000/price/NUSD_USD"
 	nonCanonicalCacheSize = params.CanonicalDepth
+	medianPriceCacheSize  = 6
 )
 
 // PriceData represents the external price feeded from outside
@@ -43,14 +44,13 @@ type PriceData struct {
 }
 
 type PriceEngine struct {
-	feeder      *Feeder
-	ticker      *time.Ticker
-	canonPrices *lru.Cache // canonical prices: number -> Price
-	nonacPrices *lru.Cache // non-canonical prices: hash -> Price
-	ttl         time.Duration
-	config      *params.DccsConfig
-
-	lastAbsorptionBlock *big.Intao
+	feeder       *Feeder
+	ticker       *time.Ticker
+	canonPrices  *lru.Cache // canonical prices: number -> Price
+	nonacPrices  *lru.Cache // non-canonical prices: hash -> Price
+	medianPrices *lru.Cache // calculated median price: hash -> Price
+	ttl          time.Duration
+	config       *params.DccsConfig
 }
 
 func newPriceEngine(conf *params.DccsConfig) *PriceEngine {
@@ -74,14 +74,19 @@ func newPriceEngine(conf *params.DccsConfig) *PriceEngine {
 	maxPriceCount := int(conf.PriceSamplingDuration / conf.PriceSamplingInterval)
 	e.canonPrices, err = lru.New(maxPriceCount) // add some extra buffer for sidechain values
 	if err != nil {
-		log.Crit("Unable to create canonical price cache", "Endurio block", conf.EndurioBlock, "pricesCount", (conf.PriceSamplingDuration / conf.PriceSamplingInterval), "error", err)
+		log.Crit("Unable to create the canonical price cache", "Endurio block", conf.EndurioBlock, "pricesCount", (conf.PriceSamplingDuration / conf.PriceSamplingInterval), "error", err)
 		return nil
 	}
 
 	e.nonacPrices, err = lru.New(nonCanonicalCacheSize)
 	if err != nil {
-		log.Crit("Unable to create non-canonical price cache", "Endurio block", conf.EndurioBlock, "nonCanonicalCacheSize", nonCanonicalCacheSize, "error", err)
+		log.Crit("Unable to create the non-canonical price cache", "Endurio block", conf.EndurioBlock, "nonCanonicalCacheSize", nonCanonicalCacheSize, "error", err)
 		return nil
+	}
+
+	e.medianPrices, err = lru.New(medianPriceCacheSize)
+	if err != nil {
+		log.Crit("Unable to create the median price cache", "Endurio block", conf.EndurioBlock, "medianPriceCacheSize", medianPriceCacheSize, "error", err)
 	}
 
 	go e.fetchingLoop()
@@ -103,12 +108,22 @@ func (a ByPrice) Len() int           { return len(a) }
 func (a ByPrice) Less(i, j int) bool { return a[i].Rat().Cmp(a[j].Rat()) < 0 }
 func (a ByPrice) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 
-func (e *PriceEngine) GetMedianPrice(chain consensus.ChainReader, number uint64) *Price {
+// CalcMedianPrice calculates the median price of a price block and cache it.
+func (e *PriceEngine) CalcMedianPrice(chain consensus.ChainReader, number uint64) (*Price, error) {
 	if !e.config.IsPriceBlock(number) {
 		// not a price block
-		return nil
+		return nil, errors.New("Not a price block")
 	}
-	prices := make([]*Price, 0, e.config.PriceSamplingDuration/e.config.PriceSamplingInterval)
+	header := chain.GetHeaderByNumber(number)
+	if header == nil {
+		return nil, errors.New("Block number too high")
+	}
+	if median, ok := e.medianPrices.Get(header.Hash()); ok {
+		// cache found
+		return median.(*Price), nil
+	}
+	cap := int(e.config.PriceSamplingDuration / e.config.PriceSamplingInterval)
+	prices := make([]*Price, 0, cap)
 	for n := number; n > number-e.config.PriceSamplingDuration; n -= e.config.PriceSamplingInterval {
 		price := e.GetBlockPrice(chain, n)
 		if price != nil {
@@ -116,16 +131,19 @@ func (e *PriceEngine) GetMedianPrice(chain consensus.ChainReader, number uint64)
 		}
 	}
 	count := len(prices)
-	if count == 0 {
-		return nil
+	if count*3 < cap*2 {
+		// require atleast 2/3 of maximum price feed
+		// TODO: make this configurable
+		return nil, errors.New("Not enough block with price to come to a consensus")
 	}
 	sort.Sort(ByPrice(prices))
 	if count&1 == 1 {
-		return prices[count/2]
+		return prices[count/2], nil
 	}
 	median := new(big.Rat).Add(prices[count/2-1].Rat(), prices[count/2].Rat())
 	median.Mul(median, common.Rat1_2)
-	return (*Price)(median)
+	e.medianPrices.Add(header.Hash(), median)
+	return (*Price)(median), nil
 }
 
 func (e *PriceEngine) GetBlockPrice(chain consensus.ChainReader, number uint64) *Price {
