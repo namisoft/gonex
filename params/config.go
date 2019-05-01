@@ -41,6 +41,8 @@ var (
 	PairExAddress        = common.HexToAddress("0x0000000000000000000000000000000000123456") // PairEx contract address
 	VolatileTokenAddress = common.HexToAddress("0x0000000000000000000000000000000001234567") // MNTY token contract address
 	StableTokenAddress   = common.HexToAddress("0x0000000000000000000000000000000012345678") // NUSD token contract address
+	// Endurio consensus state addresses
+	AbsorptionAddress = BurnAddress
 )
 
 var (
