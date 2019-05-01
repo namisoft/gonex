@@ -34,4 +34,6 @@ var (
 	Rat1   = big.NewRat(1, 1)
 	Rat2   = big.NewRat(2, 1)
 	Rat1_2 = big.NewRat(1, 2)
+
+	RatNeg1_2 = big.NewRat(-1, 2)
 )
