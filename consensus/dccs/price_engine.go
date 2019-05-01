@@ -25,6 +25,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus"
+	"github.com/ethereum/go-ethereum/core/state"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
 	lru "github.com/hashicorp/golang-lru"
@@ -100,6 +102,68 @@ func (e *PriceEngine) fetchingLoop() {
 			return true
 		})
 	}
+}
+
+// CalcNewAbsorptionRate checks whether the new block will trigger a new absorptioin.
+func (e *PriceEngine) CalcNewAbsorptionRate(chain consensus.ChainReader, header *types.Header) (rate *PriceDerivation, err error) {
+	number := header.Number.Uint64()
+	if !e.config.IsPriceBlock(number) {
+		// not a price block
+		return nil, nil
+	}
+	oneDurationBefore := new(big.Int).SetUint64(e.config.PriceSamplingDuration)
+	oneDurationBefore.Sub(header.Number, oneDurationBefore)
+	if oneDurationBefore.Cmp(e.config.ThangLongBlock) < 0 {
+		// no absorption in the first duration
+		return nil, nil
+	}
+	if chain.GetHeader(header.ParentHash, number-1) == nil {
+		return nil, errors.New("Header not connect to the current chain")
+	}
+	medianPrice, err := e.CalcMedianPrice(chain, number)
+	if err != nil {
+		return nil, err
+	}
+	state, err := chain.StateAt(header.Root)
+	if err != nil {
+		return nil, err
+	}
+	lastNumber, lastSupply, targetSupply := e.getLastAbsorption(state)
+	priceDerivation := medianPrice.Derivation()
+	if lastNumber == nil || lastNumber.Cmp(oneDurationBefore) <= 0 {
+		// passive condition: 1 duration without any active absorption or absorption never occurs
+		return priceDerivation, nil
+	}
+	// check for active condition
+	drv := priceDerivation.Rat()
+	drvRate := drv.Mul(drv, new(big.Rat).SetFrac(lastSupply, targetSupply))
+	if drvRate.Cmp(common.Rat2) >= 0 || drvRate.Cmp(common.RatNeg1_2) <= 0 {
+		// active absorption
+		return priceDerivation, nil
+	}
+	return nil, nil
+}
+
+func (e *PriceEngine) getLastAbsorption(state *state.StateDB) (number, supply, targetSupply *big.Int) {
+	hash := state.GetState(params.AbsorptionAddress, common.BytesToHash([]byte("LastNumber")))
+	if (hash == common.Hash{}) {
+		return nil, nil, nil
+	}
+	number = hash.Big()
+
+	hash = state.GetState(params.AbsorptionAddress, common.BytesToHash([]byte("LastSupply")))
+	if (hash == common.Hash{}) {
+		return nil, nil, nil
+	}
+	supply = hash.Big()
+
+	hash = state.GetState(params.AbsorptionAddress, common.BytesToHash([]byte("TargetSupply")))
+	if (hash == common.Hash{}) {
+		return nil, nil, nil
+	}
+	targetSupply = hash.Big()
+
+	return
 }
 
 type ByPrice []*Price
@@ -290,4 +354,3 @@ func PriceFromString(s string) *Price {
 	}
 	return (*Price)(price)
 }
-

@@ -871,12 +871,7 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 			header.Extra = append(header.Extra, signer[:]...)
 		}
 	} else if d.config.IsAbsorptionBlock(number) {
-		price := d.PriceEngine().GetMedianPrice(number - params.CanonicalDepth)
-		if price == nil {
-			log.Warn("No median price at block", "number", number)
-		} else {
-			// TODO
-		}
+		d.PriceEngine().CalcNewAbsorptionRate(chain, header)
 	} else if d.config.IsPriceBlock(number) {
 		price := d.PriceEngine().CurrentPrice()
 		if price != nil {
