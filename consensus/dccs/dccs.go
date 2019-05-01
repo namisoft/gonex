@@ -1524,7 +1524,7 @@ func (d *Dccs) MedianPriceStat(chain consensus.ChainReader, number uint64) strin
 	if !d.config.IsPriceBlock(number) {
 		return ""
 	}
-	price := d.PriceEngine().GetMedianPrice(chain, number)
+	price, _ := d.PriceEngine().CalcMedianPrice(chain, number)
 	if price == nil {
 		return "0"
 	}
