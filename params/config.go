@@ -90,7 +90,7 @@ var (
 			EndurioBlock:          big.NewInt(20000000),
 			PriceSamplingDuration: 7 * 24 * 60 * 60 / 2,
 			PriceSamplingInterval: 10*60/2 - 7,
-			AbsorptionDuration:    7 * 24 * 60 * 60 / 2,
+			AbsorptionLength:      7 * 24 * 60 * 60 / 2,
 		},
 	}
 
@@ -354,7 +354,7 @@ type DccsConfig struct {
 	EndurioBlock          *big.Int `json:"endurioBlock,omitempty"`
 	PriceSamplingDuration uint64   `json:"priceSamplingDuration"` // number of blocks to take price samples (a week)
 	PriceSamplingInterval uint64   `json:"priceSamplingInterval"` // the largest prime number of blocks in 10 minutes
-	AbsorptionDuration    uint64   `json:"absorptionDuration"`
+	AbsorptionLength      uint64   `json:"absorptionLength"`
 }
 
 func (c *DccsConfig) IsAbsorptionBlock(number uint64) bool {
@@ -406,14 +406,14 @@ func (c *DccsConfig) Snapshot(number uint64) uint64 {
 
 // String implements the stringer interface, returning the consensus engine details.
 func (c *DccsConfig) String() string {
-	return fmt.Sprintf("dccs {ThangLong: %v Epoch: %v Contract: %v Endurio: %v PriceDuration: %v PriceInterval: %v AbsorptionDuration: %v}",
+	return fmt.Sprintf("dccs {ThangLong: %v Epoch: %v Contract: %v Endurio: %v PriceDuration: %v PriceInterval: %v AbsorptionLength: %v}",
 		c.ThangLongBlock,
 		c.ThangLongEpoch,
 		c.Contract.String(),
 		c.EndurioBlock,
 		c.PriceSamplingDuration,
 		c.PriceSamplingInterval,
-		c.AbsorptionDuration,
+		c.AbsorptionLength,
 	)
 }
 
