@@ -43,7 +43,6 @@ import (
 	"github.com/ethereum/go-ethereum/contracts/nexty/ntf"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/log"
@@ -1024,7 +1023,79 @@ func (d *Dccs) Initialize(chain consensus.ChainReader, header *types.Header, sta
 		log.Info("⚙ Successfully deploy Endurio stablecoin contracts")
 		return nil, nil, nil
 	}
+	rate, err := d.PriceEngine().CalcNewAbsorptionRate(chain, header.Number.Uint64())
+	if err != nil {
+		log.Error("Failed to calculate new abosrption rate", "err", err, "number", header.Number)
+	}
+	if rate != nil {
+		d.PriceEngine().RecordNewAbsorptionRate(state, rate, chain)
+	}
+	absorption, err := d.PriceEngine().CalcNextAbsorption(chain, header)
+	if err != nil {
+		return nil, nil, err
+	}
+	if absorption != nil {
+		err = absorb(state, absorption, chain)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
 	return nil, nil, nil
+}
+
+func absorb(state *state.StateDB, absorption *big.Int, chain consensus.ChainReader) error {
+	inflate := absorption.Sign() > 0
+
+	backend := backends.NewRealBackend(chain, &params.AbsorptionAddress)
+	pairEx, err := pairex.NewPairEx(params.PairExAddress, backend)
+	if err != nil {
+		return err
+	}
+	vol, stb, err := pairEx.OrderToFill(nil, inflate, absorption)
+	if err != nil {
+		return err
+	}
+
+	stable, err := stable.NewStableToken(params.StableTokenAddress, backend)
+	if err != nil {
+		return err
+	}
+	volatile, err := volatile.NewVolatileToken(params.VolatileTokenAddress, backend)
+	if err != nil {
+		return err
+	}
+
+	if inflate {
+		_, err = stable.MintToOwner(nil, stb)
+		if err != nil {
+			return err
+		}
+		_, err = stable.Transfer(nil, params.PairExAddress, stb, common.BigToHash(vol).Bytes())
+		if err != nil {
+			return err
+		}
+		_, err = volatile.BurnFromOwner(nil, vol)
+		if err != nil {
+			return err
+		}
+		state.SubBalance(params.VolatileTokenAddress, vol)
+	} else {
+		_, err = volatile.MintToOwner(nil, vol)
+		if err != nil {
+			return err
+		}
+		_, err = volatile.Transfer(nil, params.PairExAddress, vol, common.BigToHash(stb).Bytes())
+		if err != nil {
+			return err
+		}
+		_, err = stable.BurnFromOwner(nil, stb)
+		if err != nil {
+			return err
+		}
+		state.AddBalance(params.VolatileTokenAddress, vol)
+	}
+	return nil
 }
 
 // Finalize implements consensus.Engine, ensuring no uncles are set, nor block
