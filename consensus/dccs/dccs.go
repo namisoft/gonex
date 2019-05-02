@@ -896,7 +896,7 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 			header.Extra = append(header.Extra, signer.Address[:]...)
 		}
 	} else if d.config.IsAbsorptionBlock(number) {
-		d.PriceEngine().CalcNewAbsorptionRate(chain, header)
+		d.PriceEngine().CalcNewAbsorptionRate(chain, number)
 	} else if d.config.IsPriceBlock(number) {
 		price := d.PriceEngine().CurrentPrice()
 		if price != nil {
