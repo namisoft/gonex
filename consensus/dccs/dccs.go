@@ -1047,6 +1047,7 @@ func (d *Dccs) Initialize(chain consensus.ChainReader, header *types.Header, sta
 			return nil, nil, err
 		}
 		log.Info("⚙ Successfully deploy Endurio stablecoin contracts")
+		return nil, nil, nil
 	}
 	return nil, nil, nil
 }
