@@ -53,8 +53,7 @@ type RealBackend struct {
 	config *params.ChainConfig
 }
 
-// NewRealBackend creates a new binding backend using a simulated blockchain
-// for testing purposes.
+// NewRealBackend creates a new binding backend for modifying the real blockchain state.
 func NewRealBackend(chain consensus.ChainReader, caller *common.Address) *RealBackend {
 	if caller == nil {
 		// A random key to make sure no one has any special permission
