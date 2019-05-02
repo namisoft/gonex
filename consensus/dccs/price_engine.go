@@ -43,6 +43,12 @@ const (
 	medianPriceCacheSize  = 6
 )
 
+var (
+	storageIndexLastNumber   = common.BytesToHash([]byte("LastNumber"))
+	storageIndexLastSupply   = common.BytesToHash([]byte("LastSupply"))
+	storageIndexTargetSupply = common.BytesToHash([]byte("TargetSupply"))
+)
+
 // PriceData represents the external price feeded from outside
 type PriceData struct {
 	Value     json.Number `json:"price"`
@@ -133,7 +139,7 @@ func (e *PriceEngine) CalcNewAbsorptionRate(chain consensus.ChainReader, header 
 	if err != nil {
 		return nil, err
 	}
-	lastNumber, lastSupply, targetSupply := e.getLastAbsorption(state)
+	lastNumber, lastSupply, targetSupply := e.GetLastAbsorption(state)
 	priceDerivation := medianPrice.Derivation()
 	if lastNumber == nil || lastNumber.Cmp(oneDurationBefore) <= 0 {
 		// passive condition: 1 duration without any active absorption or absorption never occurs
@@ -149,20 +155,30 @@ func (e *PriceEngine) CalcNewAbsorptionRate(chain consensus.ChainReader, header 
 	return nil, nil
 }
 
-func (e *PriceEngine) getLastAbsorption(state *state.StateDB) (number, supply, targetSupply *big.Int) {
-	hash := state.GetState(params.AbsorptionAddress, common.BytesToHash([]byte("LastNumber")))
+func (e *PriceEngine) SetNewAbsorption(state *state.StateDB, number, supply, targetSupply *big.Int) error {
+	if number == nil || supply == nil || targetSupply == nil {
+		return errors.New("Failed to set new absorption state: nil input param(s)")
+	}
+	state.SetState(params.AbsorptionAddress, storageIndexLastNumber, common.BigToHash(number))
+	state.SetState(params.AbsorptionAddress, storageIndexLastSupply, common.BigToHash(supply))
+	state.SetState(params.AbsorptionAddress, storageIndexTargetSupply, common.BigToHash(targetSupply))
+	return nil
+}
+
+func (e *PriceEngine) GetLastAbsorption(state *state.StateDB) (number, supply, targetSupply *big.Int) {
+	hash := state.GetState(params.AbsorptionAddress, storageIndexLastNumber)
 	if (hash == common.Hash{}) {
 		return nil, nil, nil
 	}
 	number = hash.Big()
 
-	hash = state.GetState(params.AbsorptionAddress, common.BytesToHash([]byte("LastSupply")))
+	hash = state.GetState(params.AbsorptionAddress, storageIndexLastSupply)
 	if (hash == common.Hash{}) {
 		return nil, nil, nil
 	}
 	supply = hash.Big()
 
-	hash = state.GetState(params.AbsorptionAddress, common.BytesToHash([]byte("TargetSupply")))
+	hash = state.GetState(params.AbsorptionAddress, storageIndexTargetSupply)
 	if (hash == common.Hash{}) {
 		return nil, nil, nil
 	}
