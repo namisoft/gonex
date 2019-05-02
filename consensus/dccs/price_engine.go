@@ -116,20 +116,22 @@ func (e *PriceEngine) fetchingLoop() {
 }
 
 // CalcNewAbsorptionRate checks whether the new block will trigger a new absorptioin.
-func (e *PriceEngine) CalcNewAbsorptionRate(chain consensus.ChainReader, header *types.Header) (rate *PriceDerivation, err error) {
-	number := header.Number.Uint64()
+func (e *PriceEngine) CalcNewAbsorptionRate(chain consensus.ChainReader, number uint64) (rate *Price, err error) {
+	// everything is calculated using the canonical chain data
+	number -= params.CanonicalDepth
 	if !e.config.IsPriceBlock(number) {
 		// not a price block
 		return nil, nil
+	}
+	header := chain.GetHeaderByNumber(number)
+	if header == nil {
+		return nil, errors.New("Number is too far in the future")
 	}
 	oneDurationBefore := new(big.Int).SetUint64(e.config.PriceSamplingDuration)
 	oneDurationBefore.Sub(header.Number, oneDurationBefore)
 	if oneDurationBefore.Cmp(e.config.ThangLongBlock) < 0 {
 		// no absorption in the first duration
 		return nil, nil
-	}
-	if chain.GetHeader(header.ParentHash, number-1) == nil {
-		return nil, errors.New("Header not connect to the current chain")
 	}
 	medianPrice, err := e.CalcMedianPrice(chain, number)
 	if err != nil {
@@ -139,23 +141,35 @@ func (e *PriceEngine) CalcNewAbsorptionRate(chain consensus.ChainReader, header 
 	if err != nil {
 		return nil, err
 	}
-	lastNumber, lastSupply, targetSupply := e.GetLastAbsorption(state)
-	priceDerivation := medianPrice.Derivation()
+	lastNumber, lastSupply, targetSupply := e.getLastAbsorption(state)
 	if lastNumber == nil || lastNumber.Cmp(oneDurationBefore) <= 0 {
 		// passive condition: 1 duration without any active absorption or absorption never occurs
-		return priceDerivation, nil
+		return medianPrice, nil
 	}
 	// check for active condition
-	drv := priceDerivation.Rat()
-	drvRate := drv.Mul(drv, new(big.Rat).SetFrac(lastSupply, targetSupply))
+	drv := new(big.Rat).Sub(medianPrice.Rat(), common.Rat1)
+	lastDrv := new(big.Rat).SetFrac(new(big.Int).Sub(targetSupply, lastSupply), lastSupply)
+	drvRate := drv.Mul(drv, lastDrv.Inv(lastDrv))
 	if drvRate.Cmp(common.Rat2) >= 0 || drvRate.Cmp(common.RatNeg1_2) <= 0 {
 		// active absorption
-		return priceDerivation, nil
+		return medianPrice, nil
 	}
 	return nil, nil
 }
 
-func (e *PriceEngine) SetNewAbsorption(state *state.StateDB, number, supply, targetSupply *big.Int) error {
+func (e *PriceEngine) RecordNewAbsorptionRate(state *state.StateDB, rate *Price, chain consensus.ChainReader) error {
+	number := chain.CurrentHeader().Number
+	supply, err := getStableTokenSupply(chain)
+	if err != nil {
+		return err
+	}
+	targetSupply := new(big.Int).Mul(supply, rate.Rat().Num())
+	targetSupply.Div(targetSupply, rate.Rat().Denom())
+	e.setNewAbsorption(state, number, supply, targetSupply)
+	return nil
+}
+
+func (e *PriceEngine) setNewAbsorption(state *state.StateDB, number, supply, targetSupply *big.Int) error {
 	if number == nil || supply == nil || targetSupply == nil {
 		return errors.New("Failed to set new absorption state: nil input param(s)")
 	}
@@ -165,7 +179,7 @@ func (e *PriceEngine) SetNewAbsorption(state *state.StateDB, number, supply, tar
 	return nil
 }
 
-func (e *PriceEngine) GetLastAbsorption(state *state.StateDB) (number, supply, targetSupply *big.Int) {
+func (e *PriceEngine) getLastAbsorption(state *state.StateDB) (number, supply, targetSupply *big.Int) {
 	hash := state.GetState(params.AbsorptionAddress, storageIndexLastNumber)
 	if (hash == common.Hash{}) {
 		return nil, nil, nil
@@ -216,12 +230,12 @@ func (e *PriceEngine) CalcNextAbsorption(chain consensus.ChainReader, header *ty
 		return nil, err
 	}
 	remainSupplyToAbsorb := new(big.Int).Sub(targetSupply, totalSupply)
-	if remainSupplyToAbsorb.Sign() <= 0 {
-		// target reached
-		return nil, nil
+	targetAbsorption := new(big.Int).Sub(targetSupply, lastSupply)
+	if remainSupplyToAbsorb.Sign() == targetAbsorption.Sign() {
+		return remainSupplyToAbsorb.Div(remainSupplyToAbsorb, remainBlockToAbsorb), nil
 	}
-
-	return remainSupplyToAbsorb.Div(remainSupplyToAbsorb, remainBlockToAbsorb), nil
+	// target reached
+	return nil, nil
 }
 
 func getStableTokenSupply(chain consensus.ChainReader) (*big.Int, error) {
@@ -367,19 +381,8 @@ func parsePriceFn(body []byte) (*Data, error) {
 // Price encoded in Rat
 type Price big.Rat
 
-// PriceDerivation is (Price - 1/1)
-type PriceDerivation Price
-
-func (p *PriceDerivation) Rat() *big.Rat {
-	return (*big.Rat)(p)
-}
-
 func (p *Price) Rat() *big.Rat {
 	return (*big.Rat)(p)
-}
-
-func (p *Price) Derivation() *PriceDerivation {
-	return (*PriceDerivation)(p.Rat().Sub(p.Rat(), common.Rat1))
 }
 
 // PriceDecodeFromExtra returns the price derivation encoded in Header's extra
