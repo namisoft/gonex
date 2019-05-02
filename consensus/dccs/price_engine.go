@@ -23,6 +23,11 @@ import (
 	"sort"
 	"time"
 
+	"github.com/ethereum/go-ethereum/contracts/nexty/endurio/stable"
+
+	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
+	"github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/core/state"
@@ -164,6 +169,56 @@ func (e *PriceEngine) getLastAbsorption(state *state.StateDB) (number, supply, t
 	targetSupply = hash.Big()
 
 	return
+}
+
+// CalcNextAbsorption calculates the next absorption amount of stablecoin for a header number
+func (e *PriceEngine) CalcNextAbsorption(chain consensus.ChainReader, header *types.Header) (*big.Int, error) {
+	number := header.Number.Uint64()
+	if chain.GetHeader(header.ParentHash, number-1) == nil {
+		return nil, errors.New("Header not connect to the current chain")
+	}
+	state, err := chain.StateAt(header.Root)
+	if err != nil {
+		return nil, err
+	}
+	lastNumber, lastSupply, targetSupply := e.getLastAbsorption(state)
+	if lastNumber == nil || lastSupply == nil || targetSupply == nil {
+		// absorption never occurs
+		return nil, nil
+	}
+
+	remainBlockToAbsorb := new(big.Int).SetUint64(e.config.AbsorptionLength)
+	remainBlockToAbsorb.Add(remainBlockToAbsorb, lastNumber)
+	remainBlockToAbsorb.Sub(remainBlockToAbsorb, header.Number)
+	if remainBlockToAbsorb.Sign() <= 0 {
+		// absorption cannot extend beyond 1 AbsorptionLength
+		return nil, nil
+	}
+
+	totalSupply, err := getStableTokenSupply(chain)
+	if err != nil {
+		return nil, err
+	}
+	remainSupplyToAbsorb := new(big.Int).Sub(targetSupply, totalSupply)
+	if remainSupplyToAbsorb.Sign() <= 0 {
+		// target reached
+		return nil, nil
+	}
+
+	return remainSupplyToAbsorb.Div(remainSupplyToAbsorb, remainBlockToAbsorb), nil
+}
+
+func getStableTokenSupply(chain consensus.ChainReader) (*big.Int, error) {
+	// Random key to make sure no one has any special right
+	key, _ := crypto.GenerateKey()
+	address := crypto.PubkeyToAddress(key.PublicKey)
+	backend := backends.NewRealBackend(chain, &address)
+
+	caller, err := stable.NewStableTokenCaller(params.StableTokenAddress, backend)
+	if err != nil {
+		return nil, err
+	}
+	return caller.TotalSupply(nil)
 }
 
 type ByPrice []*Price
