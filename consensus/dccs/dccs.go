@@ -918,29 +918,6 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 	return nil
 }
 
-func deployContract(state *state.StateDB, address common.Address, code []byte, storage map[common.Hash]common.Hash, overwrite bool) {
-	// Ensure there's no existing contract already at the designated address
-	contractHash := state.GetCodeHash(address)
-	// this is an consensus upgrade
-	exist := state.GetNonce(address) != 0 || (contractHash != (common.Hash{}) && contractHash != vm.EmptyCodeHash)
-	if !exist {
-		// Create a new account on the state
-		state.CreateAccount(address)
-		// Assuming chainConfig.IsEIP158(BlockNumber)
-		state.SetNonce(address, 1)
-	} else if !overwrite {
-		// disable overwrite flag to prevent unintentional contract upgrade
-		return
-	}
-
-	// Transfer the code and state from simulated backend to the real state db
-	state.SetCode(address, code)
-	for key, value := range storage {
-		state.SetState(address, key, value)
-	}
-	state.Commit(true)
-}
-
 // deployConsensusContracts deploys the consensus contract without any owner
 func deployConsensusContracts(state *state.StateDB, chainConfig *params.ChainConfig, signers []common.Address) error {
 	// Deploy NTF ERC20 Token Contract
@@ -959,7 +936,7 @@ func deployConsensusContracts(state *state.StateDB, chainConfig *params.ChainCon
 		storage[common.BigToHash(common.Big0)] = owner.Hash()
 
 		// Deploy only, no upgrade
-		deployContract(state, params.TokenAddress, code, storage, false)
+		deployer.CopyContractToAddress(state, params.TokenAddress, code, storage, false)
 		log.Info("⚙ Contract deployed successful", "contract", "NTFToken")
 	}
 
@@ -976,7 +953,7 @@ func deployConsensusContracts(state *state.StateDB, chainConfig *params.ChainCon
 			return err
 		}
 		// Deploy or update
-		deployContract(state, chainConfig.Dccs.Contract, code, storage, true)
+		deployer.CopyContractToAddress(state, chainConfig.Dccs.Contract, code, storage, true)
 		log.Info("⚙ Contract deployed successful", "contract", "NextyGovernance")
 	}
 
@@ -988,7 +965,7 @@ func deployEndurioContracts(state *state.StateDB) error {
 	{
 		// Generate contract code and data using a simulated backend
 		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
-			address, _, _, err := pairex.DeployPairEx(auth, sim)
+			address, _, _, err := pairex.DeployPairEx(auth, sim, params.VolatileTokenAddress, params.StableTokenAddress)
 			return address, err
 		})
 		if err != nil {
@@ -996,7 +973,7 @@ func deployEndurioContracts(state *state.StateDB) error {
 		}
 
 		// Deploy only, no upgrade
-		deployContract(state, params.PairExAddress, code, storage, false)
+		deployer.CopyContractToAddress(state, params.PairExAddress, code, storage, false)
 		log.Info("⚙ Contract deployed successful", "contract", "PairEx")
 	}
 
@@ -1004,7 +981,7 @@ func deployEndurioContracts(state *state.StateDB) error {
 	{
 		// Generate contract code and data using a simulated backend
 		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
-			address, _, _, err := volatile.DeployVolatileToken(auth, sim, params.PairExAddress)
+			address, _, _, err := volatile.DeployVolatileToken(auth, sim, params.PairExAddress, false)
 			return address, err
 		})
 		if err != nil {
@@ -1012,7 +989,7 @@ func deployEndurioContracts(state *state.StateDB) error {
 		}
 
 		// Deploy only, no upgrade
-		deployContract(state, params.VolatileTokenAddress, code, storage, false)
+		deployer.CopyContractToAddress(state, params.VolatileTokenAddress, code, storage, false)
 		log.Info("⚙ Contract deployed successful", "contract", "VolatileToken")
 	}
 
@@ -1020,7 +997,7 @@ func deployEndurioContracts(state *state.StateDB) error {
 	{
 		// Generate contract code and data using a simulated backend
 		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
-			address, _, _, err := stable.DeployStableToken(auth, sim, params.PairExAddress)
+			address, _, _, err := stable.DeployStableToken(auth, sim, params.PairExAddress, false)
 			return address, err
 		})
 		if err != nil {
@@ -1028,7 +1005,7 @@ func deployEndurioContracts(state *state.StateDB) error {
 		}
 
 		// Deploy only, no upgrade
-		deployContract(state, params.StableTokenAddress, code, storage, false)
+		deployer.CopyContractToAddress(state, params.StableTokenAddress, code, storage, false)
 		log.Info("⚙ Contract deployed successful", "contract", "StableToken")
 	}
 
