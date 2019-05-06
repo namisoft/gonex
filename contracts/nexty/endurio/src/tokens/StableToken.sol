@@ -15,11 +15,13 @@ contract StableToken is ERC223{
 
     IPairEx internal orderbook;
 
-    constructor (address _orderbook)
+    constructor (address _orderbook, bool register)
         public
     {
-        orderbook = IPairEx(_orderbook);
-        orderbook.stableTokenRegister();
+        if (register) {
+            orderbook = IPairEx(_orderbook);
+            orderbook.stableTokenRegister(address(this));
+        }
         initialize(address(_orderbook));
         _mint(msg.sender, 10**24);
     }

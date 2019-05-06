@@ -13,19 +13,19 @@ contract Initializer {
 
     }
 
-    function volatileTokenRegister()
+    function volatileTokenRegister(address _address)
         public
     {
         // SellType false
-        require(address(token[false]) == address(0), "already set");
-        token[false] = IOwnableERC223(msg.sender);
+        if (address(token[false]) != address(0)) return;
+        token[false] = IOwnableERC223(_address);
     }
 
-    function stableTokenRegister()
+    function stableTokenRegister(address _address)
         public
     {
         // BuyType true
-        require(address(token[true]) == address(0), "already set");
-        token[true] = IOwnableERC223(msg.sender);
+        if (address(token[true]) == address(0)) return;
+        token[true] = IOwnableERC223(_address);
     }
 }
