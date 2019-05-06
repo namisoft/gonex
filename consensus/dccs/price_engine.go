@@ -129,7 +129,7 @@ func (e *PriceEngine) CalcNewAbsorptionRate(chain consensus.ChainReader, number 
 	}
 	oneDurationBefore := new(big.Int).SetUint64(e.config.PriceSamplingDuration)
 	oneDurationBefore.Sub(header.Number, oneDurationBefore)
-	if oneDurationBefore.Cmp(e.config.ThangLongBlock) < 0 {
+	if oneDurationBefore.Cmp(e.config.EndurioBlock) < 0 {
 		// no absorption in the first duration
 		return nil, nil
 	}
@@ -159,13 +159,14 @@ func (e *PriceEngine) CalcNewAbsorptionRate(chain consensus.ChainReader, number 
 
 func (e *PriceEngine) RecordNewAbsorptionRate(state *state.StateDB, rate *Price, chain consensus.ChainReader) error {
 	number := chain.CurrentHeader().Number
-	supply, err := getStableTokenSupply(chain)
+	supply, err := GetStableTokenSupply(chain)
 	if err != nil {
 		return err
 	}
 	targetSupply := new(big.Int).Mul(supply, rate.Rat().Num())
 	targetSupply.Div(targetSupply, rate.Rat().Denom())
 	e.setNewAbsorption(state, number, supply, targetSupply)
+	state.Commit(false)
 	return nil
 }
 
@@ -201,6 +202,25 @@ func (e *PriceEngine) getLastAbsorption(state *state.StateDB) (number, supply, t
 	return
 }
 
+func (e *PriceEngine) CalcRemainToAbsorption(chain consensus.ChainReader, number uint64) (*big.Int, error) {
+	header := chain.GetHeaderByNumber(number)
+	state, err := chain.StateAt(header.Root)
+	if err != nil {
+		return nil, err
+	}
+	lastNumber, lastSupply, targetSupply := e.getLastAbsorption(state)
+	if lastNumber == nil || lastSupply == nil || targetSupply == nil {
+		// absorption never occurs
+		return nil, nil
+	}
+	totalSupply, err := GetStableTokenSupply(chain)
+	if err != nil {
+		return nil, err
+	}
+	remainSupplyToAbsorb := new(big.Int).Sub(targetSupply, totalSupply)
+	return remainSupplyToAbsorb, nil
+}
+
 // CalcNextAbsorption calculates the next absorption amount of stablecoin for a header number
 func (e *PriceEngine) CalcNextAbsorption(chain consensus.ChainReader, header *types.Header) (*big.Int, error) {
 	number := header.Number.Uint64()
@@ -225,7 +245,7 @@ func (e *PriceEngine) CalcNextAbsorption(chain consensus.ChainReader, header *ty
 		return nil, nil
 	}
 
-	totalSupply, err := getStableTokenSupply(chain)
+	totalSupply, err := GetStableTokenSupply(chain)
 	if err != nil {
 		return nil, err
 	}
@@ -238,7 +258,7 @@ func (e *PriceEngine) CalcNextAbsorption(chain consensus.ChainReader, header *ty
 	return nil, nil
 }
 
-func getStableTokenSupply(chain consensus.ChainReader) (*big.Int, error) {
+func GetStableTokenSupply(chain consensus.ChainReader) (*big.Int, error) {
 	// Random key to make sure no one has any special right
 	key, _ := crypto.GenerateKey()
 	address := crypto.PubkeyToAddress(key.PublicKey)
@@ -291,7 +311,7 @@ func (e *PriceEngine) CalcMedianPrice(chain consensus.ChainReader, number uint64
 	}
 	median := new(big.Rat).Add(prices[count/2-1].Rat(), prices[count/2].Rat())
 	median.Mul(median, common.Rat1_2)
-	e.medianPrices.Add(header.Hash(), median)
+	e.medianPrices.Add(header.Hash(), (*Price)(median))
 	return (*Price)(median), nil
 }
 

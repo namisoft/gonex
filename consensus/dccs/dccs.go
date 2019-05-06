@@ -1574,3 +1574,22 @@ func (d *Dccs) MedianPriceStat(chain consensus.ChainReader, number uint64) strin
 	}
 	return price.Rat().FloatString(4)
 }
+
+func (d *Dccs) RemainToAbsorbStat(chain consensus.ChainReader, number uint64) string {
+	supply, err := GetStableTokenSupply(chain)
+	if err != nil {
+		return err.Error()
+	}
+	if supply == nil {
+		return "StableTokenSupply is nil"
+	}
+	remain, err := d.PriceEngine().CalcRemainToAbsorption(chain, number)
+	if err != nil {
+		return err.Error()
+	}
+	if remain == nil {
+		return "0"
+	}
+	percentage := new(big.Rat).SetFrac(remain, supply)
+	return percentage.FloatString(4)
+}
