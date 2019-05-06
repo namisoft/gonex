@@ -6,16 +6,21 @@ import "./OrderBook.sol";
 
 contract PairEx is OrderBook {
 
-    constructor () 
+    constructor (
+        address _volatileTokenAddress,
+        address _stableTokenAddress
+    )
         public
     {
         Order memory order;
         order.wantAmount = 1;
-        books[false].orders[bytes32(0)] = order;  
-        books[true].orders[bytes32(0)] = order;       
+        books[false].orders[bytes32(0)] = order;
+        books[true].orders[bytes32(0)] = order;
+        volatileTokenRegister(_volatileTokenAddress);
+        stableTokenRegister(_stableTokenAddress);
     }
 
-    function getOrderType() 
+    function getOrderType()
         public
         view
         returns(bool)
