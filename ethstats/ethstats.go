@@ -486,6 +486,7 @@ type blockStats struct {
 	Price      string         `json:"price"`
 	PriceMed   string         `json:"priceMedian"`
 	ToAbsorb   string         `json:"toAbsorb"`
+	Absorbed   string         `json:"absorbed"`
 }
 
 // txStats is the information to report about individual transactions.
@@ -535,6 +536,7 @@ func (s *Service) assembleBlockStats(block *types.Block) *blockStats {
 		price       string
 		priceMedian string
 		toAbsorb    string
+		absorbed    string
 	)
 	if s.eth != nil {
 		// Full nodes have all needed information available
@@ -554,6 +556,7 @@ func (s *Service) assembleBlockStats(block *types.Block) *blockStats {
 			price = d.BlockPriceStat(s.eth.BlockChain(), header.Number.Uint64())
 			priceMedian = d.MedianPriceStat(s.eth.BlockChain(), header.Number.Uint64())
 			toAbsorb = d.RemainToAbsorbStat(s.eth.BlockChain(), header.Number.Uint64())
+			absorbed = d.AbsorbedStat(s.eth.BlockChain(), header.Number.Uint64())
 		}
 	} else {
 		// Light nodes would need on-demand lookups for transactions/uncles, skip
@@ -594,6 +597,7 @@ func (s *Service) assembleBlockStats(block *types.Block) *blockStats {
 		Price:      price,
 		PriceMed:   priceMedian,
 		ToAbsorb:   toAbsorb,
+		Absorbed:   absorbed,
 	}
 }
 
