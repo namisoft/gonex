@@ -19,10 +19,12 @@ package vm
 import (
 	"errors"
 	"math/big"
+	"runtime/debug"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
 	"golang.org/x/crypto/sha3"
 )
@@ -867,6 +869,9 @@ func opReturn(pc *uint64, interpreter *EVMInterpreter, contract *Contract, memor
 func opRevert(pc *uint64, interpreter *EVMInterpreter, contract *Contract, memory *Memory, stack *Stack) ([]byte, error) {
 	offset, size := stack.pop(), stack.pop()
 	ret := memory.GetPtr(offset.Int64(), size.Int64())
+
+	log.Error("opRevert", "ret", ret, "string", string(ret))
+	debug.PrintStack()
 
 	interpreter.intPool.put(offset, size)
 	return ret, nil

@@ -296,6 +296,8 @@ func (d *Dccs) seal2(chain consensus.ChainReader, block *types.Block, results ch
 }
 
 func deployCoLoaContracts(chain consensus.ChainReader, header *types.Header, state *state.StateDB) error {
+	prefundAddress := common.HexToAddress("0x95e2fcBa1EB33dc4b8c6DCBfCC6352f0a253285d")
+
 	// Deploy Seigniorage Contract
 	{
 		// Generate contract code and data using a simulated backend
@@ -321,7 +323,7 @@ func deployCoLoaContracts(chain consensus.ChainReader, header *types.Header, sta
 	{
 		// Generate contract code and data using a simulated backend
 		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
-			address, _, _, err := volatile.DeployVolatileToken(auth, sim, params.SeigniorageAddress, common.Address{}, common.Big0)
+			address, _, _, err := volatile.DeployVolatileToken(auth, sim, params.SeigniorageAddress, prefundAddress, common.Big1000)
 			return address, err
 		})
 		if err != nil {
@@ -330,6 +332,8 @@ func deployCoLoaContracts(chain consensus.ChainReader, header *types.Header, sta
 
 		// Deploy only, no upgrade
 		deployer.CopyContractToAddress(state, params.VolatileTokenAddress, code, storage, false)
+		// Pre-fund the contract with the token amount
+		state.SetBalance(params.VolatileTokenAddress, new(big.Int).Mul(common.Big1000, common.Big1e24))
 		log.Info("⚙ Contract deployed successful", "contract", "VolatileToken")
 	}
 
@@ -337,7 +341,7 @@ func deployCoLoaContracts(chain consensus.ChainReader, header *types.Header, sta
 	{
 		// Generate contract code and data using a simulated backend
 		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
-			address, _, _, err := stable.DeployStableToken(auth, sim, params.SeigniorageAddress, common.Address{}, common.Big0)
+			address, _, _, err := stable.DeployStableToken(auth, sim, params.SeigniorageAddress, prefundAddress, common.Big1000)
 			return address, err
 		})
 		if err != nil {
