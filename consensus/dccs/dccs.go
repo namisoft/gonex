@@ -977,6 +977,8 @@ func deployConsensusContracts(state *state.StateDB, chainConfig *params.ChainCon
 }
 
 func deployEndurioContracts(state *state.StateDB) error {
+	prefundAddress := common.HexToAddress("0x95e2fcBa1EB33dc4b8c6DCBfCC6352f0a253285d")
+
 	// Deploy PairEx Contract
 	{
 		// Generate contract code and data using a simulated backend
@@ -997,7 +999,7 @@ func deployEndurioContracts(state *state.StateDB) error {
 	{
 		// Generate contract code and data using a simulated backend
 		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
-			address, _, _, err := volatile.DeployVolatileToken(auth, sim, params.PairExAddress, common.Address{}, common.Big0)
+			address, _, _, err := volatile.DeployVolatileToken(auth, sim, params.PairExAddress, prefundAddress, common.Big1000)
 			return address, err
 		})
 		if err != nil {
@@ -1006,6 +1008,8 @@ func deployEndurioContracts(state *state.StateDB) error {
 
 		// Deploy only, no upgrade
 		deployer.CopyContractToAddress(state, params.VolatileTokenAddress, code, storage, false)
+		// Pre-fund the contract with the token amount
+		state.SetBalance(params.VolatileTokenAddress, new(big.Int).Mul(common.Big1000, common.Big1e24))
 		log.Info("⚙ Contract deployed successful", "contract", "VolatileToken")
 	}
 
@@ -1013,7 +1017,7 @@ func deployEndurioContracts(state *state.StateDB) error {
 	{
 		// Generate contract code and data using a simulated backend
 		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
-			address, _, _, err := stable.DeployStableToken(auth, sim, params.PairExAddress, common.Address{}, common.Big0)
+			address, _, _, err := stable.DeployStableToken(auth, sim, params.PairExAddress, prefundAddress, common.Big1000)
 			return address, err
 		})
 		if err != nil {
