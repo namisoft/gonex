@@ -189,13 +189,17 @@ contract PairEx is OrderBook {
             fillableHave = _inflate ? fillableVOL : fillableSTB;
             fillableWant = _inflate ? fillableSTB : fillableVOL;
             }
-            order.haveAmount = order.haveAmount.sub(fillableHave);
-            order.wantAmount = order.wantAmount.sub(fillableWant);
             // fill the partial order
             token[!_inflate].burnFromOwner(fillableHave);
             token[_inflate].mintToOwner(fillableWant);
             token[_inflate].transfer(order.maker, fillableWant);
             // TODO: emit event for 'partial order filled'
+            order.haveAmount = order.haveAmount.sub(fillableHave);
+            order.wantAmount = order.wantAmount.sub(fillableWant);
+            if (order.haveAmount == 0 || order.wantAmount == 0) {
+                _remove(orderType, cursor, false);
+                // TODO: emit event for 'remain order rejected'
+            }
             break; // stop the absorption
         }
         //  Not enough order, return all we have
