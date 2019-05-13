@@ -1026,15 +1026,18 @@ func (d *Dccs) Initialize(chain consensus.ChainReader, header *types.Header, sta
 			log.Error("Failed to deploy Endurio stablecoin contracts", "err", err)
 			return nil, nil, err
 		}
+		state.Commit(false)
 		log.Info("⚙ Successfully deploy Endurio stablecoin contracts")
 		return nil, nil, nil
 	}
-	rate, err := d.PriceEngine().CalcNewAbsorptionRate(chain, header.Number.Uint64())
+	if d.config.IsAbsorptionBlock(header.Number.Uint64()) {
+		rate, err := d.PriceEngine().CalcNewAbsorptionRate(chain, state, header.Number.Uint64())
 	if err != nil {
 		log.Error("Failed to calculate new abosrption rate", "err", err, "number", header.Number)
 	}
 	if rate != nil {
 		d.PriceEngine().RecordNewAbsorptionRate(state, rate, chain)
+	}
 	}
 	absorption, err := d.PriceEngine().CalcNextAbsorption(chain, header)
 	if err != nil {
@@ -1051,58 +1054,36 @@ func (d *Dccs) Initialize(chain consensus.ChainReader, header *types.Header, sta
 }
 
 func absorb(state *state.StateDB, absorption *big.Int, chain consensus.ChainReader) error {
+	log.Info("dccs.absorb", "absorption", absorption)
 	inflate := absorption.Sign() > 0
+	if !inflate {
+		absorption.Neg(absorption)
+	}
 
-	backend := backends.NewRealBackend(chain, &params.AbsorptionAddress)
+	backend := backends.NewRealBackend(state, chain, &params.PairExAddress)
+	emptyTransactOpts := &bind.TransactOpts{
+		From:     params.PairExAddress,
+		GasLimit: math.MaxUint64,
+		Signer: func(_ types.Signer, _ common.Address, tx *types.Transaction) (*types.Transaction, error) {
+			return tx, nil
+		},
+	}
+
 	pairEx, err := pairex.NewPairEx(params.PairExAddress, backend)
 	if err != nil {
 		return err
 	}
-	vol, stb, err := pairEx.OrderToFill(nil, inflate, absorption)
+
+	_, err = pairEx.Absorb(emptyTransactOpts, inflate, absorption)
 	if err != nil {
 		return err
 	}
 
-	stable, err := stable.NewStableToken(params.StableTokenAddress, backend)
-	if err != nil {
-		return err
-	}
-	volatile, err := volatile.NewVolatileToken(params.VolatileTokenAddress, backend)
-	if err != nil {
-		return err
-	}
+	// TODO: mint and burnt NTY as MNTY does
 
-	if inflate {
-		_, err = stable.MintToOwner(nil, stb)
-		if err != nil {
+	_, err = state.Commit(false)
 			return err
 		}
-		_, err = stable.Transfer(nil, params.PairExAddress, stb, common.BigToHash(vol).Bytes())
-		if err != nil {
-			return err
-		}
-		_, err = volatile.BurnFromOwner(nil, vol)
-		if err != nil {
-			return err
-		}
-		state.SubBalance(params.VolatileTokenAddress, vol)
-	} else {
-		_, err = volatile.MintToOwner(nil, vol)
-		if err != nil {
-			return err
-		}
-		_, err = volatile.Transfer(nil, params.PairExAddress, vol, common.BigToHash(stb).Bytes())
-		if err != nil {
-			return err
-		}
-		_, err = stable.BurnFromOwner(nil, stb)
-		if err != nil {
-			return err
-		}
-		state.AddBalance(params.VolatileTokenAddress, vol)
-	}
-	return nil
-}
 
 // Finalize implements consensus.Engine, ensuring no uncles are set, nor block
 // rewards given, and returns the final block.
@@ -1605,7 +1586,8 @@ func (d *Dccs) MedianPriceStat(chain consensus.ChainReader, number uint64) strin
 }
 
 func (d *Dccs) RemainToAbsorbStat(chain consensus.ChainReader, number uint64) string {
-	supply, err := GetStableTokenSupply(chain)
+	state, _ := chain.State()
+	supply, err := GetStableTokenSupply(state, chain)
 	if err != nil {
 		return err.Error()
 	}
@@ -1619,6 +1601,6 @@ func (d *Dccs) RemainToAbsorbStat(chain consensus.ChainReader, number uint64) st
 	if remain == nil {
 		return "0"
 	}
-	percentage := new(big.Rat).SetFrac(remain, supply)
-	return percentage.FloatString(4)
+	ratio := new(big.Rat).SetFrac(remain, supply)
+	return ratio.FloatString(4)
 }
