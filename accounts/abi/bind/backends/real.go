@@ -45,8 +45,8 @@ type RealBackend struct {
 	blockchain consensus.ChainReader
 	caller     *common.Address
 
-	mu           sync.Mutex
-	pendingState *state.StateDB // Currently pending state that will be the active on on request
+	mu    sync.Mutex
+	state *state.StateDB // Currently pending state that will be the active on on request
 
 	events *filters.EventSystem // Event system for filtering log events live
 
@@ -54,7 +54,7 @@ type RealBackend struct {
 }
 
 // NewRealBackend creates a new binding backend for modifying the real blockchain state.
-func NewRealBackend(chain consensus.ChainReader, caller *common.Address) *RealBackend {
+func NewRealBackend(state *state.StateDB, chain consensus.ChainReader, caller *common.Address) *RealBackend {
 	if caller == nil {
 		// A random key to make sure no one has any special permission
 		key, _ := crypto.GenerateKey()
@@ -64,6 +64,7 @@ func NewRealBackend(chain consensus.ChainReader, caller *common.Address) *RealBa
 	backend := &RealBackend{
 		blockchain: chain,
 		caller:     caller,
+		state:      state,
 		config:     chain.Config(),
 	}
 	return backend
@@ -77,8 +78,7 @@ func (b *RealBackend) CodeAt(ctx context.Context, contract common.Address, block
 	if blockNumber != nil && blockNumber.Cmp(b.blockchain.CurrentHeader().Number) != 0 {
 		return nil, errBlockNumberUnsupported
 	}
-	statedb, _ := b.blockchain.State()
-	return statedb.GetCode(contract), nil
+	return b.state.GetCode(contract), nil
 }
 
 // BalanceAt returns the wei balance of a certain account in the blockchain.
@@ -89,8 +89,7 @@ func (b *RealBackend) BalanceAt(ctx context.Context, contract common.Address, bl
 	if blockNumber != nil && blockNumber.Cmp(b.blockchain.CurrentHeader().Number) != 0 {
 		return nil, errBlockNumberUnsupported
 	}
-	statedb, _ := b.blockchain.State()
-	return statedb.GetBalance(contract), nil
+	return b.state.GetBalance(contract), nil
 }
 
 // NonceAt returns the nonce of a certain account in the blockchain.
@@ -101,8 +100,7 @@ func (b *RealBackend) NonceAt(ctx context.Context, contract common.Address, bloc
 	if blockNumber != nil && blockNumber.Cmp(b.blockchain.CurrentHeader().Number) != 0 {
 		return 0, errBlockNumberUnsupported
 	}
-	statedb, _ := b.blockchain.State()
-	return statedb.GetNonce(contract), nil
+	return b.state.GetNonce(contract), nil
 }
 
 // MRUNumberAt returns the nonce of a certain account in the blockchain.
@@ -113,8 +111,7 @@ func (b *RealBackend) MRUNumberAt(ctx context.Context, contract common.Address, 
 	if blockNumber != nil && blockNumber.Cmp(b.blockchain.CurrentHeader().Number) != 0 {
 		return 0, errBlockNumberUnsupported
 	}
-	statedb, _ := b.blockchain.State()
-	return statedb.GetMRUNumber(contract), nil
+	return b.state.GetMRUNumber(contract), nil
 }
 
 // ForEachStorageAt returns func to read all keys, values in the storage
@@ -125,8 +122,7 @@ func (b *RealBackend) ForEachStorageAt(ctx context.Context, contract common.Addr
 	if blockNumber != nil && blockNumber.Cmp(b.blockchain.CurrentHeader().Number) != 0 {
 		return errBlockNumberUnsupported
 	}
-	statedb, _ := b.blockchain.State()
-	statedb.ForEachStorage(contract, f)
+	b.state.ForEachStorage(contract, f)
 	return nil
 }
 
@@ -138,8 +134,7 @@ func (b *RealBackend) StorageAt(ctx context.Context, contract common.Address, ke
 	if blockNumber != nil && blockNumber.Cmp(b.blockchain.CurrentHeader().Number) != 0 {
 		return nil, errBlockNumberUnsupported
 	}
-	statedb, _ := b.blockchain.State()
-	val := statedb.GetState(contract, key)
+	val := b.state.GetState(contract, key)
 	return val[:], nil
 }
 
@@ -148,7 +143,7 @@ func (b *RealBackend) PendingCodeAt(ctx context.Context, contract common.Address
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	return b.pendingState.GetCode(contract), nil
+	return b.state.GetCode(contract), nil
 }
 
 // CallContract executes a contract call.
@@ -159,11 +154,7 @@ func (b *RealBackend) CallContract(ctx context.Context, call ethereum.CallMsg, b
 	if blockNumber != nil && blockNumber.Cmp(b.blockchain.CurrentHeader().Number) != 0 {
 		return nil, errBlockNumberUnsupported
 	}
-	state, err := b.blockchain.State()
-	if err != nil {
-		return nil, err
-	}
-	rval, _, _, err := b.callContract(ctx, call, b.blockchain.CurrentHeader(), state)
+	rval, _, _, err := b.callContract(ctx, call, b.blockchain.CurrentHeader(), b.state)
 	return rval, err
 }
 
@@ -171,9 +162,9 @@ func (b *RealBackend) CallContract(ctx context.Context, call ethereum.CallMsg, b
 func (b *RealBackend) PendingCallContract(ctx context.Context, call ethereum.CallMsg) ([]byte, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	defer b.pendingState.RevertToSnapshot(b.pendingState.Snapshot())
+	//defer b.state.RevertToSnapshot(b.state.Snapshot())
 
-	rval, _, _, err := b.callContract(ctx, call, b.blockchain.CurrentHeader(), b.pendingState)
+	rval, _, _, err := b.callContract(ctx, call, b.blockchain.CurrentHeader(), b.state)
 	return rval, err
 }
 
@@ -183,7 +174,7 @@ func (b *RealBackend) PendingNonceAt(ctx context.Context, account common.Address
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	return b.pendingState.GetOrNewStateObject(account).Nonce(), nil
+	return b.state.GetOrNewStateObject(account).Nonce(), nil
 }
 
 // SuggestGasPrice implements ContractTransactor.SuggestGasPrice. Since the simulated
@@ -215,9 +206,9 @@ func (b *RealBackend) EstimateGas(ctx context.Context, call ethereum.CallMsg) (u
 	executable := func(gas uint64) bool {
 		call.Gas = gas
 
-		snapshot := b.pendingState.Snapshot()
-		_, _, failed, err := b.callContract(ctx, call, b.blockchain.CurrentHeader(), b.pendingState)
-		b.pendingState.RevertToSnapshot(snapshot)
+		snapshot := b.state.Snapshot()
+		_, _, failed, err := b.callContract(ctx, call, b.blockchain.CurrentHeader(), b.state)
+		b.state.RevertToSnapshot(snapshot)
 
 		if err != nil || failed {
 			return false
@@ -273,7 +264,15 @@ func (b *RealBackend) callContract(ctx context.Context, call ethereum.CallMsg, h
 // SendTransaction updates the pending block to include the given transaction.
 // It panics if the transaction is invalid.
 func (b *RealBackend) SendTransaction(ctx context.Context, tx *types.Transaction) error {
-	return nil
+	_, err := b.PendingCallContract(ctx, ethereum.CallMsg{
+		From:     params.PairExAddress,
+		To:       tx.To(),
+		Gas:      tx.Gas(),
+		GasPrice: tx.GasPrice(),
+		Value:    tx.Value(),
+		Data:     tx.Data(),
+	})
+	return err
 }
 
 // FilterLogs executes a log filter operation, blocking during execution and
