@@ -501,6 +501,8 @@ func (d *Dccs) verifyCascadingFields2(chain consensus.ChainReader, header *types
 	if err != nil {
 		return err
 	}
+	// Stop recording signers list in checkpoint after Endurio hardfork
+	if !d.config.IsEndurio(header.Number) {
 	// If the block is a checkpoint block, verify the signer list
 	if d.config.IsCheckpoint(number) {
 		signers := make([]byte, len(snap.Signers)*common.AddressLength)
@@ -511,6 +513,7 @@ func (d *Dccs) verifyCascadingFields2(chain consensus.ChainReader, header *types
 		extraSuffix := len(header.Extra) - extraSeal
 		if !bytes.Equal(header.Extra[extraVanity:extraSuffix], signers) {
 			return errInvalidCheckpointSigners
+		}
 		}
 	} else if d.config.IsPriceBlock(number) {
 		// for price block: extra = [vanity(32), price(...), signature(65)]
@@ -890,12 +893,13 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 	}
 	header.Extra = header.Extra[:extraVanity]
 
+	// Stop recording signers list in checkpoint after Endurio hardfork
+	if !d.config.IsEndurio(header.Number) {
 	if d.config.IsCheckpoint(number) {
 		for _, signer := range snap.signers2() {
 			header.Extra = append(header.Extra, signer.Address[:]...)
 		}
-	} else if d.config.IsAbsorptionBlock(number) {
-		d.PriceEngine().CalcNewAbsorptionRate(chain, number)
+		}
 	} else if d.config.IsPriceBlock(number) {
 		price := d.PriceEngine().CurrentPrice()
 		if price != nil {

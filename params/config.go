@@ -308,10 +308,6 @@ func (c *DccsConfig) IsAbsorptionBlock(number uint64) bool {
 
 // IsPriceBlock returns whether a block could include a price
 func (c *DccsConfig) IsPriceBlock(number uint64) bool {
-	if c.IsCheckpoint(number) {
-		// checkpoint block must not include price value
-		return false
-	}
 	if c.IsEndurio(new(big.Int).SetUint64(number)) {
 		return number%c.PriceSamplingInterval == 0
 	}
