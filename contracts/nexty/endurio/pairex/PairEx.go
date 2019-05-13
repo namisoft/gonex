@@ -31,7 +31,7 @@ var (
 const DataSetABI = "[]"
 
 // DataSetBin is the compiled bytecode used for deploying new contracts.
-const DataSetBin = `0x6080604052348015600f57600080fd5b50603580601d6000396000f3fe6080604052600080fdfea165627a7a72305820136036fa363d95330594e3ecd1b45f45d92d91e6ae91d219c4fabc69f46ab3960029`
+const DataSetBin = `0x6080604052348015600f57600080fd5b50606380601d6000396000f3fe6080604052600080fdfea265627a7a7230582078c5216bf6fc0c3344a28b79fb150a94768ae5c6c428ee6a58afab45fb751f4d64736f6c637827302e352e392d646576656c6f702e323031392e352e31302b636f6d6d69742e65613633376632300057`
 
 // DeployDataSet deploys a new Ethereum contract, binding an instance of DataSet to it.
 func DeployDataSet(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *DataSet, error) {
@@ -189,7 +189,7 @@ func (_DataSet *DataSetTransactorRaw) Transact(opts *bind.TransactOpts, method s
 }
 
 // IOwnableERC223ABI is the input ABI used to generate the binding from.
-const IOwnableERC223ABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"mintToOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"to\",\"type\":\"address\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"burnFromOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_owner\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+const IOwnableERC223ABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"mintToOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_orderbook\",\"type\":\"address\"}],\"name\":\"setup\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"to\",\"type\":\"address\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"burnFromOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
 // IOwnableERC223Bin is the compiled bytecode used for deploying new contracts.
 const IOwnableERC223Bin = `0x`
@@ -370,27 +370,6 @@ func (_IOwnableERC223 *IOwnableERC223TransactorSession) BurnFromOwner(_amount *b
 	return _IOwnableERC223.Contract.BurnFromOwner(&_IOwnableERC223.TransactOpts, _amount)
 }
 
-// Initialize is a paid mutator transaction binding the contract method 0xc4d66de8.
-//
-// Solidity: function initialize(address _owner) returns()
-func (_IOwnableERC223 *IOwnableERC223Transactor) Initialize(opts *bind.TransactOpts, _owner common.Address) (*types.Transaction, error) {
-	return _IOwnableERC223.contract.Transact(opts, "initialize", _owner)
-}
-
-// Initialize is a paid mutator transaction binding the contract method 0xc4d66de8.
-//
-// Solidity: function initialize(address _owner) returns()
-func (_IOwnableERC223 *IOwnableERC223Session) Initialize(_owner common.Address) (*types.Transaction, error) {
-	return _IOwnableERC223.Contract.Initialize(&_IOwnableERC223.TransactOpts, _owner)
-}
-
-// Initialize is a paid mutator transaction binding the contract method 0xc4d66de8.
-//
-// Solidity: function initialize(address _owner) returns()
-func (_IOwnableERC223 *IOwnableERC223TransactorSession) Initialize(_owner common.Address) (*types.Transaction, error) {
-	return _IOwnableERC223.Contract.Initialize(&_IOwnableERC223.TransactOpts, _owner)
-}
-
 // MintToOwner is a paid mutator transaction binding the contract method 0x48043f0d.
 //
 // Solidity: function mintToOwner(uint256 _amount) returns()
@@ -410,6 +389,27 @@ func (_IOwnableERC223 *IOwnableERC223Session) MintToOwner(_amount *big.Int) (*ty
 // Solidity: function mintToOwner(uint256 _amount) returns()
 func (_IOwnableERC223 *IOwnableERC223TransactorSession) MintToOwner(_amount *big.Int) (*types.Transaction, error) {
 	return _IOwnableERC223.Contract.MintToOwner(&_IOwnableERC223.TransactOpts, _amount)
+}
+
+// Setup is a paid mutator transaction binding the contract method 0x66d38203.
+//
+// Solidity: function setup(address _orderbook) returns()
+func (_IOwnableERC223 *IOwnableERC223Transactor) Setup(opts *bind.TransactOpts, _orderbook common.Address) (*types.Transaction, error) {
+	return _IOwnableERC223.contract.Transact(opts, "setup", _orderbook)
+}
+
+// Setup is a paid mutator transaction binding the contract method 0x66d38203.
+//
+// Solidity: function setup(address _orderbook) returns()
+func (_IOwnableERC223 *IOwnableERC223Session) Setup(_orderbook common.Address) (*types.Transaction, error) {
+	return _IOwnableERC223.Contract.Setup(&_IOwnableERC223.TransactOpts, _orderbook)
+}
+
+// Setup is a paid mutator transaction binding the contract method 0x66d38203.
+//
+// Solidity: function setup(address _orderbook) returns()
+func (_IOwnableERC223 *IOwnableERC223TransactorSession) Setup(_orderbook common.Address) (*types.Transaction, error) {
+	return _IOwnableERC223.Contract.Setup(&_IOwnableERC223.TransactOpts, _orderbook)
 }
 
 // Transfer is a paid mutator transaction binding the contract method 0xa9059cbb.
@@ -434,10 +434,10 @@ func (_IOwnableERC223 *IOwnableERC223TransactorSession) Transfer(to common.Addre
 }
 
 // InitializerABI is the input ABI used to generate the binding from.
-const InitializerABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"volatileTokenRegister\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"stableTokenRegister\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]"
+const InitializerABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"Stable\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"Buy\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"Sell\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"volatileTokenRegister\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"Volatile\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"stableTokenRegister\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]"
 
 // InitializerBin is the compiled bytecode used for deploying new contracts.
-const InitializerBin = `0x608060405234801561001057600080fd5b506101bf806100206000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c8063c0409a5c1461003b578063fdeb177914610063575b600080fd5b6100616004803603602081101561005157600080fd5b50356001600160a01b0316610089565b005b6100616004803603602081101561007957600080fd5b50356001600160a01b031661010c565b60008080526020527fad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5546001600160a01b0316156100c657610109565b60008080526020527fad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb580546001600160a01b0319166001600160a01b0383161790555b50565b600160009081526020527fada5013122d395ba3c54772283fb069b10426056ef8ca54750cb9bb552a59e7d546001600160a01b031661014a57610109565b600160009081526020527fada5013122d395ba3c54772283fb069b10426056ef8ca54750cb9bb552a59e7d80546001600160a01b0383166001600160a01b03199091161790555056fea165627a7a7230582029c1811bfc47f7cff52870fca120a11b779b146d8cd861c77f4489d7507656640029`
+const InitializerBin = `0x608060405234801561001057600080fd5b506102c5806100206000396000f3fe608060405234801561001057600080fd5b50600436106100625760003560e01c80639157772a14610067578063974c86b514610067578063aea90cb814610083578063c0409a5c1461008b578063f2a946b414610083578063fdeb1779146100b3575b600080fd5b61006f6100d9565b604080519115158252519081900360200190f35b61006f6100de565b6100b1600480360360208110156100a157600080fd5b50356001600160a01b03166100e3565b005b6100b1600480360360208110156100c957600080fd5b50356001600160a01b03166101a5565b600181565b600081565b60008080526020527fad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5546001600160a01b03161561015c5760408051600160e51b62461bcd02815260206004820152600b6024820152600160aa1b6a185b1c9958591e481cd95d02604482015290519081900360640190fd5b60008080526020527fad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb580546001600160a01b0319166001600160a01b0392909216919091179055565b600160009081526020527fada5013122d395ba3c54772283fb069b10426056ef8ca54750cb9bb552a59e7d546001600160a01b0316156102205760408051600160e51b62461bcd02815260206004820152600b6024820152600160aa1b6a185b1c9958591e481cd95d02604482015290519081900360640190fd5b600160009081526020527fada5013122d395ba3c54772283fb069b10426056ef8ca54750cb9bb552a59e7d80546001600160a01b0319166001600160a01b039290921691909117905556fea265627a7a723058202dcb1e018cbc521f2684981e05e300fe5b9f32f9edadea9ee6c1e9ea6d5c5f6664736f6c637827302e352e392d646576656c6f702e323031392e352e31302b636f6d6d69742e65613633376632300057`
 
 // DeployInitializer deploys a new Ethereum contract, binding an instance of Initializer to it.
 func DeployInitializer(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *Initializer, error) {
@@ -594,6 +594,110 @@ func (_Initializer *InitializerTransactorRaw) Transact(opts *bind.TransactOpts, 
 	return _Initializer.Contract.contract.Transact(opts, method, params...)
 }
 
+// Buy is a free data retrieval call binding the contract method 0x974c86b5.
+//
+// Solidity: function Buy() constant returns(bool)
+func (_Initializer *InitializerCaller) Buy(opts *bind.CallOpts) (bool, error) {
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _Initializer.contract.Call(opts, out, "Buy")
+	return *ret0, err
+}
+
+// Buy is a free data retrieval call binding the contract method 0x974c86b5.
+//
+// Solidity: function Buy() constant returns(bool)
+func (_Initializer *InitializerSession) Buy() (bool, error) {
+	return _Initializer.Contract.Buy(&_Initializer.CallOpts)
+}
+
+// Buy is a free data retrieval call binding the contract method 0x974c86b5.
+//
+// Solidity: function Buy() constant returns(bool)
+func (_Initializer *InitializerCallerSession) Buy() (bool, error) {
+	return _Initializer.Contract.Buy(&_Initializer.CallOpts)
+}
+
+// Sell is a free data retrieval call binding the contract method 0xaea90cb8.
+//
+// Solidity: function Sell() constant returns(bool)
+func (_Initializer *InitializerCaller) Sell(opts *bind.CallOpts) (bool, error) {
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _Initializer.contract.Call(opts, out, "Sell")
+	return *ret0, err
+}
+
+// Sell is a free data retrieval call binding the contract method 0xaea90cb8.
+//
+// Solidity: function Sell() constant returns(bool)
+func (_Initializer *InitializerSession) Sell() (bool, error) {
+	return _Initializer.Contract.Sell(&_Initializer.CallOpts)
+}
+
+// Sell is a free data retrieval call binding the contract method 0xaea90cb8.
+//
+// Solidity: function Sell() constant returns(bool)
+func (_Initializer *InitializerCallerSession) Sell() (bool, error) {
+	return _Initializer.Contract.Sell(&_Initializer.CallOpts)
+}
+
+// Stable is a free data retrieval call binding the contract method 0x9157772a.
+//
+// Solidity: function Stable() constant returns(bool)
+func (_Initializer *InitializerCaller) Stable(opts *bind.CallOpts) (bool, error) {
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _Initializer.contract.Call(opts, out, "Stable")
+	return *ret0, err
+}
+
+// Stable is a free data retrieval call binding the contract method 0x9157772a.
+//
+// Solidity: function Stable() constant returns(bool)
+func (_Initializer *InitializerSession) Stable() (bool, error) {
+	return _Initializer.Contract.Stable(&_Initializer.CallOpts)
+}
+
+// Stable is a free data retrieval call binding the contract method 0x9157772a.
+//
+// Solidity: function Stable() constant returns(bool)
+func (_Initializer *InitializerCallerSession) Stable() (bool, error) {
+	return _Initializer.Contract.Stable(&_Initializer.CallOpts)
+}
+
+// Volatile is a free data retrieval call binding the contract method 0xf2a946b4.
+//
+// Solidity: function Volatile() constant returns(bool)
+func (_Initializer *InitializerCaller) Volatile(opts *bind.CallOpts) (bool, error) {
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _Initializer.contract.Call(opts, out, "Volatile")
+	return *ret0, err
+}
+
+// Volatile is a free data retrieval call binding the contract method 0xf2a946b4.
+//
+// Solidity: function Volatile() constant returns(bool)
+func (_Initializer *InitializerSession) Volatile() (bool, error) {
+	return _Initializer.Contract.Volatile(&_Initializer.CallOpts)
+}
+
+// Volatile is a free data retrieval call binding the contract method 0xf2a946b4.
+//
+// Solidity: function Volatile() constant returns(bool)
+func (_Initializer *InitializerCallerSession) Volatile() (bool, error) {
+	return _Initializer.Contract.Volatile(&_Initializer.CallOpts)
+}
+
 // StableTokenRegister is a paid mutator transaction binding the contract method 0xfdeb1779.
 //
 // Solidity: function stableTokenRegister(address _address) returns()
@@ -640,7 +744,7 @@ func (_Initializer *InitializerTransactorSession) VolatileTokenRegister(_address
 const MathABI = "[]"
 
 // MathBin is the compiled bytecode used for deploying new contracts.
-const MathBin = `0x604c6023600b82828239805160001a607314601657fe5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea165627a7a72305820a65787e19ed23fddf467e753c2a73e2529ebd11fcdb508e9d9de06d391f042610029`
+const MathBin = `0x607a6023600b82828239805160001a607314601657fe5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea265627a7a723058209a2d001f93b7b5ef867461f5b7f32f21237e46de1507a41e20065805e2902ea164736f6c637827302e352e392d646576656c6f702e323031392e352e31302b636f6d6d69742e65613633376632300057`
 
 // DeployMath deploys a new Ethereum contract, binding an instance of Math to it.
 func DeployMath(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *Math, error) {
@@ -798,10 +902,10 @@ func (_Math *MathTransactorRaw) Transact(opts *bind.TransactOpts, method string,
 }
 
 // OrderBookABI is the input ABI used to generate the binding from.
-const OrderBookABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_id\",\"type\":\"bytes32\"}],\"name\":\"getOrder\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"bytes32\"},{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"}],\"name\":\"bottom\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_id\",\"type\":\"bytes32\"}],\"name\":\"remove\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_id\",\"type\":\"bytes32\"}],\"name\":\"validOrder\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"}],\"name\":\"top\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_maker\",\"type\":\"address\"},{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_haveAmount\",\"type\":\"uint256\"},{\"name\":\"_wantAmount\",\"type\":\"uint256\"}],\"name\":\"initOrder\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"volatileTokenRegister\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_id\",\"type\":\"bytes32\"}],\"name\":\"getPrev\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_id\",\"type\":\"bytes32\"}],\"name\":\"getNext\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_haveAmount\",\"type\":\"uint256\"},{\"name\":\"_wantAmount\",\"type\":\"uint256\"},{\"name\":\"_maker\",\"type\":\"address\"},{\"name\":\"_assistingID\",\"type\":\"bytes32\"}],\"name\":\"insert\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"INPUTS_MAX\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"orderType\",\"type\":\"bool\"},{\"name\":\"_newId\",\"type\":\"bytes32\"},{\"name\":\"_oldId\",\"type\":\"bytes32\"}],\"name\":\"betterOrder\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"stableTokenRegister\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+const OrderBookABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_id\",\"type\":\"bytes32\"}],\"name\":\"getOrder\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"bytes32\"},{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"}],\"name\":\"bottom\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_id\",\"type\":\"bytes32\"}],\"name\":\"cancel\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_id\",\"type\":\"bytes32\"}],\"name\":\"validOrder\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"}],\"name\":\"top\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"Stable\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"Buy\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"Sell\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_maker\",\"type\":\"address\"},{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_haveAmount\",\"type\":\"uint256\"},{\"name\":\"_wantAmount\",\"type\":\"uint256\"}],\"name\":\"initOrder\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"volatileTokenRegister\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_id\",\"type\":\"bytes32\"}],\"name\":\"getPrev\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_id\",\"type\":\"bytes32\"}],\"name\":\"getNext\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_haveAmount\",\"type\":\"uint256\"},{\"name\":\"_wantAmount\",\"type\":\"uint256\"},{\"name\":\"_maker\",\"type\":\"address\"},{\"name\":\"_assistingID\",\"type\":\"bytes32\"}],\"name\":\"insert\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"INPUTS_MAX\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"orderType\",\"type\":\"bool\"},{\"name\":\"_newId\",\"type\":\"bytes32\"},{\"name\":\"_oldId\",\"type\":\"bytes32\"}],\"name\":\"betterOrder\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"Volatile\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"stableTokenRegister\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
 // OrderBookBin is the compiled bytecode used for deploying new contracts.
-const OrderBookBin = `0x60806040526001600355612710600455610b7c8061001e6000396000f3fe608060405234801561001057600080fd5b50600436106100cf5760003560e01c8063c0409a5c1161008c578063d39ecc9511610066578063d39ecc9514610288578063d4dcff82146102c8578063e3dd138f146102d0578063fdeb1779146102fb576100cf565b8063c0409a5c14610218578063ce11ae661461023e578063ce24388f14610263576100cf565b806307c399a3146100d4578063174a50881461012e57806369722e551461015f5780637234c79d146101865780638aa3f897146101bf578063bc96b872146101de575b600080fd5b6100f9600480360360408110156100ea57600080fd5b50803515159060200135610321565b604080516001600160a01b03909616865260208601949094528484019290925260608401526080830152519081900360a00190f35b61014d6004803603602081101561014457600080fd5b50351515610367565b60408051918252519081900360200190f35b6101846004803603604081101561017557600080fd5b50803515159060200135610389565b005b6101ab6004803603604081101561019c57600080fd5b508035151590602001356104fd565b604080519115158252519081900360200190f35b61014d600480360360208110156101d557600080fd5b50351515610526565b61014d600480360360808110156101f457600080fd5b506001600160a01b0381351690602081013515159060408101359060600135610548565b6101846004803603602081101561022e57600080fd5b50356001600160a01b0316610783565b61014d6004803603604081101561025457600080fd5b50803515159060200135610806565b61014d6004803603604081101561027957600080fd5b50803515159060200135610828565b61014d600480360360a081101561029e57600080fd5b5080351515906020810135906040810135906001600160a01b03606082013516906080013561084a565b61014d610997565b6101ab600480360360608110156102e657600080fd5b5080351515906020810135906040013561099f565b6101846004803603602081101561031157600080fd5b50356001600160a01b0316610a32565b9015156000908152600160208181526040808420948452939052919020805491810154600282015460038301546004909301546001600160a01b03909416949193909291565b1515600090815260016020908152604080832083805290915290206003015490565b81151560009081526001602090815260408083208484529182905290912080546001600160a01b031633146104085760408051600160e51b62461bcd02815260206004820152601060248201527f6f6e6c79206f72646572206f776e657200000000000000000000000000000000604482015290519081900360640190fd5b600480820154600380840180546000908152602087815260408083208701869055925494825282822090930193909355871515835282825280832054855460018701548351600160e01b63a9059cbb0281526001600160a01b03928316978101979097526024870152915191169363a9059cbb9360448083019493928390030190829087803b15801561049a57600080fd5b505af11580156104ae573d6000803e3d6000fd5b505050506040513d60208110156104c457600080fd5b50505060009182526020526040812080546001600160a01b03191681556001810182905560028101829055600381018290556004015550565b811515600090815260016020908152604080832084845290915290206002015415155b92915050565b1515600090815260016020908152604080832083805290915290206004015490565b600080831180156105595750600082115b6105ad5760408051600160e51b62461bcd02815260206004820152600e60248201527f7361766520796f75722074696d65000000000000000000000000000000000000604482015290519081900360640190fd5b600160801b831080156105c35750600160801b82105b6106175760408051600160e51b62461bcd02815260206004820152601460248201527f67726561746572207468616e20737570706c793f000000000000000000000000604482015290519081900360640190fd5b6001600160a01b038516600081815260026020818152604080842080546001908101918290558a151586528352818520868652848452825160609790971b8785015260348701919091526054860189905260748087018990528251808803909101815260949096019182905285519095928291908401908083835b602083106106b15780518252601f199092019160209182019101610692565b51815160209384036101000a60001901801990921691161790526040519190930194509192505080830381855afa1580156106f0573d6000803e3d6000fd5b5050506040513d602081101561070557600080fd5b50516040805160a0810182526001600160a01b03998a1681526020808201988952818301978852600060608301818152608084018281528683529790925292909220905181546001600160a01b0319169a16999099178955955160018901559351600288015550925160038601555090516004909301929092555090565b60008080526020527fad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5546001600160a01b0316156107c057610803565b60008080526020527fad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb580546001600160a01b0319166001600160a01b0383161790555b50565b9015156000908152600160209081526040808320938352929052206003015490565b9015156000908152600160209081526040808320938352929052206004015490565b600061085686836104fd565b6108aa5760408051600160e51b62461bcd02815260206004820152600d60248201527f7361766520796f75722067617300000000000000000000000000000000000000604482015290519081900360640190fd5b8515156000908152600160205260408120906108c885898989610548565b9050836108d689838361099f565b610916575b6108e689838361099f565b610901576000908152602083905260409020600401546108db565b61090c898383610ab9565b50915061098e9050565b6000908152602083905260409020600301545b8060001a60f81b6001600160f81b0319161580159061094e575061094e89838361099f565b1561096a57600090815260208390526040902060030154610929565b600081815260208490526040902060040154610989908a908490610ab9565b509150505b95945050505050565b600160801b81565b82151560009081526001602081815260408084208685529182905280842085855290842060035460045460028301549584015494959394929387936109fe9392909201916109f29163ffffffff610b0016565b9063ffffffff610b2e16565b90506000610a236004546109f286600201548660010154610b0090919063ffffffff16565b90911198975050505050505050565b600160009081526020527fada5013122d395ba3c54772283fb069b10426056ef8ca54750cb9bb552a59e7d546001600160a01b0316610a7057610803565b600160009081526020527fada5013122d395ba3c54772283fb069b10426056ef8ca54750cb9bb552a59e7d80546001600160a01b0383166001600160a01b031990911617905550565b911515600090815260016020908152604080832085845290915280822060039081018054858552838520928301819055600492830196909655849055938252902090910155565b600082610b0f57506000610520565b82820282848281610b1c57fe5b0414610b2757600080fd5b9392505050565b6000808211610b3c57600080fd5b6000828481610b4757fe5b0494935050505056fea165627a7a723058208bf07915529a9ede532927c109398c725d28243f365333f8e133c391fb6d29e20029`
+const OrderBookBin = `0x608060405260006003556001600455610d3c8061001d6000396000f3fe608060405234801561001057600080fd5b506004361061010b5760003560e01c8063bc96b872116100a2578063d39ecc9511610071578063d39ecc95146102d4578063d4dcff8214610314578063e3dd138f1461031c578063f2a946b414610222578063fdeb1779146103475761010b565b8063bc96b8721461022a578063c0409a5c14610264578063ce11ae661461028a578063ce24388f146102af5761010b565b80638aa3f897116100de5780638aa3f897146101fb5780639157772a1461021a578063974c86b51461021a578063aea90cb8146102225761010b565b806307c399a314610110578063174a50881461016a57806343271d791461019b5780637234c79d146101c2575b600080fd5b6101356004803603604081101561012657600080fd5b5080351515906020013561036d565b604080516001600160a01b03909616865260208601949094528484019290925260608401526080830152519081900360a00190f35b6101896004803603602081101561018057600080fd5b503515156103b3565b60408051918252519081900360200190f35b6101c0600480360360408110156101b157600080fd5b508035151590602001356103d5565b005b6101e7600480360360408110156101d857600080fd5b50803515159060200135610467565b604080519115158252519081900360200190f35b6101896004803603602081101561021157600080fd5b50351515610490565b6101e76104b2565b6101e76104b7565b6101896004803603608081101561024057600080fd5b506001600160a01b03813516906020810135151590604081013590606001356104bc565b6101c06004803603602081101561027a57600080fd5b50356001600160a01b03166106f7565b610189600480360360408110156102a057600080fd5b508035151590602001356107b9565b610189600480360360408110156102c557600080fd5b508035151590602001356107db565b610189600480360360a08110156102ea57600080fd5b5080351515906020810135906040810135906001600160a01b0360608201351690608001356107fd565b61018961094a565b6101e76004803603606081101561033257600080fd5b50803515159060208101359060400135610952565b6101c06004803603602081101561035d57600080fd5b50356001600160a01b03166109e3565b9015156000908152600160208181526040808420948452939052919020805491810154600282015460038301546004909301546001600160a01b03909416949193909291565b1515600090815260016020908152604080832083805290915290206003015490565b81151560009081526001602090815260408083208484529182905290912080546001600160a01b031633146104545760408051600160e51b62461bcd02815260206004820152601060248201527f6f6e6c79206f72646572206f776e657200000000000000000000000000000000604482015290519081900360640190fd5b61046084846000610aa9565b5050505050565b811515600090815260016020908152604080832084845290915290206002015415155b92915050565b1515600090815260016020908152604080832083805290915290206004015490565b600181565b600081565b600080831180156104cd5750600082115b6105215760408051600160e51b62461bcd02815260206004820152600e60248201527f7361766520796f75722074696d65000000000000000000000000000000000000604482015290519081900360640190fd5b600160781b831080156105375750600160781b82105b61058b5760408051600160e51b62461bcd02815260206004820152601460248201527f67726561746572207468616e20737570706c793f000000000000000000000000604482015290519081900360640190fd5b6001600160a01b038516600081815260026020818152604080842080546001908101918290558a151586528352818520868652848452825160609790971b8785015260348701919091526054860189905260748087018990528251808803909101815260949096019182905285519095928291908401908083835b602083106106255780518252601f199092019160209182019101610606565b51815160209384036101000a60001901801990921691161790526040519190930194509192505080830381855afa158015610664573d6000803e3d6000fd5b5050506040513d602081101561067957600080fd5b50516040805160a0810182526001600160a01b03998a1681526020808201988952818301978852600060608301818152608084018281528683529790925292909220905181546001600160a01b0319169a16999099178955955160018901559351600288015550925160038601555090516004909301929092555090565b60008080526020527fad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5546001600160a01b0316156107705760408051600160e51b62461bcd02815260206004820152600b6024820152600160aa1b6a185b1c9958591e481cd95d02604482015290519081900360640190fd5b60008080526020527fad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb580546001600160a01b0319166001600160a01b0392909216919091179055565b9015156000908152600160209081526040808320938352929052206003015490565b9015156000908152600160209081526040808320938352929052206004015490565b60006108098683610467565b61085d5760408051600160e51b62461bcd02815260206004820152600d60248201527f7361766520796f75722067617300000000000000000000000000000000000000604482015290519081900360640190fd5b85151560009081526001602052604081209061087b858989896104bc565b905083610889898383610952565b6108c9575b610899898383610952565b6108b45760009081526020839052604090206004015461088e565b6108bf898383610c6d565b5091506109419050565b6000908152602083905260409020600301545b8060001a60f81b6001600160f81b031916158015906109015750610901898383610952565b1561091d576000908152602083905260409020600301546108dc565b60008181526020849052604090206004015461093c908a908490610c6d565b509150505b95945050505050565b600160781b81565b82151560009081526001602081815260408084208685529182905280842085855290842060045460028201549483015493949293919286926109ab929161099f919063ffffffff610cb416565b9063ffffffff610cb416565b905060006109d46003546004540161099f86600201548660010154610cb490919063ffffffff16565b90911198975050505050505050565b600160009081526020527fada5013122d395ba3c54772283fb069b10426056ef8ca54750cb9bb552a59e7d546001600160a01b031615610a5e5760408051600160e51b62461bcd02815260206004820152600b6024820152600160aa1b6a185b1c9958591e481cd95d02604482015290519081900360640190fd5b600160009081526020527fada5013122d395ba3c54772283fb069b10426056ef8ca54750cb9bb552a59e7d80546001600160a01b0319166001600160a01b0392909216919091179055565b821515600090815260016020908152604080832085845291829052808320600480820154600380840180548852858820909301829055915490865292852001919091558315610b8f57851560009081526020818152604080832054845460028601548351600160e01b63a9059cbb0281526001600160a01b0392831660048201526024810191909152925191169363a9059cbb93604480850194919392918390030190829087803b158015610b5d57600080fd5b505af1158015610b71573d6000803e3d6000fd5b505050506040513d6020811015610b8757600080fd5b50610c289050565b85151560009081526020818152604080832054845460018601548351600160e01b63a9059cbb0281526001600160a01b0392831660048201526024810191909152925191169363a9059cbb93604480850194919392918390030190829087803b158015610bfb57600080fd5b505af1158015610c0f573d6000803e3d6000fd5b505050506040513d6020811015610c2557600080fd5b50505b60049081015460009586526020929092526040852080546001600160a01b03191681556001810186905560028101869055600381018690550193909355509092915050565b911515600090815260016020908152604080832085845290915280822060039081018054858552838520928301819055600492830196909655849055938252902090910155565b600082610cc35750600061048a565b82820282848281610cd057fe5b0414610cdb57600080fd5b939250505056fea265627a7a723058203bff535de0cf18910414b651d88de57e612ad4512c4d9fc5449a4fed36ee07f864736f6c637827302e352e392d646576656c6f702e323031392e352e31302b636f6d6d69742e65613633376632300057`
 
 // DeployOrderBook deploys a new Ethereum contract, binding an instance of OrderBook to it.
 func DeployOrderBook(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *OrderBook, error) {
@@ -958,6 +1062,32 @@ func (_OrderBook *OrderBookTransactorRaw) Transact(opts *bind.TransactOpts, meth
 	return _OrderBook.Contract.contract.Transact(opts, method, params...)
 }
 
+// Buy is a free data retrieval call binding the contract method 0x974c86b5.
+//
+// Solidity: function Buy() constant returns(bool)
+func (_OrderBook *OrderBookCaller) Buy(opts *bind.CallOpts) (bool, error) {
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _OrderBook.contract.Call(opts, out, "Buy")
+	return *ret0, err
+}
+
+// Buy is a free data retrieval call binding the contract method 0x974c86b5.
+//
+// Solidity: function Buy() constant returns(bool)
+func (_OrderBook *OrderBookSession) Buy() (bool, error) {
+	return _OrderBook.Contract.Buy(&_OrderBook.CallOpts)
+}
+
+// Buy is a free data retrieval call binding the contract method 0x974c86b5.
+//
+// Solidity: function Buy() constant returns(bool)
+func (_OrderBook *OrderBookCallerSession) Buy() (bool, error) {
+	return _OrderBook.Contract.Buy(&_OrderBook.CallOpts)
+}
+
 // INPUTSMAX is a free data retrieval call binding the contract method 0xd4dcff82.
 //
 // Solidity: function INPUTS_MAX() constant returns(uint256)
@@ -982,6 +1112,84 @@ func (_OrderBook *OrderBookSession) INPUTSMAX() (*big.Int, error) {
 // Solidity: function INPUTS_MAX() constant returns(uint256)
 func (_OrderBook *OrderBookCallerSession) INPUTSMAX() (*big.Int, error) {
 	return _OrderBook.Contract.INPUTSMAX(&_OrderBook.CallOpts)
+}
+
+// Sell is a free data retrieval call binding the contract method 0xaea90cb8.
+//
+// Solidity: function Sell() constant returns(bool)
+func (_OrderBook *OrderBookCaller) Sell(opts *bind.CallOpts) (bool, error) {
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _OrderBook.contract.Call(opts, out, "Sell")
+	return *ret0, err
+}
+
+// Sell is a free data retrieval call binding the contract method 0xaea90cb8.
+//
+// Solidity: function Sell() constant returns(bool)
+func (_OrderBook *OrderBookSession) Sell() (bool, error) {
+	return _OrderBook.Contract.Sell(&_OrderBook.CallOpts)
+}
+
+// Sell is a free data retrieval call binding the contract method 0xaea90cb8.
+//
+// Solidity: function Sell() constant returns(bool)
+func (_OrderBook *OrderBookCallerSession) Sell() (bool, error) {
+	return _OrderBook.Contract.Sell(&_OrderBook.CallOpts)
+}
+
+// Stable is a free data retrieval call binding the contract method 0x9157772a.
+//
+// Solidity: function Stable() constant returns(bool)
+func (_OrderBook *OrderBookCaller) Stable(opts *bind.CallOpts) (bool, error) {
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _OrderBook.contract.Call(opts, out, "Stable")
+	return *ret0, err
+}
+
+// Stable is a free data retrieval call binding the contract method 0x9157772a.
+//
+// Solidity: function Stable() constant returns(bool)
+func (_OrderBook *OrderBookSession) Stable() (bool, error) {
+	return _OrderBook.Contract.Stable(&_OrderBook.CallOpts)
+}
+
+// Stable is a free data retrieval call binding the contract method 0x9157772a.
+//
+// Solidity: function Stable() constant returns(bool)
+func (_OrderBook *OrderBookCallerSession) Stable() (bool, error) {
+	return _OrderBook.Contract.Stable(&_OrderBook.CallOpts)
+}
+
+// Volatile is a free data retrieval call binding the contract method 0xf2a946b4.
+//
+// Solidity: function Volatile() constant returns(bool)
+func (_OrderBook *OrderBookCaller) Volatile(opts *bind.CallOpts) (bool, error) {
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _OrderBook.contract.Call(opts, out, "Volatile")
+	return *ret0, err
+}
+
+// Volatile is a free data retrieval call binding the contract method 0xf2a946b4.
+//
+// Solidity: function Volatile() constant returns(bool)
+func (_OrderBook *OrderBookSession) Volatile() (bool, error) {
+	return _OrderBook.Contract.Volatile(&_OrderBook.CallOpts)
+}
+
+// Volatile is a free data retrieval call binding the contract method 0xf2a946b4.
+//
+// Solidity: function Volatile() constant returns(bool)
+func (_OrderBook *OrderBookCallerSession) Volatile() (bool, error) {
+	return _OrderBook.Contract.Volatile(&_OrderBook.CallOpts)
 }
 
 // BetterOrder is a free data retrieval call binding the contract method 0xe3dd138f.
@@ -1176,6 +1384,27 @@ func (_OrderBook *OrderBookCallerSession) ValidOrder(_orderType bool, _id [32]by
 	return _OrderBook.Contract.ValidOrder(&_OrderBook.CallOpts, _orderType, _id)
 }
 
+// Cancel is a paid mutator transaction binding the contract method 0x43271d79.
+//
+// Solidity: function cancel(bool _orderType, bytes32 _id) returns()
+func (_OrderBook *OrderBookTransactor) Cancel(opts *bind.TransactOpts, _orderType bool, _id [32]byte) (*types.Transaction, error) {
+	return _OrderBook.contract.Transact(opts, "cancel", _orderType, _id)
+}
+
+// Cancel is a paid mutator transaction binding the contract method 0x43271d79.
+//
+// Solidity: function cancel(bool _orderType, bytes32 _id) returns()
+func (_OrderBook *OrderBookSession) Cancel(_orderType bool, _id [32]byte) (*types.Transaction, error) {
+	return _OrderBook.Contract.Cancel(&_OrderBook.TransactOpts, _orderType, _id)
+}
+
+// Cancel is a paid mutator transaction binding the contract method 0x43271d79.
+//
+// Solidity: function cancel(bool _orderType, bytes32 _id) returns()
+func (_OrderBook *OrderBookTransactorSession) Cancel(_orderType bool, _id [32]byte) (*types.Transaction, error) {
+	return _OrderBook.Contract.Cancel(&_OrderBook.TransactOpts, _orderType, _id)
+}
+
 // InitOrder is a paid mutator transaction binding the contract method 0xbc96b872.
 //
 // Solidity: function initOrder(address _maker, bool _orderType, uint256 _haveAmount, uint256 _wantAmount) returns(bytes32)
@@ -1216,27 +1445,6 @@ func (_OrderBook *OrderBookSession) Insert(_orderType bool, _haveAmount *big.Int
 // Solidity: function insert(bool _orderType, uint256 _haveAmount, uint256 _wantAmount, address _maker, bytes32 _assistingID) returns(bytes32)
 func (_OrderBook *OrderBookTransactorSession) Insert(_orderType bool, _haveAmount *big.Int, _wantAmount *big.Int, _maker common.Address, _assistingID [32]byte) (*types.Transaction, error) {
 	return _OrderBook.Contract.Insert(&_OrderBook.TransactOpts, _orderType, _haveAmount, _wantAmount, _maker, _assistingID)
-}
-
-// Remove is a paid mutator transaction binding the contract method 0x69722e55.
-//
-// Solidity: function remove(bool _orderType, bytes32 _id) returns()
-func (_OrderBook *OrderBookTransactor) Remove(opts *bind.TransactOpts, _orderType bool, _id [32]byte) (*types.Transaction, error) {
-	return _OrderBook.contract.Transact(opts, "remove", _orderType, _id)
-}
-
-// Remove is a paid mutator transaction binding the contract method 0x69722e55.
-//
-// Solidity: function remove(bool _orderType, bytes32 _id) returns()
-func (_OrderBook *OrderBookSession) Remove(_orderType bool, _id [32]byte) (*types.Transaction, error) {
-	return _OrderBook.Contract.Remove(&_OrderBook.TransactOpts, _orderType, _id)
-}
-
-// Remove is a paid mutator transaction binding the contract method 0x69722e55.
-//
-// Solidity: function remove(bool _orderType, bytes32 _id) returns()
-func (_OrderBook *OrderBookTransactorSession) Remove(_orderType bool, _id [32]byte) (*types.Transaction, error) {
-	return _OrderBook.Contract.Remove(&_OrderBook.TransactOpts, _orderType, _id)
 }
 
 // StableTokenRegister is a paid mutator transaction binding the contract method 0xfdeb1779.
@@ -1282,10 +1490,10 @@ func (_OrderBook *OrderBookTransactorSession) VolatileTokenRegister(_address com
 }
 
 // PairExABI is the input ABI used to generate the binding from.
-const PairExABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_id\",\"type\":\"bytes32\"}],\"name\":\"getOrder\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"bytes32\"},{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"}],\"name\":\"bottom\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getOrderType\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_id\",\"type\":\"bytes32\"}],\"name\":\"remove\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_id\",\"type\":\"bytes32\"}],\"name\":\"validOrder\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_stableTokenTarget\",\"type\":\"uint256\"}],\"name\":\"orderToFill\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"}],\"name\":\"top\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_maker\",\"type\":\"address\"},{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_haveAmount\",\"type\":\"uint256\"},{\"name\":\"_wantAmount\",\"type\":\"uint256\"}],\"name\":\"initOrder\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"volatileTokenRegister\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_from\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"},{\"name\":\"_data\",\"type\":\"bytes\"}],\"name\":\"tokenFallback\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_id\",\"type\":\"bytes32\"}],\"name\":\"getPrev\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_id\",\"type\":\"bytes32\"}],\"name\":\"getNext\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_haveAmount\",\"type\":\"uint256\"},{\"name\":\"_wantAmount\",\"type\":\"uint256\"},{\"name\":\"_maker\",\"type\":\"address\"},{\"name\":\"_assistingID\",\"type\":\"bytes32\"}],\"name\":\"insert\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"INPUTS_MAX\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"orderType\",\"type\":\"bool\"},{\"name\":\"_newId\",\"type\":\"bytes32\"},{\"name\":\"_oldId\",\"type\":\"bytes32\"}],\"name\":\"betterOrder\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"stableTokenRegister\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_volatileTokenAddress\",\"type\":\"address\"},{\"name\":\"_stableTokenAddress\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]"
+const PairExABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_id\",\"type\":\"bytes32\"}],\"name\":\"getOrder\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"bytes32\"},{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"}],\"name\":\"bottom\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_volatileTokenAddress\",\"type\":\"address\"},{\"name\":\"_stableTokenAddress\",\"type\":\"address\"}],\"name\":\"setup\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_id\",\"type\":\"bytes32\"}],\"name\":\"cancel\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getOrderType\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_id\",\"type\":\"bytes32\"}],\"name\":\"validOrder\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_stableTokenTarget\",\"type\":\"uint256\"}],\"name\":\"orderToFill\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"}],\"name\":\"top\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"Stable\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"Buy\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_inflate\",\"type\":\"bool\"},{\"name\":\"_stableTokenTarget\",\"type\":\"uint256\"}],\"name\":\"absorb\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"Sell\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_maker\",\"type\":\"address\"},{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_haveAmount\",\"type\":\"uint256\"},{\"name\":\"_wantAmount\",\"type\":\"uint256\"}],\"name\":\"initOrder\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"volatileTokenRegister\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_from\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"},{\"name\":\"_data\",\"type\":\"bytes\"}],\"name\":\"tokenFallback\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_id\",\"type\":\"bytes32\"}],\"name\":\"getPrev\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_id\",\"type\":\"bytes32\"}],\"name\":\"getNext\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_orderType\",\"type\":\"bool\"},{\"name\":\"_haveAmount\",\"type\":\"uint256\"},{\"name\":\"_wantAmount\",\"type\":\"uint256\"},{\"name\":\"_maker\",\"type\":\"address\"},{\"name\":\"_assistingID\",\"type\":\"bytes32\"}],\"name\":\"insert\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"INPUTS_MAX\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"orderType\",\"type\":\"bool\"},{\"name\":\"_newId\",\"type\":\"bytes32\"},{\"name\":\"_oldId\",\"type\":\"bytes32\"}],\"name\":\"betterOrder\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"Volatile\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"stableTokenRegister\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_volatileTokenAddress\",\"type\":\"address\"},{\"name\":\"_stableTokenAddress\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]"
 
 // PairExBin is the compiled bytecode used for deploying new contracts.
-const PairExBin = `0x608060405260016003556127106004553480156200001c57600080fd5b50604051604080620016bf833981018060405260408110156200003e57600080fd5b5080516020909101516200005162000337565b600160408201908152600080527fa6eef7e35abe7026729641147f7915573c7e97b47efa546f5f6e3230263bcb49602090815282517fe5d06582d467054dda5404b9e1ec93f72b608a4970ba970773776c69ca5664f780546001600160a01b03199081166001600160a01b039384161790915582850180517fe5d06582d467054dda5404b9e1ec93f72b608a4970ba970773776c69ca5664f85584517fe5d06582d467054dda5404b9e1ec93f72b608a4970ba970773776c69ca5664f9556060860180517fe5d06582d467054dda5404b9e1ec93f72b608a4970ba970773776c69ca5664fa556080870180517fe5d06582d467054dda5404b9e1ec93f72b608a4970ba970773776c69ca5664fb557fcc69885fda6bcc1a4ace058b4a62bf5e179ea78fd58a1ccd71c22cc9b688792f865287517f09d41a60c7eb9e1f3f38bbee2eea2761087cd398a4df0eb22dbaa4eaa274957c8054909516951694909417909255517f09d41a60c7eb9e1f3f38bbee2eea2761087cd398a4df0eb22dbaa4eaa274957d5592517f09d41a60c7eb9e1f3f38bbee2eea2761087cd398a4df0eb22dbaa4eaa274957e5591517f09d41a60c7eb9e1f3f38bbee2eea2761087cd398a4df0eb22dbaa4eaa274957f5590517f09d41a60c7eb9e1f3f38bbee2eea2761087cd398a4df0eb22dbaa4eaa274958055620002539084906200026d811b901c565b6200026482620002d060201b60201c565b50505062000365565b60008080526020526000805160206200169f833981519152546001600160a01b0316156200029b57620002cd565b60008080526020526000805160206200169f83398151915280546001600160a01b0319166001600160a01b0383161790555b50565b600160009081526020526000805160206200167f833981519152546001600160a01b0316620002ff57620002cd565b600160009081526020526000805160206200167f83398151915280546001600160a01b0383166001600160a01b031990911617905550565b6040805160a08101825260008082526020820181905291810182905260608101829052608081019190915290565b61130a80620003756000396000f3fe608060405234801561001057600080fd5b50600436106101005760003560e01c8063c0409a5c11610097578063d39ecc9511610066578063d39ecc9514610384578063d4dcff82146103c4578063e3dd138f146103cc578063fdeb1779146103f757610100565b8063c0409a5c1461028f578063c0ee0b8a146102b5578063ce11ae661461033a578063ce24388f1461035f57610100565b80637234c79d116100d35780637234c79d146101d35780637e01b4f1146101f85780638aa3f89714610236578063bc96b8721461025557610100565b806307c399a314610105578063174a50881461015f57806355ebd76d1461019057806369722e55146101ac575b600080fd5b61012a6004803603604081101561011b57600080fd5b5080351515906020013561041d565b604080516001600160a01b03909616865260208601949094528484019290925260608401526080830152519081900360a00190f35b61017e6004803603602081101561017557600080fd5b50351515610463565b60408051918252519081900360200190f35b610198610485565b604080519115158252519081900360200190f35b6101d1600480360360408110156101c257600080fd5b50803515159060200135610558565b005b610198600480360360408110156101e957600080fd5b508035151590602001356106cc565b61021d6004803603604081101561020e57600080fd5b508035151590602001356106f5565b6040805192835260208301919091528051918290030190f35b61017e6004803603602081101561024c57600080fd5b5035151561083b565b61017e6004803603608081101561026b57600080fd5b506001600160a01b038135169060208101351515906040810135906060013561085d565b6101d1600480360360208110156102a557600080fd5b50356001600160a01b0316610a98565b6101d1600480360360608110156102cb57600080fd5b6001600160a01b03823516916020810135918101906060810160408201356401000000008111156102fb57600080fd5b82018360208201111561030d57600080fd5b8035906020019184600183028401116401000000008311171561032f57600080fd5b509092509050610b1b565b61017e6004803603604081101561035057600080fd5b50803515159060200135610b92565b61017e6004803603604081101561037557600080fd5b50803515159060200135610bb4565b61017e600480360360a081101561039a57600080fd5b5080351515906020810135906040810135906001600160a01b036060820135169060800135610bd6565b61017e610d23565b610198600480360360608110156103e257600080fd5b50803515159060208101359060400135610d2b565b6101d16004803603602081101561040d57600080fd5b50356001600160a01b0316610db2565b9015156000908152600160208181526040808420948452939052919020805491810154600282015460038301546004909301546001600160a01b03909416949193909291565b1515600090815260016020908152604080832083805290915290206003015490565b6001600090815260208190526000805160206112948339815191525433906001600160a01b03168114806104ed575060008080526020527fad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5546001600160a01b038281169116145b61052b57604051600160e51b62461bcd02815260040180806020018281038252602b8152602001806112b4602b913960400191505060405180910390fd5b60016000908152602052600080516020611294833981519152546001600160a01b03918216911614905090565b81151560009081526001602090815260408083208484529182905290912080546001600160a01b031633146105d75760408051600160e51b62461bcd02815260206004820152601060248201527f6f6e6c79206f72646572206f776e657200000000000000000000000000000000604482015290519081900360640190fd5b600480820154600380840180546000908152602087815260408083208701869055925494825282822090930193909355871515835282825280832054855460018701548351600160e01b63a9059cbb0281526001600160a01b03928316978101979097526024870152915191169363a9059cbb9360448083019493928390030190829087803b15801561066957600080fd5b505af115801561067d573d6000803e3d6000fd5b505050506040513d602081101561069357600080fd5b50505060009182526020526040812080546001600160a01b03191681556001810182905560028101829055600381018290556004015550565b811515600090815260016020908152604080832084845290915290206002015415155b92915050565b811515600090815260016020526040812081908180806107148861083b565b90505b8060001a60f81b6001600160f81b0319161580159061073557508683105b1561082d576000818152602085905260408120908961075857816002015461075e565b81600101545b905060008a610771578260010154610777565b82600201545b90508961078a878463ffffffff610e1516565b11156107fa5760006107a28b8863ffffffff610e2e16565b905060006107c6846107ba858563ffffffff610e4316565b9063ffffffff610e6a16565b90506107d8878263ffffffff610e1516565b6107e8898463ffffffff610e1516565b9a509a50505050505050505050610834565b61080a858263ffffffff610e1516565b945061081c868363ffffffff610e1516565b955082600401549350505050610717565b5093509150505b9250929050565b1515600090815260016020908152604080832083805290915290206004015490565b6000808311801561086e5750600082115b6108c25760408051600160e51b62461bcd02815260206004820152600e60248201527f7361766520796f75722074696d65000000000000000000000000000000000000604482015290519081900360640190fd5b600160801b831080156108d85750600160801b82105b61092c5760408051600160e51b62461bcd02815260206004820152601460248201527f67726561746572207468616e20737570706c793f000000000000000000000000604482015290519081900360640190fd5b6001600160a01b038516600081815260026020818152604080842080546001908101918290558a151586528352818520868652848452825160609790971b8785015260348701919091526054860189905260748087018990528251808803909101815260949096019182905285519095928291908401908083835b602083106109c65780518252601f1990920191602091820191016109a7565b51815160209384036101000a60001901801990921691161790526040519190930194509192505080830381855afa158015610a05573d6000803e3d6000fd5b5050506040513d6020811015610a1a57600080fd5b50516040805160a0810182526001600160a01b03998a1681526020808201988952818301978852600060608301818152608084018281528683529790925292909220905181546001600160a01b0319169a16999099178955955160018901559351600288015550925160038601555090516004909301929092555090565b60008080526020527fad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5546001600160a01b031615610ad557610b18565b60008080526020527fad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb580546001600160a01b0319166001600160a01b0383161790555b50565b836000610b26610485565b90508460008060208614610b515786866040811015610b4457600080fd5b5080359060200135610b66565b86866020811015610b6157600080fd5b503560005b90925090506000610b7a8585858986610bd6565b9050610b868582610e8c565b50505050505050505050565b9015156000908152600160209081526040808320938352929052206003015490565b9015156000908152600160209081526040808320938352929052206004015490565b6000610be286836106cc565b610c365760408051600160e51b62461bcd02815260206004820152600d60248201527f7361766520796f75722067617300000000000000000000000000000000000000604482015290519081900360640190fd5b851515600090815260016020526040812090610c548589898961085d565b905083610c62898383610d2b565b610ca2575b610c72898383610d2b565b610c8d57600090815260208390526040902060040154610c67565b610c98898383611192565b509150610d1a9050565b6000908152602083905260409020600301545b8060001a60f81b6001600160f81b03191615801590610cda5750610cda898383610d2b565b15610cf657600090815260208390526040902060030154610cb5565b600081815260208490526040902060040154610d15908a908490611192565b509150505b95945050505050565b600160801b81565b8215156000908152600160208181526040808420868552918290528084208585529084206003546004546002830154958401549495939492938793610d7e9392909201916107ba9163ffffffff610e4316565b90506000610da36004546107ba86600201548660010154610e4390919063ffffffff16565b90911198975050505050505050565b60016000908152602052600080516020611294833981519152546001600160a01b0316610dde57610b18565b6001600090815260205260008051602061129483398151915280546001600160a01b0383166001600160a01b031990911617905550565b600082820183811015610e2757600080fd5b9392505050565b600082821115610e3d57600080fd5b50900390565b600082610e52575060006106ef565b82820282848281610e5f57fe5b0414610e2757600080fd5b6000808211610e7857600080fd5b6000828481610e8357fe5b04949350505050565b8115801560009081526001602081815260408084208685528083528185208686529390925283209092610ebe8561083b565b90505b8060001a60f81b6001600160f81b0319161561118857600081815260208390526040902060028082015490850154610efe9163ffffffff610e4316565b60018083015490860154610f179163ffffffff610e4316565b1015610f285750505050505061118e565b6000610f3c856001015483600201546111d9565b6001860154909150610f6c906107ba610f5b828563ffffffff610e2e16565b60028901549063ffffffff610e4316565b60028601556001850154610f86908263ffffffff610e2e16565b85600101819055506000610faf83600201546107ba848660010154610e4390919063ffffffff16565b6001840154909150610fdf906107ba610fce828563ffffffff610e2e16565b60028701549063ffffffff610e4316565b60028401556001830154610ff9908263ffffffff610e2e16565b60018401558715156000908152602081815260408083205489548251600160e01b63a9059cbb0281526001600160a01b03918216600482015260248101879052925191169363a9059cbb93604480850194919392918390030190829087803b15801561106457600080fd5b505af1158015611078573d6000803e3d6000fd5b505050506040513d602081101561108e57600080fd5b50508915156000908152602081815260408083205486548251600160e01b63a9059cbb0281526001600160a01b03918216600482015260248101889052925191169363a9059cbb93604480850194919392918390030190829087803b1580156110f657600080fd5b505af115801561110a573d6000803e3d6000fd5b505050506040513d602081101561112057600080fd5b50506001830154158061113557506002830154155b156111445761114488856111ef565b61114d8861083b565b935085600101546000148061116457506002860154155b15611180576111738a8a6111ef565b505050505050505061118e565b505050610ec1565b50505050505b5050565b911515600090815260016020908152604080832085845290915280822060039081018054858552838520928301819055600492830196909655849055938252902090910155565b60008183106111e85781610e27565b5090919050565b8115156000818152600160208181526040808420868552808352818520600480820154600380840180548a52868a208401839055549189528589200155968652858452828620548154958201548451600160e01b63a9059cbb0281526001600160a01b03978816998101999099526024890152925191969095949092169363a9059cbb93604480850194919392918390030190829087803b15801561066957600080fdfeada5013122d395ba3c54772283fb069b10426056ef8ca54750cb9bb552a59e7d6f6e6c7920566f6c6174696c65546f6b656e20616e6420537461626c65546f6b656e206163636570746564a165627a7a72305820ee6f907621954962428e02a2d0f9dc8dee8955ebe41ef46486f29d06862a7cf60029ada5013122d395ba3c54772283fb069b10426056ef8ca54750cb9bb552a59e7dad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5`
+const PairExBin = `0x6080604052600060035560016004553480156200001b57600080fd5b5060405160408062001eb0833981018060405260408110156200003d57600080fd5b5080516020909101516001600160a01b0382161562000067576200006782620000a060201b60201c565b6001600160a01b03811615620000885762000088816200016760201b60201c565b620000986200023260201b60201c565b50506200045c565b600080805260205260008051602062001e90833981519152546001600160a01b0316156200012f57604080517f08c379a000000000000000000000000000000000000000000000000000000000815260206004820152600b60248201527f616c726561647920736574000000000000000000000000000000000000000000604482015290519081900360640190fd5b600080805260205260008051602062001e9083398151915280546001600160a01b0319166001600160a01b0392909216919091179055565b6001600090815260205260008051602062001e70833981519152546001600160a01b031615620001f857604080517f08c379a000000000000000000000000000000000000000000000000000000000815260206004820152600b60248201527f616c726561647920736574000000000000000000000000000000000000000000604482015290519081900360640190fd5b6001600090815260205260008051602062001e7083398151915280546001600160a01b0319166001600160a01b0392909216919091179055565b6200023c6200042e565b600160408201908152600080527fa6eef7e35abe7026729641147f7915573c7e97b47efa546f5f6e3230263bcb49602090815282517fe5d06582d467054dda5404b9e1ec93f72b608a4970ba970773776c69ca5664f780546001600160a01b03199081166001600160a01b039384161790915582850180517fe5d06582d467054dda5404b9e1ec93f72b608a4970ba970773776c69ca5664f85584517fe5d06582d467054dda5404b9e1ec93f72b608a4970ba970773776c69ca5664f9556060860180517fe5d06582d467054dda5404b9e1ec93f72b608a4970ba970773776c69ca5664fa556080870180517fe5d06582d467054dda5404b9e1ec93f72b608a4970ba970773776c69ca5664fb557fcc69885fda6bcc1a4ace058b4a62bf5e179ea78fd58a1ccd71c22cc9b688792f90955295517f09d41a60c7eb9e1f3f38bbee2eea2761087cd398a4df0eb22dbaa4eaa274957c80549093169316929092179055517f09d41a60c7eb9e1f3f38bbee2eea2761087cd398a4df0eb22dbaa4eaa274957d5590517f09d41a60c7eb9e1f3f38bbee2eea2761087cd398a4df0eb22dbaa4eaa274957e5590517f09d41a60c7eb9e1f3f38bbee2eea2761087cd398a4df0eb22dbaa4eaa274957f55517f09d41a60c7eb9e1f3f38bbee2eea2761087cd398a4df0eb22dbaa4eaa274958055565b6040805160a08101825260008082526020820181905291810182905260608101829052608081019190915290565b611a04806200046c6000396000f3fe608060405234801561001057600080fd5b50600436106101425760003560e01c8063aea90cb8116100b8578063ce24388f1161007c578063ce24388f14610404578063d39ecc9514610429578063d4dcff8214610469578063e3dd138f14610471578063f2a946b4146102f2578063fdeb17791461049c57610142565b8063aea90cb8146102f2578063bc96b872146102fa578063c0409a5c14610334578063c0ee0b8a1461035a578063ce11ae66146103df57610142565b80637234c79d1161010a5780637234c79d146102435780637e01b4f1146102685780638aa3f897146102a65780639157772a146102c5578063974c86b5146102c55780639b7c4e01146102cd57610142565b806307c399a314610147578063174a5088146101a15780632d34ba79146101d257806343271d791461020257806355ebd76d14610227575b600080fd5b61016c6004803603604081101561015d57600080fd5b508035151590602001356104c2565b604080516001600160a01b03909616865260208601949094528484019290925260608401526080830152519081900360a00190f35b6101c0600480360360208110156101b757600080fd5b50351515610508565b60408051918252519081900360200190f35b610200600480360360408110156101e857600080fd5b506001600160a01b038135811691602001351661052a565b005b6102006004803603604081101561021857600080fd5b50803515159060200135610634565b61022f6106c6565b604080519115158252519081900360200190f35b61022f6004803603604081101561025957600080fd5b50803515159060200135610787565b61028d6004803603604081101561027e57600080fd5b508035151590602001356107b0565b6040805192835260208301919091528051918290030190f35b6101c0600480360360208110156102bc57600080fd5b503515156108f6565b61022f610918565b61028d600480360360408110156102e357600080fd5b5080351515906020013561091d565b61022f610d79565b6101c06004803603608081101561031057600080fd5b506001600160a01b0381351690602081013515159060408101359060600135610d7e565b6102006004803603602081101561034a57600080fd5b50356001600160a01b0316610fb9565b6102006004803603606081101561037057600080fd5b6001600160a01b03823516916020810135918101906060810160408201356401000000008111156103a057600080fd5b8201836020820111156103b257600080fd5b803590602001918460018302840111640100000000831117156103d457600080fd5b509092509050611057565b6101c0600480360360408110156103f557600080fd5b508035151590602001356110ce565b6101c06004803603604081101561041a57600080fd5b508035151590602001356110f0565b6101c0600480360360a081101561043f57600080fd5b5080351515906020810135906040810135906001600160a01b036060820135169060800135611112565b6101c061125f565b61022f6004803603606081101561048757600080fd5b50803515159060208101359060400135611267565b610200600480360360208110156104b257600080fd5b50356001600160a01b03166112f8565b9015156000908152600160208181526040808420948452939052919020805491810154600282015460038301546004909301546001600160a01b03909416949193909291565b1515600090815260016020908152604080832083805290915290206003015490565b61053382610fb9565b61053c816112f8565b6000808052602081905260008051602061198b8339815191525460408051600160e01b6366d3820302815230600482015290516001600160a01b03909216926366d382039260248084019382900301818387803b15801561059c57600080fd5b505af11580156105b0573d6000803e3d6000fd5b50506001600090815260208190526000805160206119408339815191525460408051600160e01b6366d3820302815230600482015290516001600160a01b0390921694506366d382039350602480820193929182900301818387803b15801561061857600080fd5b505af115801561062c573d6000803e3d6000fd5b505050505050565b81151560009081526001602090815260408083208484529182905290912080546001600160a01b031633146106b35760408051600160e51b62461bcd02815260206004820152601060248201527f6f6e6c79206f72646572206f776e657200000000000000000000000000000000604482015290519081900360640190fd5b6106bf8484600061139a565b5050505050565b6001600090815260208190526000805160206119408339815191525433906001600160a01b031681148061071c5750600080805260205260008051602061198b833981519152546001600160a01b038281169116145b61075a57604051600160e51b62461bcd02815260040180806020018281038252602b815260200180611960602b913960400191505060405180910390fd5b60016000908152602052600080516020611940833981519152546001600160a01b03918216911614905090565b811515600090815260016020908152604080832084845290915290206002015415155b92915050565b811515600090815260016020526040812081908180806107cf886108f6565b90505b8060001a60f81b6001600160f81b031916158015906107f057508683105b156108e85760008181526020859052604081209089610813578160020154610819565b81600101545b905060008a61082c578260010154610832565b82600201545b905089610845878463ffffffff61155e16565b11156108b557600061085d8b8863ffffffff61157716565b9050600061088184610875858563ffffffff61158c16565b9063ffffffff6115b316565b9050610893878263ffffffff61155e16565b6108a3898463ffffffff61155e16565b9a509a505050505050505050506108ef565b6108c5858263ffffffff61155e16565b94506108d7868363ffffffff61155e16565b9550826004015493505050506107d2565b5093509150505b9250929050565b1515600090815260016020908152604080832083805290915290206004015490565b600181565b6000803330146109775760408051600160e51b62461bcd02815260206004820152600e60248201527f636f6e73656e737573206f6e6c79000000000000000000000000000000000000604482015290519081900360640190fd5b600084610985576001610988565b60005b801515600090815260016020526040812091925080806109a7856108f6565b90505b8060001a60f81b6001600160f81b031916158015906109c857508782105b15610d6b576000818152602085905260408120908a6109eb5781600201546109f1565b81600101545b905060008b610a04578260010154610a0a565b82600201545b90508a610a1d868363ffffffff61155e16565b11610b4a57610a32868363ffffffff61155e16565b9550610a44858263ffffffff61155e16565b8c156000908152602081905260408082205460018701548251600160e01b63b5f07ea1028152600481019190915291519398506001600160a01b03169263b5f07ea19260248084019391929182900301818387803b158015610aa557600080fd5b505af1158015610ab9573d6000803e3d6000fd5b505050508b15156000908152602081905260408082205460028601548251600160e01b6348043f0d028152600481019190915291516001600160a01b03909116926348043f0d926024808201939182900301818387803b158015610b1c57600080fd5b505af1158015610b30573d6000803e3d6000fd5b50505050610b408885600161139a565b93505050506109aa565b60008080610b5e8e8963ffffffff61157716565b90506000610b7685610875888563ffffffff61158c16565b9050610b888a8263ffffffff61155e16565b9950610b9a898363ffffffff61155e16565b98508f610ba75781610ba9565b805b93508f610bb65780610bb8565b815b92505050610bd382866001015461157790919063ffffffff16565b60018601556002850154610bed908263ffffffff61157716565b60028601558d15600090815260208190526040808220548151600160e01b63b5f07ea10281526004810186905291516001600160a01b039091169263b5f07ea1926024808201939182900301818387803b158015610c4a57600080fd5b505af1158015610c5e573d6000803e3d6000fd5b505050508d1515600090815260208190526040808220548151600160e01b6348043f0d0281526004810185905291516001600160a01b03909116926348043f0d926024808201939182900301818387803b158015610cbb57600080fd5b505af1158015610ccf573d6000803e3d6000fd5b505050508d15156000908152602081815260408083205488548251600160e01b63a9059cbb0281526001600160a01b03918216600482015260248101879052925191169363a9059cbb93604480850194919392918390030190829087803b158015610d3957600080fd5b505af1158015610d4d573d6000803e3d6000fd5b505050506040513d6020811015610d6357600080fd5b505050505050505b509097909650945050505050565b600081565b60008083118015610d8f5750600082115b610de35760408051600160e51b62461bcd02815260206004820152600e60248201527f7361766520796f75722074696d65000000000000000000000000000000000000604482015290519081900360640190fd5b600160781b83108015610df95750600160781b82105b610e4d5760408051600160e51b62461bcd02815260206004820152601460248201527f67726561746572207468616e20737570706c793f000000000000000000000000604482015290519081900360640190fd5b6001600160a01b038516600081815260026020818152604080842080546001908101918290558a151586528352818520868652848452825160609790971b8785015260348701919091526054860189905260748087018990528251808803909101815260949096019182905285519095928291908401908083835b60208310610ee75780518252601f199092019160209182019101610ec8565b51815160209384036101000a60001901801990921691161790526040519190930194509192505080830381855afa158015610f26573d6000803e3d6000fd5b5050506040513d6020811015610f3b57600080fd5b50516040805160a0810182526001600160a01b03998a1681526020808201988952818301978852600060608301818152608084018281528683529790925292909220905181546001600160a01b0319169a16999099178955955160018901559351600288015550925160038601555090516004909301929092555090565b600080805260205260008051602061198b833981519152546001600160a01b0316156110205760408051600160e51b62461bcd02815260206004820152600b6024820152600160aa1b6a185b1c9958591e481cd95d02604482015290519081900360640190fd5b600080805260205260008051602061198b83398151915280546001600160a01b0319166001600160a01b0392909216919091179055565b8360006110626106c6565b9050846000806020861461108d578686604081101561108057600080fd5b50803590602001356110a2565b8686602081101561109d57600080fd5b503560005b909250905060006110b68585858986611112565b90506110c285826115d5565b50505050505050505050565b9015156000908152600160209081526040808320938352929052206003015490565b9015156000908152600160209081526040808320938352929052206004015490565b600061111e8683610787565b6111725760408051600160e51b62461bcd02815260206004820152600d60248201527f7361766520796f75722067617300000000000000000000000000000000000000604482015290519081900360640190fd5b85151560009081526001602052604081209061119085898989610d7e565b90508361119e898383611267565b6111de575b6111ae898383611267565b6111c9576000908152602083905260409020600401546111a3565b6111d48983836118e2565b5091506112569050565b6000908152602083905260409020600301545b8060001a60f81b6001600160f81b031916158015906112165750611216898383611267565b15611232576000908152602083905260409020600301546111f1565b600081815260208490526040902060040154611251908a9084906118e2565b509150505b95945050505050565b600160781b81565b82151560009081526001602081815260408084208685529182905280842085855290842060045460028201549483015493949293919286926112c092916112b4919063ffffffff61158c16565b9063ffffffff61158c16565b905060006112e9600354600454016112b48660020154866001015461158c90919063ffffffff16565b90911198975050505050505050565b60016000908152602052600080516020611940833981519152546001600160a01b0316156113615760408051600160e51b62461bcd02815260206004820152600b6024820152600160aa1b6a185b1c9958591e481cd95d02604482015290519081900360640190fd5b6001600090815260205260008051602061194083398151915280546001600160a01b0319166001600160a01b0392909216919091179055565b82151560009081526001602090815260408083208584529182905280832060048082015460038084018054885285882090930182905591549086529285200191909155831561148057851560009081526020818152604080832054845460028601548351600160e01b63a9059cbb0281526001600160a01b0392831660048201526024810191909152925191169363a9059cbb93604480850194919392918390030190829087803b15801561144e57600080fd5b505af1158015611462573d6000803e3d6000fd5b505050506040513d602081101561147857600080fd5b506115199050565b85151560009081526020818152604080832054845460018601548351600160e01b63a9059cbb0281526001600160a01b0392831660048201526024810191909152925191169363a9059cbb93604480850194919392918390030190829087803b1580156114ec57600080fd5b505af1158015611500573d6000803e3d6000fd5b505050506040513d602081101561151657600080fd5b50505b60049081015460009586526020929092526040852080546001600160a01b03191681556001810186905560028101869055600381018690550193909355509092915050565b60008282018381101561157057600080fd5b9392505050565b60008282111561158657600080fd5b50900390565b60008261159b575060006107aa565b828202828482816115a857fe5b041461157057600080fd5b60008082116115c157600080fd5b60008284816115cc57fe5b04949350505050565b8115801560009081526001602081815260408084208685528083528185208686529390925283209092611607856108f6565b90505b8060001a60f81b6001600160f81b031916156118d8576000818152602083905260409020600280820154908501546116479163ffffffff61158c16565b600180830154908601546116609163ffffffff61158c16565b1015611671575050505050506118de565b600061168585600101548360020154611929565b60018601549091506116b5906108756116a4828563ffffffff61157716565b60028901549063ffffffff61158c16565b600286015560018501546116cf908263ffffffff61157716565b856001018190555060006116f8836002015461087584866001015461158c90919063ffffffff16565b600184015490915061172890610875611717828563ffffffff61157716565b60028701549063ffffffff61158c16565b60028401556001830154611742908263ffffffff61157716565b60018401558715156000908152602081815260408083205489548251600160e01b63a9059cbb0281526001600160a01b03918216600482015260248101879052925191169363a9059cbb93604480850194919392918390030190829087803b1580156117ad57600080fd5b505af11580156117c1573d6000803e3d6000fd5b505050506040513d60208110156117d757600080fd5b50508915156000908152602081815260408083205486548251600160e01b63a9059cbb0281526001600160a01b03918216600482015260248101889052925191169363a9059cbb93604480850194919392918390030190829087803b15801561183f57600080fd5b505af1158015611853573d6000803e3d6000fd5b505050506040513d602081101561186957600080fd5b50506001830154158061187e57506002830154155b156118915761188f8885600061139a565b505b61189a886108f6565b93508560010154600014806118b157506002860154155b156118d0576118c28a8a600061139a565b5050505050505050506118de565b50505061160a565b50505050505b5050565b911515600090815260016020908152604080832085845290915280822060039081018054858552838520928301819055600492830196909655849055938252902090910155565b60008183106119385781611570565b509091905056feada5013122d395ba3c54772283fb069b10426056ef8ca54750cb9bb552a59e7d6f6e6c7920566f6c6174696c65546f6b656e20616e6420537461626c65546f6b656e206163636570746564ad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5a265627a7a723058205c4077f0b53c27e9bbb8933fa90879da5c7fc771dedbe4e1225689c12e71ffa164736f6c637827302e352e392d646576656c6f702e323031392e352e31302b636f6d6d69742e65613633376632300057ada5013122d395ba3c54772283fb069b10426056ef8ca54750cb9bb552a59e7dad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5`
 
 // DeployPairEx deploys a new Ethereum contract, binding an instance of PairEx to it.
 func DeployPairEx(auth *bind.TransactOpts, backend bind.ContractBackend, _volatileTokenAddress common.Address, _stableTokenAddress common.Address) (common.Address, *types.Transaction, *PairEx, error) {
@@ -1442,6 +1650,32 @@ func (_PairEx *PairExTransactorRaw) Transact(opts *bind.TransactOpts, method str
 	return _PairEx.Contract.contract.Transact(opts, method, params...)
 }
 
+// Buy is a free data retrieval call binding the contract method 0x974c86b5.
+//
+// Solidity: function Buy() constant returns(bool)
+func (_PairEx *PairExCaller) Buy(opts *bind.CallOpts) (bool, error) {
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _PairEx.contract.Call(opts, out, "Buy")
+	return *ret0, err
+}
+
+// Buy is a free data retrieval call binding the contract method 0x974c86b5.
+//
+// Solidity: function Buy() constant returns(bool)
+func (_PairEx *PairExSession) Buy() (bool, error) {
+	return _PairEx.Contract.Buy(&_PairEx.CallOpts)
+}
+
+// Buy is a free data retrieval call binding the contract method 0x974c86b5.
+//
+// Solidity: function Buy() constant returns(bool)
+func (_PairEx *PairExCallerSession) Buy() (bool, error) {
+	return _PairEx.Contract.Buy(&_PairEx.CallOpts)
+}
+
 // INPUTSMAX is a free data retrieval call binding the contract method 0xd4dcff82.
 //
 // Solidity: function INPUTS_MAX() constant returns(uint256)
@@ -1466,6 +1700,84 @@ func (_PairEx *PairExSession) INPUTSMAX() (*big.Int, error) {
 // Solidity: function INPUTS_MAX() constant returns(uint256)
 func (_PairEx *PairExCallerSession) INPUTSMAX() (*big.Int, error) {
 	return _PairEx.Contract.INPUTSMAX(&_PairEx.CallOpts)
+}
+
+// Sell is a free data retrieval call binding the contract method 0xaea90cb8.
+//
+// Solidity: function Sell() constant returns(bool)
+func (_PairEx *PairExCaller) Sell(opts *bind.CallOpts) (bool, error) {
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _PairEx.contract.Call(opts, out, "Sell")
+	return *ret0, err
+}
+
+// Sell is a free data retrieval call binding the contract method 0xaea90cb8.
+//
+// Solidity: function Sell() constant returns(bool)
+func (_PairEx *PairExSession) Sell() (bool, error) {
+	return _PairEx.Contract.Sell(&_PairEx.CallOpts)
+}
+
+// Sell is a free data retrieval call binding the contract method 0xaea90cb8.
+//
+// Solidity: function Sell() constant returns(bool)
+func (_PairEx *PairExCallerSession) Sell() (bool, error) {
+	return _PairEx.Contract.Sell(&_PairEx.CallOpts)
+}
+
+// Stable is a free data retrieval call binding the contract method 0x9157772a.
+//
+// Solidity: function Stable() constant returns(bool)
+func (_PairEx *PairExCaller) Stable(opts *bind.CallOpts) (bool, error) {
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _PairEx.contract.Call(opts, out, "Stable")
+	return *ret0, err
+}
+
+// Stable is a free data retrieval call binding the contract method 0x9157772a.
+//
+// Solidity: function Stable() constant returns(bool)
+func (_PairEx *PairExSession) Stable() (bool, error) {
+	return _PairEx.Contract.Stable(&_PairEx.CallOpts)
+}
+
+// Stable is a free data retrieval call binding the contract method 0x9157772a.
+//
+// Solidity: function Stable() constant returns(bool)
+func (_PairEx *PairExCallerSession) Stable() (bool, error) {
+	return _PairEx.Contract.Stable(&_PairEx.CallOpts)
+}
+
+// Volatile is a free data retrieval call binding the contract method 0xf2a946b4.
+//
+// Solidity: function Volatile() constant returns(bool)
+func (_PairEx *PairExCaller) Volatile(opts *bind.CallOpts) (bool, error) {
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _PairEx.contract.Call(opts, out, "Volatile")
+	return *ret0, err
+}
+
+// Volatile is a free data retrieval call binding the contract method 0xf2a946b4.
+//
+// Solidity: function Volatile() constant returns(bool)
+func (_PairEx *PairExSession) Volatile() (bool, error) {
+	return _PairEx.Contract.Volatile(&_PairEx.CallOpts)
+}
+
+// Volatile is a free data retrieval call binding the contract method 0xf2a946b4.
+//
+// Solidity: function Volatile() constant returns(bool)
+func (_PairEx *PairExCallerSession) Volatile() (bool, error) {
+	return _PairEx.Contract.Volatile(&_PairEx.CallOpts)
 }
 
 // BetterOrder is a free data retrieval call binding the contract method 0xe3dd138f.
@@ -1716,6 +2028,48 @@ func (_PairEx *PairExCallerSession) ValidOrder(_orderType bool, _id [32]byte) (b
 	return _PairEx.Contract.ValidOrder(&_PairEx.CallOpts, _orderType, _id)
 }
 
+// Absorb is a paid mutator transaction binding the contract method 0x9b7c4e01.
+//
+// Solidity: function absorb(bool _inflate, uint256 _stableTokenTarget) returns(uint256, uint256)
+func (_PairEx *PairExTransactor) Absorb(opts *bind.TransactOpts, _inflate bool, _stableTokenTarget *big.Int) (*types.Transaction, error) {
+	return _PairEx.contract.Transact(opts, "absorb", _inflate, _stableTokenTarget)
+}
+
+// Absorb is a paid mutator transaction binding the contract method 0x9b7c4e01.
+//
+// Solidity: function absorb(bool _inflate, uint256 _stableTokenTarget) returns(uint256, uint256)
+func (_PairEx *PairExSession) Absorb(_inflate bool, _stableTokenTarget *big.Int) (*types.Transaction, error) {
+	return _PairEx.Contract.Absorb(&_PairEx.TransactOpts, _inflate, _stableTokenTarget)
+}
+
+// Absorb is a paid mutator transaction binding the contract method 0x9b7c4e01.
+//
+// Solidity: function absorb(bool _inflate, uint256 _stableTokenTarget) returns(uint256, uint256)
+func (_PairEx *PairExTransactorSession) Absorb(_inflate bool, _stableTokenTarget *big.Int) (*types.Transaction, error) {
+	return _PairEx.Contract.Absorb(&_PairEx.TransactOpts, _inflate, _stableTokenTarget)
+}
+
+// Cancel is a paid mutator transaction binding the contract method 0x43271d79.
+//
+// Solidity: function cancel(bool _orderType, bytes32 _id) returns()
+func (_PairEx *PairExTransactor) Cancel(opts *bind.TransactOpts, _orderType bool, _id [32]byte) (*types.Transaction, error) {
+	return _PairEx.contract.Transact(opts, "cancel", _orderType, _id)
+}
+
+// Cancel is a paid mutator transaction binding the contract method 0x43271d79.
+//
+// Solidity: function cancel(bool _orderType, bytes32 _id) returns()
+func (_PairEx *PairExSession) Cancel(_orderType bool, _id [32]byte) (*types.Transaction, error) {
+	return _PairEx.Contract.Cancel(&_PairEx.TransactOpts, _orderType, _id)
+}
+
+// Cancel is a paid mutator transaction binding the contract method 0x43271d79.
+//
+// Solidity: function cancel(bool _orderType, bytes32 _id) returns()
+func (_PairEx *PairExTransactorSession) Cancel(_orderType bool, _id [32]byte) (*types.Transaction, error) {
+	return _PairEx.Contract.Cancel(&_PairEx.TransactOpts, _orderType, _id)
+}
+
 // InitOrder is a paid mutator transaction binding the contract method 0xbc96b872.
 //
 // Solidity: function initOrder(address _maker, bool _orderType, uint256 _haveAmount, uint256 _wantAmount) returns(bytes32)
@@ -1758,25 +2112,25 @@ func (_PairEx *PairExTransactorSession) Insert(_orderType bool, _haveAmount *big
 	return _PairEx.Contract.Insert(&_PairEx.TransactOpts, _orderType, _haveAmount, _wantAmount, _maker, _assistingID)
 }
 
-// Remove is a paid mutator transaction binding the contract method 0x69722e55.
+// Setup is a paid mutator transaction binding the contract method 0x2d34ba79.
 //
-// Solidity: function remove(bool _orderType, bytes32 _id) returns()
-func (_PairEx *PairExTransactor) Remove(opts *bind.TransactOpts, _orderType bool, _id [32]byte) (*types.Transaction, error) {
-	return _PairEx.contract.Transact(opts, "remove", _orderType, _id)
+// Solidity: function setup(address _volatileTokenAddress, address _stableTokenAddress) returns()
+func (_PairEx *PairExTransactor) Setup(opts *bind.TransactOpts, _volatileTokenAddress common.Address, _stableTokenAddress common.Address) (*types.Transaction, error) {
+	return _PairEx.contract.Transact(opts, "setup", _volatileTokenAddress, _stableTokenAddress)
 }
 
-// Remove is a paid mutator transaction binding the contract method 0x69722e55.
+// Setup is a paid mutator transaction binding the contract method 0x2d34ba79.
 //
-// Solidity: function remove(bool _orderType, bytes32 _id) returns()
-func (_PairEx *PairExSession) Remove(_orderType bool, _id [32]byte) (*types.Transaction, error) {
-	return _PairEx.Contract.Remove(&_PairEx.TransactOpts, _orderType, _id)
+// Solidity: function setup(address _volatileTokenAddress, address _stableTokenAddress) returns()
+func (_PairEx *PairExSession) Setup(_volatileTokenAddress common.Address, _stableTokenAddress common.Address) (*types.Transaction, error) {
+	return _PairEx.Contract.Setup(&_PairEx.TransactOpts, _volatileTokenAddress, _stableTokenAddress)
 }
 
-// Remove is a paid mutator transaction binding the contract method 0x69722e55.
+// Setup is a paid mutator transaction binding the contract method 0x2d34ba79.
 //
-// Solidity: function remove(bool _orderType, bytes32 _id) returns()
-func (_PairEx *PairExTransactorSession) Remove(_orderType bool, _id [32]byte) (*types.Transaction, error) {
-	return _PairEx.Contract.Remove(&_PairEx.TransactOpts, _orderType, _id)
+// Solidity: function setup(address _volatileTokenAddress, address _stableTokenAddress) returns()
+func (_PairEx *PairExTransactorSession) Setup(_volatileTokenAddress common.Address, _stableTokenAddress common.Address) (*types.Transaction, error) {
+	return _PairEx.Contract.Setup(&_PairEx.TransactOpts, _volatileTokenAddress, _stableTokenAddress)
 }
 
 // StableTokenRegister is a paid mutator transaction binding the contract method 0xfdeb1779.
@@ -1846,7 +2200,7 @@ func (_PairEx *PairExTransactorSession) VolatileTokenRegister(_address common.Ad
 const SafeMathABI = "[]"
 
 // SafeMathBin is the compiled bytecode used for deploying new contracts.
-const SafeMathBin = `0x604c6023600b82828239805160001a607314601657fe5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea165627a7a723058209666e3c94883c612cd6f865b0444ddab0c1b5435a9178e6b5820dcf71421e05e0029`
+const SafeMathBin = `0x607a6023600b82828239805160001a607314601657fe5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea265627a7a72305820eef902655aa1b9e203b21af68c09bc0f306a44a64877150397b166a34822455964736f6c637827302e352e392d646576656c6f702e323031392e352e31302b636f6d6d69742e65613633376632300057`
 
 // DeploySafeMath deploys a new Ethereum contract, binding an instance of SafeMath to it.
 func DeploySafeMath(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *SafeMath, error) {
