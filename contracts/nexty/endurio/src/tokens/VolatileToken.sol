@@ -5,28 +5,38 @@ import "./ERC223.sol";
 import "../interfaces/IPairEx.sol";
 
 /*
-    . Exchanged with NTY with rate 1 MANTY = 10000 NTY
+    . Exchanged with NTY with rate 1 MegaNTY = 1000000 NTY
     . Mint. / burn. able(free) by owner = orderbook contract
 */
 
 contract VolatileToken is ERC223 {
     string public constant name = "MNTY";
     string public constant symbol = "Mega NTY";
-    uint8 public constant decimals = 24;
+    uint256 public constant decimals = 24;
 
     IPairEx internal orderbook;
 
-    constructor (address _orderbook, bool register)
+    constructor (
+        address _orderbook,      // mandatory
+        address _prefundAddress, // optional
+        uint256 _prefundAmount   // optional
+    )
         public
     {
-        if (register) {
-            orderbook = IPairEx(_orderbook);
-            orderbook.volatileTokenRegister(address(this));
+        if (_prefundAmount > 0 ) {
+            _mint(_prefundAddress, _prefundAmount * 10**decimals);
         }
         initialize(address(_orderbook));
-        //_mint(msg.sender, 10 ** 30);
     }
 
+    function setup(
+        address _orderbook
+    )
+        external
+    {
+        // just an interface check
+        orderbook = IPairEx(_orderbook);
+    }
 
     function buy()
         public
