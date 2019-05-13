@@ -1560,6 +1560,29 @@ func (d *Dccs) MedianPriceStat(chain consensus.ChainReader, number uint64) strin
 	return price.Rat().FloatString(4)
 }
 
+func (d *Dccs) AbsorbedStat(chain consensus.ChainReader, number uint64) string {
+	if number <= 0 {
+		return "No StableTokenSupply"
+	}
+	state, _ := chain.StateAt(chain.GetHeaderByNumber(number - 1).Root)
+	oldSupply, err := GetStableTokenSupply(state, chain)
+	if err != nil {
+		return err.Error()
+	}
+	if oldSupply == nil {
+		return "Old StableTokenSupply"
+	}
+	state, _ = chain.State()
+	supply, err := GetStableTokenSupply(state, chain)
+	if err != nil {
+		return err.Error()
+	}
+	if supply == nil {
+		return "New StableTokenSupply"
+	}
+	return supply.Sub(supply, oldSupply).String()
+}
+
 func (d *Dccs) RemainToAbsorbStat(chain consensus.ChainReader, number uint64) string {
 	state, _ := chain.State()
 	supply, err := GetStableTokenSupply(state, chain)
