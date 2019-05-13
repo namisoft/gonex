@@ -116,35 +116,31 @@ func (e *PriceEngine) fetchingLoop() {
 }
 
 // CalcNewAbsorptionRate checks whether the new block will trigger a new absorptioin.
-func (e *PriceEngine) CalcNewAbsorptionRate(chain consensus.ChainReader, number uint64) (rate *Price, err error) {
-	// everything is calculated using the canonical chain data
-	number -= params.CanonicalDepth
-	if !e.config.IsPriceBlock(number) {
+func (e *PriceEngine) CalcNewAbsorptionRate(chain consensus.ChainReader, state *state.StateDB, number uint64) (rate *Price, err error) {
+	if !e.config.IsAbsorptionBlock(number) {
 		// not a price block
 		return nil, nil
 	}
-	header := chain.GetHeaderByNumber(number)
-	if header == nil {
-		return nil, errors.New("Number is too far in the future")
-	}
-	oneDurationBefore := new(big.Int).SetUint64(e.config.PriceSamplingDuration)
-	oneDurationBefore.Sub(header.Number, oneDurationBefore)
+	oneDurationBefore := new(big.Int).SetUint64(number - e.config.PriceSamplingDuration)
 	if oneDurationBefore.Cmp(e.config.EndurioBlock) < 0 {
 		// no absorption in the first duration
 		return nil, nil
 	}
-	medianPrice, err := e.CalcMedianPrice(chain, number)
-	if err != nil {
-		return nil, err
-	}
-	state, err := chain.StateAt(header.Root)
-	if err != nil {
-		return nil, err
-	}
+	// everything is calculated using the canonical chain data
+	number -= params.CanonicalDepth
 	lastNumber, lastSupply, targetSupply := e.getLastAbsorption(state)
 	if lastNumber == nil || lastNumber.Cmp(oneDurationBefore) <= 0 {
 		// passive condition: 1 duration without any active absorption or absorption never occurs
+		medianPrice, _ := e.CalcMedianPrice(chain, number)
+		if medianPrice == nil {
+			// if the median price is not available, stop all absorption
+			medianPrice = (*Price)(common.Rat0)
+		}
 		return medianPrice, nil
+	}
+	medianPrice, err := e.CalcMedianPrice(chain, number)
+	if err != nil {
+		return nil, err
 	}
 	// check for active condition
 	drv := new(big.Rat).Sub(medianPrice.Rat(), common.Rat1)
@@ -159,7 +155,7 @@ func (e *PriceEngine) CalcNewAbsorptionRate(chain consensus.ChainReader, number 
 
 func (e *PriceEngine) RecordNewAbsorptionRate(state *state.StateDB, rate *Price, chain consensus.ChainReader) error {
 	number := chain.CurrentHeader().Number
-	supply, err := GetStableTokenSupply(chain)
+	supply, err := GetStableTokenSupply(state, chain)
 	if err != nil {
 		return err
 	}
@@ -213,7 +209,7 @@ func (e *PriceEngine) CalcRemainToAbsorption(chain consensus.ChainReader, number
 		// absorption never occurs
 		return nil, nil
 	}
-	totalSupply, err := GetStableTokenSupply(chain)
+	totalSupply, err := GetStableTokenSupply(state, chain)
 	if err != nil {
 		return nil, err
 	}
@@ -227,7 +223,7 @@ func (e *PriceEngine) CalcNextAbsorption(chain consensus.ChainReader, header *ty
 	if chain.GetHeader(header.ParentHash, number-1) == nil {
 		return nil, errors.New("Header not connect to the current chain")
 	}
-	state, err := chain.StateAt(header.Root)
+	state, err := chain.State()
 	if err != nil {
 		return nil, err
 	}
@@ -245,7 +241,7 @@ func (e *PriceEngine) CalcNextAbsorption(chain consensus.ChainReader, header *ty
 		return nil, nil
 	}
 
-	totalSupply, err := GetStableTokenSupply(chain)
+	totalSupply, err := GetStableTokenSupply(state, chain)
 	if err != nil {
 		return nil, err
 	}
@@ -258,11 +254,11 @@ func (e *PriceEngine) CalcNextAbsorption(chain consensus.ChainReader, header *ty
 	return nil, nil
 }
 
-func GetStableTokenSupply(chain consensus.ChainReader) (*big.Int, error) {
+func GetStableTokenSupply(state *state.StateDB, chain consensus.ChainReader) (*big.Int, error) {
 	// Random key to make sure no one has any special right
 	key, _ := crypto.GenerateKey()
 	address := crypto.PubkeyToAddress(key.PublicKey)
-	backend := backends.NewRealBackend(chain, &address)
+	backend := backends.NewRealBackend(state, chain, &address)
 
 	caller, err := stable.NewStableTokenCaller(params.StableTokenAddress, backend)
 	if err != nil {
