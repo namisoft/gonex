@@ -20,4 +20,5 @@ contract DataSet {
     mapping(bool => OrderList) internal books;
     // contract private nonce ot generate unique ids
     mapping(address => uint256) internal pNonce;
+    bytes32 constant zeroBytes32 = bytes32(0);
 }
