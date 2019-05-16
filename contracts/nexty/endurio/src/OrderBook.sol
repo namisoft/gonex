@@ -28,7 +28,7 @@ contract OrderBook is Initializer, DataSet {
         // direction to bottom, search first order, that new order better than
         bytes32 id = _assistingID;
         if (!betterOrder(_orderType, newID, id)) {
-            // order[newID] always better than oder[0] with price = 0
+            // order[newID] always better than order[zeroBytes32] with price = 0
             // if price of order[newID] = 0 => throw cause infinite loop
             while (!betterOrder(_orderType, newID, id)) {
                 id = book.orders[id].next;
@@ -39,7 +39,7 @@ contract OrderBook is Initializer, DataSet {
         id = book.orders[id].prev;
         // direction to top, search first order that new order not better than
         // this part triggered only if new order not better than assistingID order
-        while (id[0] != 0 && betterOrder(_orderType, newID, id)) {
+        while (id != zeroBytes32 && betterOrder(_orderType, newID, id)) {
             id = book.orders[id].prev;
         }
         insertBefore(_orderType, newID, book.orders[id].next);
