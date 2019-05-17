@@ -1602,3 +1602,15 @@ func (d *Dccs) RemainToAbsorbStat(chain consensus.ChainReader, number uint64) st
 	ratio := new(big.Rat).SetFrac(remain, supply)
 	return ratio.FloatString(4)
 }
+
+func (d *Dccs) StableSupplyStat(chain consensus.ChainReader, number uint64) string {
+	state, _ := chain.State()
+	supply, err := GetStableTokenSupply(state, chain)
+	if err != nil {
+		return err.Error()
+	}
+	if supply == nil {
+		return "nil"
+	}
+	return supply.String()
+}
