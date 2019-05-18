@@ -969,6 +969,8 @@ func deployEndurioContracts(state *state.StateDB) error {
 
 		// Deploy only, no upgrade
 		deployer.CopyContractToAddress(state, params.VolatileTokenAddress, code, storage, false)
+		// Pre-fund the contract with the token amount
+		state.SetBalance(params.VolatileTokenAddress, new(big.Int).Mul(common.Big1000, common.Big1e24))
 		log.Info("⚙ Contract deployed successful", "contract", "VolatileToken")
 	}
 
@@ -1044,6 +1046,20 @@ func absorb(state *state.StateDB, absorption *big.Int, chain consensus.ChainRead
 		},
 	}
 
+	volatileToken, err := volatile.NewVolatileToken(params.VolatileTokenAddress, backend)
+	if err != nil {
+		return err
+	}
+	supply, err := volatileToken.TotalSupply(&bind.CallOpts{})
+	if err != nil {
+		return err
+	}
+	balance := state.GetBalance(params.VolatileTokenAddress)
+	if supply.Cmp(balance) != 0 {
+		log.Error("Volatile token balance and supply do not match", "supply", supply, "balance", balance)
+		return fmt.Errorf("Volatile token balance and supply do not match: supply=%v, balance=%v", supply, balance)
+	}
+
 	pairEx, err := pairex.NewPairEx(params.PairExAddress, backend)
 	if err != nil {
 		return err
@@ -1054,7 +1070,12 @@ func absorb(state *state.StateDB, absorption *big.Int, chain consensus.ChainRead
 		return err
 	}
 
-	// TODO: mint and burnt NTY as MNTY does
+	supply, err = volatileToken.TotalSupply(&bind.CallOpts{})
+	if err != nil {
+		return err
+	}
+	// update the new balance after absorption
+	state.SetBalance(params.VolatileTokenAddress, supply)
 
 	_, err = state.Commit(false)
 			return err
