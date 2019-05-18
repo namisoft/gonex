@@ -233,25 +233,41 @@ func (e *PriceEngine) CalcNextAbsorption(chain consensus.ChainReader, header *ty
 		return nil, nil
 	}
 
-	remainBlockToAbsorb := new(big.Int).SetUint64(e.config.AbsorptionLength)
-	remainBlockToAbsorb.Add(remainBlockToAbsorb, lastNumber)
-	remainBlockToAbsorb.Sub(remainBlockToAbsorb, header.Number)
-	if remainBlockToAbsorb.Sign() <= 0 {
-		// absorption cannot extend beyond 1 AbsorptionLength
-		return nil, nil
-	}
-
-	totalSupply, err := GetStableTokenSupply(state, chain)
+	currentSupply, err := GetStableTokenSupply(state, chain)
 	if err != nil {
 		return nil, err
 	}
-	remainSupplyToAbsorb := new(big.Int).Sub(targetSupply, totalSupply)
+
 	targetAbsorption := new(big.Int).Sub(targetSupply, lastSupply)
-	if remainSupplyToAbsorb.Sign() == targetAbsorption.Sign() {
-		return remainSupplyToAbsorb.Div(remainSupplyToAbsorb, remainBlockToAbsorb), nil
+	remainAbsorption := new(big.Int).Sub(targetSupply, currentSupply)
+	if targetAbsorption.Sign() == 0 || remainAbsorption.Sign() == 0 {
+		// no absorption require or target reached
+		return nil, nil
 	}
-	// target reached
-	return nil, nil
+	if remainAbsorption.Sign() != targetAbsorption.Sign() {
+		// target passed
+		return nil, nil
+	}
+
+	deflate := targetAbsorption.Sign() < 0
+
+	if deflate {
+		targetAbsorption.Neg(targetAbsorption)
+		remainAbsorption.Neg(remainAbsorption)
+	}
+
+	// need more absorption
+	blockAbsorption := new(big.Int).SetUint64(e.config.AbsorptionLength)
+	blockAbsorption.Div(targetAbsorption, blockAbsorption)
+	if remainAbsorption.Cmp(blockAbsorption) < 0 {
+		blockAbsorption = remainAbsorption
+	}
+
+	if deflate {
+		blockAbsorption.Neg(blockAbsorption)
+	}
+
+	return blockAbsorption, nil
 }
 
 func GetStableTokenSupply(state *state.StateDB, chain consensus.ChainReader) (*big.Int, error) {
