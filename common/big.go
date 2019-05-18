@@ -27,6 +27,10 @@ var (
 	Big32  = big.NewInt(32)
 	Big256 = big.NewInt(256)
 	Big257 = big.NewInt(257)
+
+	Big1000 = big.NewInt(1000)
+	Big1e12 = big.NewInt(1e12)
+	Big1e24 = new(big.Int).Mul(Big1e12, Big1e12)
 )
 
 var (
