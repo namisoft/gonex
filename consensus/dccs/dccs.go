@@ -1587,7 +1587,7 @@ func (d *Dccs) MedianPriceStat(chain consensus.ChainReader, number uint64) strin
 
 func (d *Dccs) AbsorbedStat(chain consensus.ChainReader, number uint64) string {
 	if number <= 0 {
-		return "No StableTokenSupply"
+		return ""
 	}
 	state, _ := chain.StateAt(chain.GetHeaderByNumber(number - 1).Root)
 	oldSupply, err := GetStableTokenSupply(state, chain)
@@ -1595,15 +1595,15 @@ func (d *Dccs) AbsorbedStat(chain consensus.ChainReader, number uint64) string {
 		return err.Error()
 	}
 	if oldSupply == nil {
-		return "Old StableTokenSupply"
+		return "No Old Supply"
 	}
-	state, _ = chain.State()
+	state, _ = chain.StateAt(chain.GetHeaderByNumber(number).Root)
 	supply, err := GetStableTokenSupply(state, chain)
 	if err != nil {
 		return err.Error()
 	}
 	if supply == nil {
-		return "New StableTokenSupply"
+		return "No New Supply"
 	}
 	return supply.Sub(supply, oldSupply).String()
 }
@@ -1615,7 +1615,7 @@ func (d *Dccs) RemainToAbsorbStat(chain consensus.ChainReader, number uint64) st
 		return err.Error()
 	}
 	if supply == nil {
-		return "StableTokenSupply is nil"
+		return "No Supply"
 	}
 	remain, err := d.PriceEngine().CalcRemainToAbsorption(chain, number)
 	if err != nil {
@@ -1629,13 +1629,13 @@ func (d *Dccs) RemainToAbsorbStat(chain consensus.ChainReader, number uint64) st
 }
 
 func (d *Dccs) StableSupplyStat(chain consensus.ChainReader, number uint64) string {
-	state, _ := chain.State()
+	state, _ := chain.StateAt(chain.GetHeaderByNumber(number).Root)
 	supply, err := GetStableTokenSupply(state, chain)
 	if err != nil {
 		return err.Error()
 	}
 	if supply == nil {
-		return "nil"
+		return "No Supply"
 	}
 	return supply.String()
 }
