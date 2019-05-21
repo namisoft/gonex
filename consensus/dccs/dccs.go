@@ -1650,6 +1650,10 @@ func (d *Dccs) RemainToAbsorbStat(chain consensus.ChainReader, number uint64) st
 }
 
 func (d *Dccs) StableSupplyStat(chain consensus.ChainReader, number uint64) string {
+	header := chain.GetHeaderByNumber(number)
+	if header == nil {
+		return "No Header"
+	}
 	state, _ := chain.StateAt(chain.GetHeaderByNumber(number).Root)
 	supply, err := GetStableTokenSupply(state, chain)
 	if err != nil {
