@@ -87,15 +87,6 @@ interface IERC20 {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-// ================= ERC20 Token Contract start =========================
-/*
- * ERC20 interface
- * see https://github.com/ethereum/EIPs/issues/20
- */
-contract Token is IERC20 {
-    uint256 public totalSupply;
-}
-
 // ================= MultiOwnable Contract =============================
 /**
  * @title MultiOwnable
@@ -193,10 +184,21 @@ contract Pausable is MultiOwnable {
 }
 
 // ================= Standard Token Contract ======================
-contract StandardToken is Token, Pausable {
+contract StandardToken is IERC20, Pausable {
     using SafeMath for uint256;
-    mapping(address => mapping (address => uint256)) internal allowed;
+
     mapping(address => uint256) balances;
+
+    mapping(address => mapping (address => uint256)) internal allowed;
+
+    uint256 private _totalSupply;
+
+    /**
+     * @dev Total number of tokens in existence.
+     */
+    function totalSupply() public view returns (uint256) {
+        return _totalSupply;
+    }
 
     /**
     * @dev transfer token for a specified address
@@ -293,6 +295,21 @@ contract StandardToken is Token, Pausable {
         emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
+
+    /**
+     * @dev Internal function that mints an amount of the token and assigns it to
+     * an account. This encapsulates the modification of balances such that the
+     * proper events are emitted.
+     * @param account The account that will receive the created tokens.
+     * @param value The amount that will be created.
+     */
+    function _mint(address account, uint256 value) internal {
+        require(account != address(0), "ERC20: mint to the zero address");
+
+        _totalSupply = _totalSupply.add(value);
+        balances[account] = balances[account].add(value);
+        emit Transfer(address(0), account, value);
+    }
 }
 
 // ================= Nexty Token Foundation Contract ======================
@@ -304,11 +321,8 @@ contract NtfToken is StandardToken {
     address public tokenWallet;
 
     constructor(address _tokenOwner) public {
-        totalSupply = INITIAL_SUPPLY;
+        _mint(_tokenOwner, INITIAL_SUPPLY);
         tokenWallet = _tokenOwner;
-        balances[tokenWallet] = totalSupply;
-
-        emit Transfer(0x0000000000000000000000000000000000000000, tokenWallet, balances[tokenWallet]);
     }
 
     function sendTokens(address _to, uint256 _amount) external onlyOwner {
