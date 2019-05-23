@@ -921,7 +921,7 @@ func deployConsensusContracts(state *state.StateDB, chainConfig *params.ChainCon
 		}
 
 		// replace the random generated sender address in MultiOwnable's manager field
-		storage[common.BigToHash(common.Big1)] = owner.Hash()
+		storage[common.BigToHash(common.Big0)] = owner.Hash()
 
 		// Deploy only, no upgrade
 		deployContract(state, params.TokenAddress, code, storage, false)
