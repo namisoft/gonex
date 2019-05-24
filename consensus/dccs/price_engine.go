@@ -143,10 +143,10 @@ func (e *PriceEngine) CalcNewAbsorptionRate(chain consensus.ChainReader, state *
 		return nil, err
 	}
 	// check for active condition
-	drv := new(big.Rat).Sub(medianPrice.Rat(), common.Rat1)
-	lastDrv := new(big.Rat).SetFrac(new(big.Int).Sub(targetSupply, lastSupply), lastSupply)
-	drvRate := drv.Mul(drv, lastDrv.Inv(lastDrv))
-	if drvRate.Cmp(common.Rat2) >= 0 || drvRate.Cmp(common.RatNeg1_2) <= 0 {
+	priceDerivation := new(big.Rat).Sub(medianPrice.Rat(), common.Rat1)
+	lastDerivationInv := new(big.Rat).SetFrac(lastSupply, new(big.Int).Sub(targetSupply, lastSupply))
+	derivationRate := priceDerivation.Mul(priceDerivation, lastDerivationInv)
+	if derivationRate.Cmp(common.Rat2) >= 0 || derivationRate.Cmp(common.RatNeg1_2) <= 0 {
 		// active absorption
 		return medianPrice, nil
 	}
@@ -221,7 +221,7 @@ func (e *PriceEngine) CalcRemainToAbsorption(chain consensus.ChainReader, number
 func (e *PriceEngine) CalcNextAbsorption(chain consensus.ChainReader, header *types.Header) (*big.Int, error) {
 	number := header.Number.Uint64()
 	if chain.GetHeader(header.ParentHash, number-1) == nil {
-		return nil, errors.New("Header not connect to the current chain")
+		return nil, consensus.ErrUnknownAncestor
 	}
 	state, err := chain.State()
 	if err != nil {
@@ -319,8 +319,10 @@ func (e *PriceEngine) CalcMedianPrice(chain consensus.ChainReader, number uint64
 	}
 	sort.Sort(ByPrice(prices))
 	if count&1 == 1 {
+		// count is odd, return the middle item
 		return prices[count/2], nil
 	}
+	// count is even, return the average of the 2 middle items
 	median := new(big.Rat).Add(prices[count/2-1].Rat(), prices[count/2].Rat())
 	median.Mul(median, common.Rat1_2)
 	e.medianPrices.Add(header.Hash(), (*Price)(median))
