@@ -5,8 +5,7 @@
 #   git config --global core.excludesfile ~/.gitignore_global
 
 /tmp
-/data/**/gonex
-/data/**/history
+/data/**
 */**/*un~
 */**/*.test
 *un~
@@ -48,8 +47,15 @@ profile.cov
 
 **/yarn-error.log
 
+<<<<<<< HEAD
 # testnet
 *.log
 passwd
 
 *.exe
+=======
+# intermediate files
+*.json
+*.key
+passwd
+>>>>>>> 20d2bce97... rename all ethereum/geth into nexty/gonex (#194)
