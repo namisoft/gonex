@@ -76,6 +76,9 @@ func (f *Feeder) requestUpdate(url string, parsePriceFn func([]byte) (*Data, err
 			log.Error("Failed to request for data", "url", url, "error", err)
 			return
 		}
+		// make sure the Body is closed, but only after the error check
+		defer response.Body.Close()
+
 		body, err := ioutil.ReadAll(response.Body)
 		if err != nil {
 			log.Error("Failed to read response body", "url", url, "error", err, "reponse", response)
