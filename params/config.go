@@ -299,7 +299,7 @@ type DccsConfig struct {
 	EndurioBlock          *big.Int `json:"endurioBlock,omitempty"`
 	PriceSamplingDuration uint64   `json:"priceSamplingDuration"` // number of blocks to take price samples (a week)
 	PriceSamplingInterval uint64   `json:"priceSamplingInterval"` // the largest prime number of blocks in 10 minutes
-	AbsorptionLength      uint64   `json:"absorptionLength"`
+	AbsorptionLength      uint64   `json:"absorptionLength"`      // number of blocks that the absorption will be taken place (half a week)
 }
 
 func (c *DccsConfig) IsAbsorptionBlock(number uint64) bool {
