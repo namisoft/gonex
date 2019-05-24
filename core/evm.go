@@ -47,6 +47,7 @@ func NewEVMContext(msg Message, header *types.Header, chain HeaderReader, author
 	// If we don't have an explicit author (i.e. not mining), extract from the header
 	var beneficiary common.Address
 	if author == nil {
+		// TODO solve this possible invalid cast panic
 		beneficiary, _ = chain.(ChainContext).Engine().Author(header) // Ignore error, we're past header validation
 	} else {
 		beneficiary = *author
