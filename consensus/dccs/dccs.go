@@ -20,6 +20,7 @@ package dccs
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"math"
 	"math/big"
@@ -475,17 +476,17 @@ func (d *Dccs) verifyCascadingFields2(chain consensus.ChainReader, header *types
 	}
 	// Stop recording signers list in checkpoint after Endurio hardfork
 	if !d.config.IsEndurio(header.Number) {
-	// If the block is a checkpoint block, verify the signer list
-	if d.config.IsCheckpoint(number) {
-		signers := make([]byte, len(snap.Signers)*common.AddressLength)
-		for i, signer := range snap.signers2() {
-			copy(signers[i*common.AddressLength:], signer[:])
-		}
-		// for checkpoint: extra = [vanity(32), signers(...), signature(65)]
-		extraSuffix := len(header.Extra) - extraSeal
-		if !bytes.Equal(header.Extra[extraVanity:extraSuffix], signers) {
-			return errInvalidCheckpointSigners
-		}
+		// If the block is a checkpoint block, verify the signer list
+		if d.config.IsCheckpoint(number) {
+			signers := make([]byte, len(snap.Signers)*common.AddressLength)
+			for i, signer := range snap.signers2() {
+				copy(signers[i*common.AddressLength:], signer[:])
+			}
+			// for checkpoint: extra = [vanity(32), signers(...), signature(65)]
+			extraSuffix := len(header.Extra) - extraSeal
+			if !bytes.Equal(header.Extra[extraVanity:extraSuffix], signers) {
+				return errInvalidCheckpointSigners
+			}
 		}
 	} else if d.config.IsPriceBlock(number) {
 		// for price block: extra = [vanity(32), price(...), signature(65)]
@@ -870,10 +871,10 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 
 	// Stop recording signers list in checkpoint after Endurio hardfork
 	if !d.config.IsEndurio(header.Number) {
-	if d.config.IsCheckpoint(number) {
-		for _, signer := range snap.signers2() {
-			header.Extra = append(header.Extra, signer[:]...)
-		}
+		if d.config.IsCheckpoint(number) {
+			for _, signer := range snap.signers2() {
+				header.Extra = append(header.Extra, signer[:]...)
+			}
 		}
 	} else if d.config.IsPriceBlock(number) {
 		price := d.PriceEngine().CurrentPrice()
@@ -960,7 +961,7 @@ func deployEndurioContracts(state *state.StateDB) error {
 	{
 		// Generate contract code and data using a simulated backend
 		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
-			address, _, _, err := volatile.DeployVolatileToken(auth, sim, params.PairExAddress, false)
+			address, _, _, err := volatile.DeployVolatileToken(auth, sim, params.PairExAddress, common.Address{}, common.Big0)
 			return address, err
 		})
 		if err != nil {
@@ -978,7 +979,7 @@ func deployEndurioContracts(state *state.StateDB) error {
 	{
 		// Generate contract code and data using a simulated backend
 		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
-			address, _, _, err := stable.DeployStableToken(auth, sim, params.PairExAddress, false)
+			address, _, _, err := stable.DeployStableToken(auth, sim, params.PairExAddress, common.Address{}, common.Big0)
 			return address, err
 		})
 		if err != nil {
@@ -1009,12 +1010,12 @@ func (d *Dccs) Initialize(chain consensus.ChainReader, header *types.Header, sta
 	}
 	if d.config.IsAbsorptionBlock(header.Number.Uint64()) {
 		rate, err := d.PriceEngine().CalcNewAbsorptionRate(chain, state, header.Number.Uint64())
-	if err != nil {
-		log.Error("Failed to calculate new abosrption rate", "err", err, "number", header.Number)
-	}
-	if rate != nil {
-		d.PriceEngine().RecordNewAbsorptionRate(state, rate, chain)
-	}
+		if err != nil {
+			log.Error("Failed to calculate new abosrption rate", "err", err, "number", header.Number)
+		}
+		if rate != nil {
+			d.PriceEngine().RecordNewAbsorptionRate(state, rate, chain)
+		}
 	}
 	absorption, err := d.PriceEngine().CalcNextAbsorption(chain, header)
 	if err != nil {
@@ -1078,8 +1079,8 @@ func absorb(state *state.StateDB, absorption *big.Int, chain consensus.ChainRead
 	state.SetBalance(params.VolatileTokenAddress, supply)
 
 	_, err = state.Commit(false)
-			return err
-		}
+	return err
+}
 
 // Finalize implements consensus.Engine, ensuring no uncles are set, nor block
 // rewards given, and returns the final block.
