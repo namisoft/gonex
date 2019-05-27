@@ -49,7 +49,7 @@ func (w *wizard) deployExplorer() {
 	fmt.Printf("Which port should the explorer listen on? (default = %d)\n", infos.webPort)
 	infos.webPort = w.readDefaultInt(infos.webPort)
 
-	// Figure which virtual-host to deploy ethstats on
+	// Figure which virtual-host to deploy nextats on
 	if infos.webHost, err = w.ensureVirtualHost(client, infos.webPort, infos.webHost); err != nil {
 		log.Error("Failed to decide on explorer host", "err", err)
 		return
