@@ -143,10 +143,10 @@ func (e *PriceEngine) CalcNewAbsorptionRate(chain consensus.ChainReader, state *
 		return nil, err
 	}
 	// check for active condition
-	priceDerivation := new(big.Rat).Sub(medianPrice.Rat(), common.Rat1)
-	lastDerivationInv := new(big.Rat).SetFrac(lastSupply, new(big.Int).Sub(targetSupply, lastSupply))
-	derivationRate := priceDerivation.Mul(priceDerivation, lastDerivationInv)
-	if derivationRate.Cmp(common.Rat2) >= 0 || derivationRate.Cmp(common.RatNeg1_2) <= 0 {
+	priceDeviation := new(big.Rat).Sub(medianPrice.Rat(), common.Rat1)
+	lastDeviationInv := new(big.Rat).SetFrac(lastSupply, new(big.Int).Sub(targetSupply, lastSupply))
+	deviationRate := priceDeviation.Mul(priceDeviation, lastDeviationInv)
+	if deviationRate.Cmp(common.Rat2) >= 0 || deviationRate.Cmp(common.RatNeg1_2) <= 0 {
 		// active absorption
 		return medianPrice, nil
 	}
@@ -419,7 +419,7 @@ func (p *Price) Rat() *big.Rat {
 	return (*big.Rat)(p)
 }
 
-// PriceDecodeFromExtra returns the price derivation encoded in Header's extra
+// PriceDecodeFromExtra returns the price deviation encoded in Header's extra
 // extra = [vanity(32), price(...), signature(65)]
 func PriceDecodeFromExtra(extra []byte) *Price {
 	extraSuffix := len(extra) - extraSeal
@@ -427,7 +427,7 @@ func PriceDecodeFromExtra(extra []byte) *Price {
 	return PriceDecode(extraBytes)
 }
 
-// PriceDecode returns the price derivation encoded in Header's extra
+// PriceDecode returns the price deviation encoded in Header's extra
 func PriceDecode(bytes []byte) *Price {
 	if len(bytes) == 0 {
 		return nil
@@ -435,20 +435,20 @@ func PriceDecode(bytes []byte) *Price {
 	var rat big.Rat
 	err := rat.GobDecode(bytes)
 	if err != nil {
-		log.Info("Input bytes array is not price derivation", "bytes", bytes, "error", err)
+		log.Info("Input bytes array is not price deviation", "bytes", bytes, "error", err)
 		return nil
 	}
 	return (*Price)(&rat)
 }
 
-// PriceEncode encodes the price derivation in Header's extra
+// PriceEncode encodes the price deviation in Header's extra
 func PriceEncode(price *Price) []byte {
 	if price == nil || (*big.Rat)(price).Sign() == 0 {
 		return nil
 	}
 	bytes, err := (*big.Rat)(price).GobEncode()
 	if err != nil {
-		log.Info("Failed to encode price derivation", "price", price, "error", err)
+		log.Info("Failed to encode price deviation", "price", price, "error", err)
 		return nil
 	}
 	return bytes

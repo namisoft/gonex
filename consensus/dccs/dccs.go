@@ -519,7 +519,7 @@ func (d *Dccs) verifyCascadingFields2(chain consensus.ChainReader, header *types
 		// for price block: extra = [vanity(32), price(...), signature(65)]
 		price := PriceDecodeFromExtra(header.Extra)
 		if price != nil {
-			log.Info("Block price derivation found", "number", number, "price", price)
+			log.Info("Block price deviation found", "number", number, "price", price)
 		} else {
 			log.Warn("Missing price data in block", "number", number)
 		}
