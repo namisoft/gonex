@@ -52,6 +52,10 @@ var (
 	// configured for the transaction pool.
 	ErrUnderpriced = errors.New("transaction underpriced")
 
+	// ErrSpammyUnderpriced is returned if a transaction's gas price is below the minimum
+	// configured for the non-zero fee transaction.
+	ErrSpammyUnderpriced = errors.New("spammy transaction underpriced")
+
 	// ErrUnderparity is returned if a transaction's parity is below the minimum
 	// configured for the transaction pool.
 	ErrUnderparity = errors.New("transaction underparity")
@@ -142,6 +146,9 @@ type TxPoolConfig struct {
 	ParityLimit uint64 // Minimum parity to enforce for acceptance into the pool
 	ParityPrice uint64 // Price (in wei) for 1 parity unit
 
+	SpammyAge        uint64 // Minimum account age (CurrentNumber-MRU) for a tx to be spammy
+	SpammyPriceLimit uint64 // PriceLimit for spammy tx
+
 	AccountSlots uint64 // Number of executable transaction slots guaranteed per account
 	GlobalSlots  uint64 // Maximum number of executable transaction slots for all accounts
 	AccountQueue uint64 // Maximum number of non-executable transaction slots permitted per account
@@ -161,6 +168,9 @@ var DefaultTxPoolConfig = TxPoolConfig{
 
 	ParityLimit: types.ParityMax,
 	ParityPrice: 13e15, // ~ 273 NTY ~ 0.01 USD for 21000 Tx Gas
+
+	SpammyAge:        10,
+	SpammyPriceLimit: 5e15,
 
 	AccountSlots: 16,
 	GlobalSlots:  4096,
@@ -234,6 +244,9 @@ type TxPool struct {
 	signer       types.Signer
 	mu           sync.RWMutex
 
+	spammyAge        uint64
+	spammyPriceLimit uint64
+
 	currentState  *state.StateDB      // Current state in the blockchain head
 	pendingState  *state.ManagedState // Pending state tracking virtual nonces
 	currentMaxGas uint64              // Current gas limit for transaction caps
@@ -272,6 +285,9 @@ func NewTxPool(config TxPoolConfig, chainconfig *params.ChainConfig, chain block
 		gasPrice:    new(big.Int).SetUint64(config.PriceLimit),
 		parityLimit: config.ParityLimit,
 		parityPrice: new(big.Int).SetUint64(config.ParityPrice),
+
+		spammyAge:        config.SpammyAge,
+		spammyPriceLimit: config.SpammyPriceLimit,
 	}
 	pool.locals = newAccountSet(pool.signer)
 	for _, addr := range config.Locals {
@@ -679,6 +695,31 @@ func (pool *TxPool) validateTx(tx *types.Transaction, local bool) error {
 		return ErrNonceTooLow
 	}
 
+	var mruNumber uint64
+	if pool.chainconfig.IsThangLong(pool.chain.CurrentBlock().Number()) {
+		mruNumber = pool.currentState.GetMRUNumber(from)
+		if mruNumber == 0 {
+			if nonce == 0 {
+				// new account is treated as freshly used
+				mruNumber = pool.chain.CurrentBlock().NumberU64()
+			} else {
+				// old account from pre-hardfork
+				mruNumber = pool.chainconfig.Dccs.ThangLongBlock.Uint64()
+			}
+		}
+
+		if !local {
+			accAge := pool.chain.CurrentBlock().NumberU64() - mruNumber
+
+			if accAge < pool.spammyAge {
+				// too young for zero-fee
+				if gasPrice.Uint64() < pool.spammyPriceLimit {
+					return ErrSpammyUnderpriced
+				}
+			}
+		}
+	}
+
 	balance := pool.currentState.GetBalance(from)
 	// Transactor should have enough funds to cover the costs
 	// cost == V + GP * GL
@@ -696,17 +737,6 @@ func (pool *TxPool) validateTx(tx *types.Transaction, local bool) error {
 
 	if pool.chainconfig.IsThangLong(pool.chain.CurrentBlock().Number()) {
 		if !tx.HasParity() {
-			mruNumber := pool.currentState.GetMRUNumber(from)
-			if mruNumber == 0 {
-				if nonce == 0 {
-					// new account is treated as freshly used
-					mruNumber = pool.chain.CurrentBlock().NumberU64()
-				} else {
-					// old account from pre-hardfork
-					mruNumber = pool.chainconfig.Dccs.ThangLongBlock.Uint64()
-				}
-			}
-
 			parity := mruNumber + extrinsicParity(tx)
 
 			if gasPrice.Sign() > 0 {
