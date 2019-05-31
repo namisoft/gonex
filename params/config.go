@@ -113,10 +113,10 @@ var (
 	// TestnetTrustedCheckpoint contains the light client trusted checkpoint for the Ropsten test network.
 	TestnetTrustedCheckpoint = &TrustedCheckpoint{
 		Name:         "testnet",
-		SectionIndex: 161,
-		SectionHead:  common.HexToHash("0x5378afa734e1feafb34bcca1534c4d96952b754579b96a4afb23d5301ecececc"),
-		CHTRoot:      common.HexToHash("0x1cf2b071e7443a62914362486b613ff30f60cea0d9c268ed8c545f876a3ee60c"),
-		BloomRoot:    common.HexToHash("0x5ac25c84bd18a9cbe878d4609a80220f57f85037a112644532412ba0d498a31b"),
+		SectionIndex: 19,
+		SectionHead:  common.HexToHash("0x57a235095aba5f4c6cf7a1787c283003e93adadf68f46ecacbcc777d505d83b2"),
+		CHTRoot:      common.Hash{}, // TODO: will calculate later when using LES
+		BloomRoot:    common.Hash{}, // TODO: will calculate later when using LES
 	}
 
 	// RinkebyChainConfig contains the chain parameters to run a node on the Rinkeby test network.
