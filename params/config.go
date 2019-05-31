@@ -78,10 +78,10 @@ var (
 	// MainnetTrustedCheckpoint contains the light client trusted checkpoint for the main network.
 	MainnetTrustedCheckpoint = &TrustedCheckpoint{
 		Name:         "mainnet",
-		SectionIndex: 227,
-		SectionHead:  common.HexToHash("0xa2e0b25d72c2fc6e35a7f853cdacb193b4b4f95c606accf7f8fa8415283582c7"),
-		CHTRoot:      common.HexToHash("0xf69bdd4053b95b61a27b106a0e86103d791edd8574950dc96aa351ab9b9f1aa0"),
-		BloomRoot:    common.HexToHash("0xec1b454d4c6322c78ccedf76ac922a8698c3cac4d98748a84af4995b7bd3d744"),
+		SectionIndex: 561,
+		SectionHead:  common.HexToHash("0x6b87a31980a1fe764e5db97ea7c841b9d6db88fe8cd0506937532bae7eab783c"),
+		CHTRoot:      common.Hash{}, // TODO: will calculate later when using LES
+		BloomRoot:    common.Hash{}, // TODO: will calculate later when using LES
 	}
 
 	// TestnetChainConfig contains the chain parameters to run a node on the Dccs test network.
