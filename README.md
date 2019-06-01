@@ -20,11 +20,8 @@ Kindly refers to our [white paper](https://nexty.io/whitepaper.pdf) for more det
 
 ## Building the source
 
-For prerequisites and detailed build instructions please read the
-[Installation Instructions](https://github.com/ethereum/go-ethereum/wiki/Building-Ethereum)
-on the wiki.
-
 Building gonex requires both a Go (version 1.9 or later) and a C compiler.
+Upgrade gonex client from 2.0.1 requires a folder rename ~/.ethereum to ~/.nexty and ~/.ethereum/geth to ~/.nexty/gonex
 You can install them using your favourite package manager.
 Once the dependencies are installed, run
 
