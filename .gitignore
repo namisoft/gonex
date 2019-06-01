@@ -5,8 +5,7 @@
 #   git config --global core.excludesfile ~/.gitignore_global
 
 /tmp
-/data/**/gonex
-/data/**/history
+/data/**
 */**/*un~
 */**/*.test
 *un~
@@ -23,7 +22,6 @@ build/_vendor/pkg
 *~
 .project
 .settings
-
 # used by the Makefile
 /build/_workspace/
 /build/bin/
@@ -48,8 +46,7 @@ profile.cov
 
 **/yarn-error.log
 
-# testnet
-*.log
+# intermediate files
+*.json
+*.key
 passwd
-
-*.exe
