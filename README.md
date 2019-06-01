@@ -117,7 +117,7 @@ $ gonex --testnet console
 
 ### Configuration
 
-As an alternative to passing the numerous flags to the `geth` binary, you can also pass a configuration file via:
+As an alternative to passing the numerous flags to the `gonex` binary, you can also pass a configuration file via:
 
 ```
 $ gonex --config /path/to/your_config.toml
@@ -136,9 +136,9 @@ $ gonex --your-favourite-flags dumpconfig
 One of the quickest ways to get Nexty up and running on your machine is by using Docker:
 
 ```
-docker run -d --name nexty-node -v /Users/alice/ethereum:/root \
+docker run -d --name nexty-node -v /Users/alice/nexty:/root \
            -p 8545:8545 -p 30303:30303 \
-           ethereum/client-go
+           nexty/client-go
 ```
 
 This will start gonex in fast-sync mode with a DB memory allowance of 1GB just as the above command does.  It will also create a persistent volume in your home directory for saving your blockchain as well as map the default ports. There is also an `alpine` tag available for a slim version of the image.
@@ -147,10 +147,9 @@ Do not forget `--rpcaddr 0.0.0.0`, if you want to access RPC from other containe
 
 ### Programatically interfacing Gonex nodes
 
-As a developer, sooner rather than later you'll want to start interacting with Gonex and the Ethereum
+As a developer, sooner rather than later you'll want to start interacting with Gonex and the Nexty
 network via your own programs and not manually through the console. To aid this, Gonex has built-in
-support for a JSON-RPC based APIs ([standard APIs](https://github.com/ethereum/wiki/wiki/JSON-RPC) and
-[Geth specific APIs](https://github.com/ethereum/go-ethereum/wiki/Management-APIs)). These can be
+support for a JSON-RPC based APIs ([standard APIs](https://github.com/ethereum/wiki/wiki/JSON-RPC). These can be
 exposed via HTTP, WebSockets and IPC (unix sockets on unix based platforms, and named pipes on Windows).
 
 The IPC interface is enabled by default and exposes all the APIs supported by Gonex, whereas the HTTP
@@ -265,10 +264,9 @@ need to configure a miner to process transactions and create new blocks for you.
 
 #### Running a private miner
 
-Mining on the public Ethereum network is a complex task as it's only feasible using GPUs, requiring
-an OpenCL or CUDA enabled `ethminer` instance. For information on such a setup, please consult the
-[EtherMining subreddit](https://www.reddit.com/r/EtherMining/) and the [Genoil miner](https://github.com/Genoil/cpp-ethereum)
-repository.
+Mining on the public Nexty network is a complex task as it's only feasible using GPUs, requiring
+an OpenCL or CUDA enabled `ntyminer` instance. For information on such a setup, please consult the
+[Nexty subreddit](https://www.reddit.com/r//).
 
 In a private network setting however, a single CPU miner instance is more than enough for practical
 purposes as it can produce a stable stream of blocks at the correct intervals without needing heavy
@@ -308,10 +306,3 @@ for more details on configuring your environment, managing project dependencies 
 
 ## License
 
-The go-ethereum library (i.e. all code outside of the `cmd` directory) is licensed under the
-[GNU Lesser General Public License v3.0](https://www.gnu.org/licenses/lgpl-3.0.en.html), also
-included in our repository in the `COPYING.LESSER` file.
-
-The go-ethereum binaries (i.e. all code inside of the `cmd` directory) is licensed under the
-[GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.en.html), also included
-in our repository in the `COPYING` file.
