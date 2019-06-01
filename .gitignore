@@ -22,7 +22,6 @@ build/_vendor/pkg
 *~
 .project
 .settings
-
 # used by the Makefile
 /build/_workspace/
 /build/bin/
@@ -47,15 +46,7 @@ profile.cov
 
 **/yarn-error.log
 
-<<<<<<< HEAD
-# testnet
-*.log
-passwd
-
-*.exe
-=======
 # intermediate files
 *.json
 *.key
 passwd
->>>>>>> 20d2bce97... rename all ethereum/geth into nexty/gonex (#194)
