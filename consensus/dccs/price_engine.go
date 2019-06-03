@@ -399,7 +399,7 @@ func parsePriceFn(body []byte) (*Data, error) {
 	log.Trace("PriceData", "priceData", priceData)
 
 	price := PriceFromString(priceData.Value.String())
-	if price == nil {
+	if price == nil || common.Rat0.Cmp(price.Rat()) == 0 {
 		log.Error("Failed to parse price value", "priceData.Value", priceData.Value)
 		return nil, errors.New("Not a price value")
 	}
