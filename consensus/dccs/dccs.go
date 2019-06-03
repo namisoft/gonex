@@ -1033,7 +1033,7 @@ func (d *Dccs) Initialize(chain consensus.ChainReader, header *types.Header, sta
 	if d.config.IsAbsorptionBlock(header.Number.Uint64()) {
 		rate, err := d.PriceEngine().CalcNewAbsorptionRate(chain, state, header.Number.Uint64())
 		if err != nil {
-			log.Error("Failed to calculate new abosrption rate", "err", err, "number", header.Number)
+			log.Error("Failed to calculate new absorption rate", "err", err, "number", header.Number)
 		}
 		if rate != nil {
 			d.PriceEngine().RecordNewAbsorptionRate(state, rate, chain)
