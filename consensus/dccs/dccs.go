@@ -994,8 +994,6 @@ func deployEndurioContracts(state *state.StateDB) error {
 
 		// Deploy only, no upgrade
 		deployer.CopyContractToAddress(state, params.VolatileTokenAddress, code, storage, false)
-		// Pre-fund the contract with the token amount
-		state.SetBalance(params.VolatileTokenAddress, new(big.Int).Mul(common.Big1000, common.Big1e24))
 		log.Info("⚙ Contract deployed successful", "contract", "VolatileToken")
 	}
 
