@@ -28,10 +28,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ethereum/go-ethereum/contracts/nexty/endurio/pairex"
-	"github.com/ethereum/go-ethereum/contracts/nexty/endurio/stable"
-	"github.com/ethereum/go-ethereum/contracts/nexty/endurio/volatile"
-
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
@@ -40,6 +36,9 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/consensus/misc"
+	"github.com/ethereum/go-ethereum/contracts/nexty/endurio/pairex"
+	"github.com/ethereum/go-ethereum/contracts/nexty/endurio/stable"
+	"github.com/ethereum/go-ethereum/contracts/nexty/endurio/volatile"
 	"github.com/ethereum/go-ethereum/contracts/nexty/governance"
 	"github.com/ethereum/go-ethereum/contracts/nexty/ntf"
 	"github.com/ethereum/go-ethereum/core/state"
