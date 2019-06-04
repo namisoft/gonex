@@ -86,7 +86,7 @@ func newPriceEngine(conf *params.DccsConfig) *PriceEngine {
 	var err error
 
 	maxPriceCount := int(conf.PriceSamplingDuration / conf.PriceSamplingInterval)
-	e.canonPrices, err = lru.New(maxPriceCount) // add some extra buffer for sidechain values
+	e.canonPrices, err = lru.New(maxPriceCount) // add some extra buffer for values in forks
 	if err != nil {
 		log.Crit("Unable to create the canonical price cache", "Endurio block", conf.EndurioBlock, "pricesCount", (conf.PriceSamplingDuration / conf.PriceSamplingInterval), "error", err)
 		return nil
