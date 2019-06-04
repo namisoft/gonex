@@ -121,6 +121,10 @@ var (
 	// their extra-data fields.
 	errExtraSigners = errors.New("non-checkpoint block contains extra signer list")
 
+	// errInvalidPrice is returned if price block contains invalid price value in
+	// their extra-data fields.
+	errInvalidPrice = errors.New("price block contains invalid price value")
+
 	// errInvalidCheckpointSigners is returned if a checkpoint block contains an
 	// invalid list of signers (i.e. non divisible by 20 bytes, or not the correct
 	// ones).
@@ -517,10 +521,13 @@ func (d *Dccs) verifyCascadingFields2(chain consensus.ChainReader, header *types
 	} else if d.config.IsPriceBlock(number) {
 		// for price block: extra = [vanity(32), price(...), signature(65)]
 		price := PriceDecodeFromExtra(header.Extra)
-		if price != nil {
-			log.Info("Block price deviation found", "number", number, "price", price)
-		} else {
+		if price == nil {
 			log.Warn("Missing price data in block", "number", number)
+		} else if price.Rat().Cmp(common.Rat0) <= 0 {
+			log.Error("Invalid price data in block", "number", number, "price", price.Rat().RatString())
+			return errInvalidPrice
+		} else {
+			log.Info("Block price data found", "number", number, "price", price)
 		}
 	} else {
 		// for regular block: extra = [vanity(32), signature(65)]
@@ -901,11 +908,13 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 		}
 	} else if d.config.IsPriceBlock(number) {
 		price := d.PriceEngine().CurrentPrice()
-		if price != nil {
+		if price == nil {
+			log.Warn("No price to record in block", "number", number)
+		} else if price.Rat().Cmp(common.Rat0) <= 0 {
+			log.Error("Skip recording invalid price data", "price", price.Rat().RatString())
+		} else {
 			log.Info("Encode price to block extra", "price", price.Rat().RatString())
 			header.Extra = append(header.Extra, PriceEncode(price)...)
-		} else {
-			log.Warn("Skipping price data in block", "number", number)
 		}
 	}
 	header.Extra = append(header.Extra, make([]byte, extraSeal)...)
