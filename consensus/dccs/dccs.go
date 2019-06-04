@@ -1566,6 +1566,7 @@ func (d *Dccs) GetRecentHeaders(snap *Snapshot, chain consensus.ChainReader, hea
 	return headers, nil
 }
 
+// BlockPriceStat returns ethstats data for block price
 func (d *Dccs) BlockPriceStat(chain consensus.ChainReader, number uint64) string {
 	if !d.config.IsPriceBlock(number) {
 		return ""
@@ -1577,6 +1578,7 @@ func (d *Dccs) BlockPriceStat(chain consensus.ChainReader, number uint64) string
 	return price.Rat().FloatString(4)
 }
 
+// MedianPriceStat returns ethstats data for median price
 func (d *Dccs) MedianPriceStat(chain consensus.ChainReader, number uint64) string {
 	if !d.config.IsPriceBlock(number) {
 		return ""
@@ -1588,6 +1590,7 @@ func (d *Dccs) MedianPriceStat(chain consensus.ChainReader, number uint64) strin
 	return price.Rat().FloatString(4)
 }
 
+// AbsorbedStat returns ethstats data for stablecoin supply absorbed by the block
 func (d *Dccs) AbsorbedStat(chain consensus.ChainReader, number uint64) string {
 	if number <= 0 {
 		return ""
@@ -1611,6 +1614,7 @@ func (d *Dccs) AbsorbedStat(chain consensus.ChainReader, number uint64) string {
 	return supply.Sub(supply, oldSupply).String()
 }
 
+// RemainToAbsorbStat returns ethstats data for stablecoin supply remain to absorb
 func (d *Dccs) RemainToAbsorbStat(chain consensus.ChainReader, number uint64) string {
 	state, _ := chain.State()
 	supply, err := GetStableTokenSupply(state, chain)
@@ -1631,6 +1635,7 @@ func (d *Dccs) RemainToAbsorbStat(chain consensus.ChainReader, number uint64) st
 	return ratio.FloatString(4)
 }
 
+// StableSupplyStat returns ethstats data for stablecoin supply
 func (d *Dccs) StableSupplyStat(chain consensus.ChainReader, number uint64) string {
 	header := chain.GetHeaderByNumber(number)
 	if header == nil {

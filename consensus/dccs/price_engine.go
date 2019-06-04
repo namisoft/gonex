@@ -56,6 +56,7 @@ type PriceData struct {
 	Exchange  string      `json:"exchange"`
 }
 
+// PriceEngine is the price feeding and managing engine
 type PriceEngine struct {
 	feeder       *Feeder
 	ticker       *time.Ticker
@@ -153,6 +154,7 @@ func (e *PriceEngine) CalcNewAbsorptionRate(chain consensus.ChainReader, state *
 	return nil, nil
 }
 
+// RecordNewAbsorptionRate records the new absorption to the state db
 func (e *PriceEngine) RecordNewAbsorptionRate(state *state.StateDB, rate *Price, chain consensus.ChainReader) error {
 	number := chain.CurrentHeader().Number
 	supply, err := GetStableTokenSupply(state, chain)
@@ -198,6 +200,7 @@ func (e *PriceEngine) getLastAbsorption(state *state.StateDB) (number, supply, t
 	return
 }
 
+// CalcRemainToAbsorption calculates and returns the remain stablecoin supply to absorb by the consensus
 func (e *PriceEngine) CalcRemainToAbsorption(chain consensus.ChainReader, number uint64) (*big.Int, error) {
 	header := chain.GetHeaderByNumber(number)
 	state, err := chain.StateAt(header.Root)
@@ -270,6 +273,7 @@ func (e *PriceEngine) CalcNextAbsorption(chain consensus.ChainReader, header *ty
 	return blockAbsorption, nil
 }
 
+// GetStableTokenSupply returns the current supply of the stable token in the stateDB
 func GetStableTokenSupply(state *state.StateDB, chain consensus.ChainReader) (*big.Int, error) {
 	// Random key to make sure no one has any special right
 	key, _ := crypto.GenerateKey()
@@ -283,6 +287,7 @@ func GetStableTokenSupply(state *state.StateDB, chain consensus.ChainReader) (*b
 	return caller.TotalSupply(nil)
 }
 
+// ByPrice sorts the price list by value
 type ByPrice []*Price
 
 func (a ByPrice) Len() int           { return len(a) }
@@ -329,6 +334,7 @@ func (e *PriceEngine) CalcMedianPrice(chain consensus.ChainReader, number uint64
 	return (*Price)(median), nil
 }
 
+// GetBlockPrice returns the price encoded in a block header extra data
 func (e *PriceEngine) GetBlockPrice(chain consensus.ChainReader, number uint64) *Price {
 	if !e.config.IsPriceBlock(number) {
 		// not a price block
@@ -375,6 +381,7 @@ func (e *PriceEngine) GetBlockPrice(chain consensus.ChainReader, number uint64) 
 	return price.(*Price)
 }
 
+// CurrentPrice returns the current un-expired data fed from price service
 func (e *PriceEngine) CurrentPrice() *Price {
 	data := e.feeder.getCurrent(priceServiceURL)
 	if data == nil {
@@ -415,6 +422,7 @@ func parsePriceFn(body []byte) (*Data, error) {
 // Price encoded in Rat
 type Price big.Rat
 
+// Rat returns the Price in big.Rat pointer type
 func (p *Price) Rat() *big.Rat {
 	return (*big.Rat)(p)
 }
