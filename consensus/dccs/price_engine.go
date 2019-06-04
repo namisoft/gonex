@@ -116,7 +116,7 @@ func (e *PriceEngine) fetchingLoop() {
 	}
 }
 
-// CalcNewAbsorptionRate checks whether the new block will trigger a new absorptioin.
+// CalcNewAbsorptionRate checks whether the new block will trigger a new absorption.
 func (e *PriceEngine) CalcNewAbsorptionRate(chain consensus.ChainReader, state *state.StateDB, number uint64) (rate *Price, err error) {
 	if !e.config.IsAbsorptionBlock(number) {
 		// not a price block
