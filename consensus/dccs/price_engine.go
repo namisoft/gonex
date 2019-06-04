@@ -419,7 +419,7 @@ func (p *Price) Rat() *big.Rat {
 	return (*big.Rat)(p)
 }
 
-// PriceDecodeFromExtra returns the price deviation encoded in Header's extra
+// PriceDecodeFromExtra returns the price encoded in Header's extra
 // extra = [vanity(32), price(...), signature(65)]
 func PriceDecodeFromExtra(extra []byte) *Price {
 	extraSuffix := len(extra) - extraSeal
@@ -427,7 +427,7 @@ func PriceDecodeFromExtra(extra []byte) *Price {
 	return PriceDecode(extraBytes)
 }
 
-// PriceDecode returns the price deviation encoded in Header's extra
+// PriceDecode returns the price encoded in Header's extra
 func PriceDecode(bytes []byte) *Price {
 	if len(bytes) == 0 {
 		return nil
@@ -435,20 +435,20 @@ func PriceDecode(bytes []byte) *Price {
 	var rat big.Rat
 	err := rat.GobDecode(bytes)
 	if err != nil {
-		log.Info("Input bytes array is not price deviation", "bytes", bytes, "error", err)
+		log.Info("Input bytes array is not price value", "bytes", bytes, "error", err)
 		return nil
 	}
 	return (*Price)(&rat)
 }
 
-// PriceEncode encodes the price deviation in Header's extra
+// PriceEncode encodes the price data in Header's extra
 func PriceEncode(price *Price) []byte {
 	if price == nil || (*big.Rat)(price).Sign() == 0 {
 		return nil
 	}
 	bytes, err := (*big.Rat)(price).GobEncode()
 	if err != nil {
-		log.Info("Failed to encode price deviation", "price", price, "error", err)
+		log.Info("Failed to encode price data", "price", price, "error", err)
 		return nil
 	}
 	return bytes
