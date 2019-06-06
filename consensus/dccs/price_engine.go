@@ -119,8 +119,8 @@ func (e *PriceEngine) fetchingLoop() {
 // CalcNewAbsorptionRate checks whether the new block will trigger a new absorption.
 func (e *PriceEngine) CalcNewAbsorptionRate(chain consensus.ChainReader, state *state.StateDB, number uint64) (rate *Price, err error) {
 	if !e.config.IsAbsorptionBlock(number) {
-		// not a price block
-		return nil, nil
+		// not an absorption block
+		return nil, errors.New("Not an absorption block")
 	}
 	oneDurationBefore := new(big.Int).SetUint64(number - e.config.PriceSamplingDuration)
 	if oneDurationBefore.Cmp(e.config.EndurioBlock) < 0 {
@@ -156,16 +156,33 @@ func (e *PriceEngine) CalcNewAbsorptionRate(chain consensus.ChainReader, state *
 
 // RecordNewAbsorptionRate records the new absorption to the state db
 func (e *PriceEngine) RecordNewAbsorptionRate(state *state.StateDB, rate *Price, chain consensus.ChainReader) error {
-	number := chain.CurrentHeader().Number
+	if rate.Rat().Cmp(common.Rat0) <= 0 {
+		// invalid absorption rate, clear the absorption
+		e.clearAbsorption(state)
+		return nil
+	}
 	supply, err := GetStableTokenSupply(state, chain)
 	if err != nil {
 		return err
 	}
 	targetSupply := new(big.Int).Mul(supply, rate.Rat().Num())
 	targetSupply.Div(targetSupply, rate.Rat().Denom())
+	if targetSupply.Cmp(supply) == 0 {
+		// no change in supply, clear the absorption
+		e.clearAbsorption(state)
+		return nil
+	}
+	number := chain.CurrentHeader().Number
 	e.setNewAbsorption(state, number, supply, targetSupply)
 	state.Commit(false)
 	return nil
+}
+
+// clearAbsorption clears current absorption from the state
+func (e *PriceEngine) clearAbsorption(state *state.StateDB) {
+	state.SetState(params.AbsorptionAddress, storageIndexLastNumber, common.Hash{})
+	state.SetState(params.AbsorptionAddress, storageIndexLastSupply, common.Hash{})
+	state.SetState(params.AbsorptionAddress, storageIndexTargetSupply, common.Hash{})
 }
 
 func (e *PriceEngine) setNewAbsorption(state *state.StateDB, number, supply, targetSupply *big.Int) error {

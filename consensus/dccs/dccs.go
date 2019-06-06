@@ -236,6 +236,7 @@ type Dccs struct {
 	priceEngineOnce sync.Once
 }
 
+// PriceEngine creates and returns the PriceEngine singleton instance
 func (d *Dccs) PriceEngine() *PriceEngine {
 	d.priceEngineOnce.Do(func() {
 		d.priceEngine = newPriceEngine(d.config)
