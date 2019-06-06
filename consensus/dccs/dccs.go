@@ -376,13 +376,16 @@ func (d *Dccs) verifyHeader2(chain consensus.ChainReader, header *types.Header, 
 	if len(header.Extra) < extraVanity+extraSeal {
 		return errMissingSignature
 	}
-	// Ensure that the extra-data contains a signer list on checkpoint, but none otherwise
-	signersBytes := len(header.Extra) - extraVanity - extraSeal
-	if !checkpoint && signersBytes != 0 {
-		return errExtraSigners
-	}
-	if checkpoint && signersBytes%common.AddressLength != 0 {
-		return errInvalidCheckpointSigners
+	// Only check header's signer list before Endurio hardfork
+	if !d.config.IsEndurio(header.Number) {
+		// Ensure that the extra-data contains a signer list on checkpoint, but none otherwise
+		signersBytes := len(header.Extra) - extraVanity - extraSeal
+		if !checkpoint && signersBytes != 0 {
+			return errExtraSigners
+		}
+		if checkpoint && signersBytes%common.AddressLength != 0 {
+			return errInvalidCheckpointSigners
+		}
 	}
 	// Ensure that the mix digest is zero as we don't have fork protection currently
 	if header.MixDigest != (common.Hash{}) {
