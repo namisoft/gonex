@@ -553,12 +553,14 @@ func (s *Service) assembleBlockStats(block *types.Block) *blockStats {
 		}
 		uncles = block.Uncles()
 
-		if d, ok := s.engine.(*dccs.Dccs); ok {
-			price = d.BlockPriceStat(s.eth.BlockChain(), header.Number.Uint64())
-			priceMedian = d.MedianPriceStat(s.eth.BlockChain(), header.Number.Uint64())
-			toAbsorb = d.RemainToAbsorbStat(s.eth.BlockChain(), header.Number.Uint64())
-			absorbed = d.AbsorbedStat(s.eth.BlockChain(), header.Number.Uint64())
-			supplySTB = d.StableSupplyStat(s.eth.BlockChain(), header.Number.Uint64())
+		if s.eth.BlockChain().Config().IsEndurio(header.Number) {
+			d, _ := s.engine.(*dccs.Dccs)
+			number := header.Number.Uint64()
+			price = d.BlockPriceStat(s.eth.BlockChain(), number)
+			priceMedian = d.MedianPriceStat(s.eth.BlockChain(), number)
+			toAbsorb = d.RemainToAbsorbStat(s.eth.BlockChain(), number)
+			absorbed = d.AbsorbedStat(s.eth.BlockChain(), number)
+			supplySTB = d.StableSupplyStat(s.eth.BlockChain(), number)
 		}
 	} else {
 		// Light nodes would need on-demand lookups for transactions/uncles, skip
