@@ -61,10 +61,7 @@ contract VolatileToken is ERC223 {
         address _sender = msg.sender;
         _burn(_sender, _amount);
 
-        /************************************************************************/
-        /* concensus garantures, this contract always got enough NTY to cashout */
-        /************************************************************************/
-
+        // guarantee at consensus level, this contract always have enough NTY to cashout
         _to.transfer(_amount);
     }
 
@@ -80,9 +77,9 @@ contract VolatileToken is ERC223 {
         return true;
     }
 
-    function buy(uint _value, bytes memory _data) 
-        public 
-        payable 
+    function buy(uint _value, bytes memory _data)
+        public
+        payable
     {
         buy();
         transfer(owner(), _value, _data);
@@ -93,9 +90,9 @@ contract VolatileToken is ERC223 {
         uint256  _value,
         uint256 _wantAmount,
         bytes32 _assistingID
-    ) 
-        public 
-        payable 
+    )
+        public
+        payable
     {
         bytes memory data = abi.encode(_wantAmount, _assistingID);
         buy(_value, data);
