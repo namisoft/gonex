@@ -1032,13 +1032,29 @@ func (d *Dccs) Initialize(chain consensus.ChainReader, header *types.Header, sta
 			header.Root = state.IntermediateRoot(false)
 		}
 	}
+	// slashing the premtpive initiator if any
+	if d.config.IsPriceBlock(header.Number.Uint64()) {
+		if d.PriceEngine().HasActivePremptive(state, chain) {
+			medianPrice, _ := d.PriceEngine().CalcMedianPrice(chain, header.Number.Uint64())
+			priceDeviation := new(big.Rat).Sub(medianPrice.Rat(), common.Rat1)
+
+			_, amount, _, _, slashingRate, slashingDuration, err := d.PriceEngine().GetCurrentPremptive(state, chain)
+			if err != nil {
+				return nil, nil, err
+			}
+			if priceDeviation.Sign() != amount.Sign() {
+				if err = d.slash(state, chain, priceDeviation, amount, slashingRate, slashingDuration); err != nil {
+					return nil, nil, err
+				}
+			}
+		}
+	}
 	absorption, err := d.PriceEngine().CalcNextAbsorption(chain, header)
 	if err != nil {
 		return nil, nil, err
 	}
 	if absorption != nil {
-		err = absorb(state, absorption, chain)
-		if err != nil {
+		if err = absorb(state, absorption, chain); err != nil {
 			return nil, nil, err
 		}
 		header.Root = state.IntermediateRoot(false)
@@ -1087,12 +1103,52 @@ func absorb(state *state.StateDB, absorption *big.Int, chain consensus.ChainRead
 		return err
 	}
 
+	isPremptive, err := pairEx.HasActivePremptive(nil)
+	if err != nil {
+		return err
+	}
+
+	if isPremptive {
+		// TODO: need to get data from `_, err = pairEx.Absorb(emptyTransactOpts, inflate, absorption)`
+		_, err = pairEx.PremptiveAbsorb(emptyTransactOpts, inflate, big.NewInt(100), big.NewInt(100))
+		if err != nil {
+			return err
+		}
+	}
+
 	supply, err = volatileToken.TotalSupply(&bind.CallOpts{})
 	if err != nil {
 		return err
 	}
 	// update the new balance after absorption
 	state.SetBalance(params.VolatileTokenAddress, supply)
+	return nil
+}
+
+func (d *Dccs) slash(state *state.StateDB, chain consensus.ChainReader, priceDeviation *big.Rat, amount, slashingRate, slashingDuration *big.Int) error {
+	backend := backends.NewRealBackend(state, chain, &params.PairExAddress)
+	emptyTransactOpts := &bind.TransactOpts{
+		From:     params.PairExAddress,
+		GasLimit: math.MaxUint64,
+		Signer: func(_ types.Signer, _ common.Address, tx *types.Transaction) (*types.Transaction, error) {
+			return tx, nil
+		},
+	}
+
+	totalSupply, _ := GetStableTokenSupply(state, chain)
+	absorbRate := new(big.Rat).SetFrac(totalSupply, amount)
+	slashingAmountRat := new(big.Rat).Mul(priceDeviation, absorbRate)
+	slashingAmountRat = new(big.Rat).Abs(slashingAmountRat)
+	slashingAmountRat.Mul(slashingAmountRat, new(big.Rat).SetFrac(slashingRate, slashingDuration))
+	slashingAmount := new(big.Int).Div(slashingAmountRat.Num(), slashingAmountRat.Denom())
+	pairEx, err := pairex.NewPairEx(params.PairExAddress, backend)
+	if err != nil {
+		return err
+	}
+
+	if _, err = pairEx.Slash(emptyTransactOpts, slashingAmount); err != nil {
+		return err
+	}
 	return nil
 }
 
