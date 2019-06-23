@@ -19,19 +19,20 @@ package dccs
 import (
 	"encoding/json"
 	"errors"
+	"math"
 	"math/big"
 	"sort"
 	"time"
 
-	"github.com/ethereum/go-ethereum/contracts/nexty/endurio/stable"
-
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
-	"github.com/ethereum/go-ethereum/crypto"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus"
+	"github.com/ethereum/go-ethereum/contracts/nexty/endurio/pairex"
+	"github.com/ethereum/go-ethereum/contracts/nexty/endurio/stable"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
 	lru "github.com/hashicorp/golang-lru"
@@ -47,6 +48,7 @@ var (
 	storageIndexLastNumber   = common.BytesToHash([]byte("LastNumber"))
 	storageIndexLastSupply   = common.BytesToHash([]byte("LastSupply"))
 	storageIndexTargetSupply = common.BytesToHash([]byte("TargetSupply"))
+	storageIndexUnlockNumber = common.BytesToHash([]byte("UnlockNumber"))
 )
 
 // PriceData represents the external price feeded from outside
@@ -129,7 +131,7 @@ func (e *PriceEngine) CalcNewAbsorptionRate(chain consensus.ChainReader, state *
 	}
 	// everything is calculated using the canonical chain data
 	number -= params.CanonicalDepth
-	lastNumber, lastSupply, targetSupply := e.getLastAbsorption(state)
+	lastNumber, lastSupply, targetSupply, lastUnlockNumber := e.getLastAbsorption(state)
 	if lastNumber == nil || lastNumber.Cmp(oneDurationBefore) <= 0 {
 		// passive condition: 1 duration without any active absorption or absorption never occurs
 		medianPrice, _ := e.CalcMedianPrice(chain, number)
@@ -151,7 +153,109 @@ func (e *PriceEngine) CalcNewAbsorptionRate(chain consensus.ChainReader, state *
 		// active absorption
 		return medianPrice, nil
 	}
+
+	// premptive absorption activation process
+	if e.HasActivePremptive(state, chain) {
+		_, amount, _, unlockNumber, _, _, _ := e.GetCurrentPremptive(state, chain)
+		if unlockNumber.Cmp(lastUnlockNumber) <= 0 {
+			// already activate premptive
+			return nil, nil
+		}
+		// activate new premptive absorption in consensus level
+		totalSupply, _ := GetStableTokenSupply(state, chain)
+		absorption := new(big.Int).Div(amount, big.NewInt(2))
+		median := new(big.Rat).SetFrac(totalSupply, new(big.Int).Add(absorption, totalSupply))
+		return (*Price)(median), nil
+	}
+	// activate premptive in contract level from proposal if any
+	// this premptive will be activated in the consensus level at the next absorption block
+	amount := e.GetCurrentProposal(state, chain)
+	if amount == nil {
+		// if there's not any proposal, then no premptive absorption will be actived
+		return nil, nil
+	}
+	totalSupply, _ := GetStableTokenSupply(state, chain)
+	median := new(big.Rat).SetFrac(amount, totalSupply)
+	median.Mul(median, common.Rat1_4)
+
+	// only call activate premptive if pass condition
+	// [X/S] >= 4 * MedianPriceRate
+	if median.Cmp(medianPrice.Rat()) >= 0 {
+		if err := e.ActivatePremptive(state, chain); err != nil {
+			log.Warn("Cannot activate premptive", "err", err)
+		}
+	}
+
 	return nil, nil
+}
+
+// GetCurrentProposal get current proposal
+func (e *PriceEngine) GetCurrentProposal(state *state.StateDB, chain consensus.ChainReader) *big.Int {
+	key, _ := crypto.GenerateKey()
+	address := crypto.PubkeyToAddress(key.PublicKey)
+	backend := backends.NewRealBackend(state, chain, &address)
+	pairEx, err := pairex.NewPairEx(params.PairExAddress, backend)
+	if err != nil {
+		return nil
+	}
+	_, amount, _, err := pairEx.GetCurrentProposal(nil)
+	if err != nil {
+		return nil
+	}
+	return amount
+}
+
+// GetCurrentPremptive get current active premptive
+func (e *PriceEngine) GetCurrentPremptive(state *state.StateDB, chain consensus.ChainReader) (common.Address, *big.Int, *big.Int, *big.Int, *big.Int, *big.Int, error) {
+	key, _ := crypto.GenerateKey()
+	address := crypto.PubkeyToAddress(key.PublicKey)
+	backend := backends.NewRealBackend(state, chain, &address)
+	pairEx, err := pairex.NewPairEx(params.PairExAddress, backend)
+	if err != nil {
+		return common.Address{}, nil, nil, nil, nil, nil, err
+	}
+	initiator, amount, balance, unlockNumber, slashingRate, slashingDuration, err := pairEx.GetCurrentPremptive(nil)
+	if err != nil {
+		return common.Address{}, nil, nil, nil, nil, nil, err
+	}
+	return initiator, amount, balance, unlockNumber, slashingRate, slashingDuration, nil
+}
+
+// HasActivePremptive check whether premptive is active or not
+func (e *PriceEngine) HasActivePremptive(state *state.StateDB, chain consensus.ChainReader) bool {
+	key, _ := crypto.GenerateKey()
+	address := crypto.PubkeyToAddress(key.PublicKey)
+	backend := backends.NewRealBackend(state, chain, &address)
+	pairEx, err := pairex.NewPairEx(params.PairExAddress, backend)
+	if err != nil {
+		return false
+	}
+	isPremptive, err := pairEx.HasActivePremptive(nil)
+	if err != nil {
+		return false
+	}
+	return isPremptive
+}
+
+// ActivatePremptive activate premptive from current proposal
+func (e *PriceEngine) ActivatePremptive(state *state.StateDB, chain consensus.ChainReader) error {
+	backend := backends.NewRealBackend(state, chain, &params.PairExAddress)
+	emptyTransactOpts := &bind.TransactOpts{
+		From:     params.PairExAddress,
+		GasLimit: math.MaxUint64,
+		Signer: func(_ types.Signer, _ common.Address, tx *types.Transaction) (*types.Transaction, error) {
+			return tx, nil
+		},
+	}
+	pairEx, err := pairex.NewPairEx(params.PairExAddress, backend)
+	if err != nil {
+		return err
+	}
+	_, err = pairEx.ActivatePremptive(emptyTransactOpts)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // RecordNewAbsorptionRate records the new absorption to the state db
@@ -173,7 +277,12 @@ func (e *PriceEngine) RecordNewAbsorptionRate(state *state.StateDB, rate *Price,
 		return nil
 	}
 	number := chain.CurrentHeader().Number
-	e.setNewAbsorption(state, number, supply, targetSupply)
+	if e.HasActivePremptive(state, chain) {
+		_, _, _, unlockNumber, _, _, _ := e.GetCurrentPremptive(state, chain)
+		e.setNewAbsorption(state, number, supply, targetSupply, unlockNumber)
+	} else {
+		e.setNewAbsorption(state, number, supply, targetSupply, common.Big0)
+	}
 	return nil
 }
 
@@ -182,34 +291,46 @@ func (e *PriceEngine) clearAbsorption(state *state.StateDB) {
 	state.SetState(params.AbsorptionAddress, storageIndexLastNumber, common.Hash{})
 	state.SetState(params.AbsorptionAddress, storageIndexLastSupply, common.Hash{})
 	state.SetState(params.AbsorptionAddress, storageIndexTargetSupply, common.Hash{})
+	state.SetState(params.AbsorptionAddress, storageIndexUnlockNumber, common.Hash{})
 }
 
-func (e *PriceEngine) setNewAbsorption(state *state.StateDB, number, supply, targetSupply *big.Int) error {
+func (e *PriceEngine) setNewAbsorption(state *state.StateDB, number, supply, targetSupply, unlockNumber *big.Int) error {
 	if number == nil || supply == nil || targetSupply == nil {
 		return errors.New("Failed to set new absorption state: nil input param(s)")
 	}
 	state.SetState(params.AbsorptionAddress, storageIndexLastNumber, common.BigToHash(number))
 	state.SetState(params.AbsorptionAddress, storageIndexLastSupply, common.BigToHash(supply))
 	state.SetState(params.AbsorptionAddress, storageIndexTargetSupply, common.BigToHash(targetSupply))
+	if unlockNumber == nil {
+		state.SetState(params.AbsorptionAddress, storageIndexUnlockNumber, common.Hash{})
+	} else {
+		state.SetState(params.AbsorptionAddress, storageIndexUnlockNumber, common.BigToHash(unlockNumber))
+	}
 	return nil
 }
 
-func (e *PriceEngine) getLastAbsorption(state *state.StateDB) (number, supply, targetSupply *big.Int) {
+func (e *PriceEngine) getLastAbsorption(state *state.StateDB) (number, supply, targetSupply, unlockNumber *big.Int) {
 	hash := state.GetState(params.AbsorptionAddress, storageIndexLastNumber)
 	if (hash == common.Hash{}) {
-		return nil, nil, nil
+		return nil, nil, nil, nil
 	}
 	number = hash.Big()
 
 	hash = state.GetState(params.AbsorptionAddress, storageIndexLastSupply)
 	if (hash == common.Hash{}) {
-		return nil, nil, nil
+		return nil, nil, nil, nil
 	}
 	supply = hash.Big()
 
 	hash = state.GetState(params.AbsorptionAddress, storageIndexTargetSupply)
 	if (hash == common.Hash{}) {
-		return nil, nil, nil
+		return nil, nil, nil, nil
+	}
+	targetSupply = hash.Big()
+
+	hash = state.GetState(params.AbsorptionAddress, storageIndexUnlockNumber)
+	if (hash == common.Hash{}) {
+		return number, supply, targetSupply, nil
 	}
 	targetSupply = hash.Big()
 
@@ -223,7 +344,7 @@ func (e *PriceEngine) CalcRemainToAbsorption(chain consensus.ChainReader, number
 	if err != nil {
 		return nil, err
 	}
-	lastNumber, lastSupply, targetSupply := e.getLastAbsorption(state)
+	lastNumber, lastSupply, targetSupply, _ := e.getLastAbsorption(state)
 	if lastNumber == nil || lastSupply == nil || targetSupply == nil {
 		// absorption never occurs
 		return nil, nil
@@ -246,7 +367,7 @@ func (e *PriceEngine) CalcNextAbsorption(chain consensus.ChainReader, header *ty
 	if err != nil {
 		return nil, err
 	}
-	lastNumber, lastSupply, targetSupply := e.getLastAbsorption(state)
+	lastNumber, lastSupply, targetSupply, _ := e.getLastAbsorption(state)
 	if lastNumber == nil || lastSupply == nil || targetSupply == nil {
 		// absorption never occurs
 		return nil, nil
