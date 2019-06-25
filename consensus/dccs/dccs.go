@@ -1599,7 +1599,13 @@ func (d *Dccs) AbsorbedStat(chain consensus.ChainReader, number uint64) string {
 	if number <= 0 {
 		return ""
 	}
-	state, _ := chain.StateAt(chain.GetHeaderByNumber(number - 1).Root)
+	state, err := chain.StateAt(chain.GetHeaderByNumber(number - 1).Root)
+	if err != nil {
+		return err.Error()
+	}
+	if state == nil {
+		return "No state at " + string(number-1)
+	}
 	oldSupply, err := GetStableTokenSupply(state, chain)
 	if err != nil {
 		return err.Error()
@@ -1607,7 +1613,13 @@ func (d *Dccs) AbsorbedStat(chain consensus.ChainReader, number uint64) string {
 	if oldSupply == nil {
 		return "No Old Supply"
 	}
-	state, _ = chain.StateAt(chain.GetHeaderByNumber(number).Root)
+	state, err = chain.StateAt(chain.GetHeaderByNumber(number).Root)
+	if err != nil {
+		return err.Error()
+	}
+	if state == nil {
+		return "No state at " + string(number)
+	}
 	supply, err := GetStableTokenSupply(state, chain)
 	if err != nil {
 		return err.Error()
@@ -1620,7 +1632,17 @@ func (d *Dccs) AbsorbedStat(chain consensus.ChainReader, number uint64) string {
 
 // RemainToAbsorbStat returns ethstats data for stablecoin supply remain to absorb
 func (d *Dccs) RemainToAbsorbStat(chain consensus.ChainReader, number uint64) string {
-	state, _ := chain.State()
+	header := chain.GetHeaderByNumber(number)
+	if header == nil {
+		return "No Header"
+	}
+	state, err := chain.StateAt(chain.GetHeaderByNumber(number).Root)
+	if err != nil {
+		return err.Error()
+	}
+	if state == nil {
+		return "No state at " + string(number)
+	}
 	supply, err := GetStableTokenSupply(state, chain)
 	if err != nil {
 		return err.Error()
@@ -1645,7 +1667,13 @@ func (d *Dccs) StableSupplyStat(chain consensus.ChainReader, number uint64) stri
 	if header == nil {
 		return "No Header"
 	}
-	state, _ := chain.StateAt(chain.GetHeaderByNumber(number).Root)
+	state, err := chain.StateAt(chain.GetHeaderByNumber(number).Root)
+	if err != nil {
+		return err.Error()
+	}
+	if state == nil {
+		return "No state at " + string(number)
+	}
 	supply, err := GetStableTokenSupply(state, chain)
 	if err != nil {
 		return err.Error()
