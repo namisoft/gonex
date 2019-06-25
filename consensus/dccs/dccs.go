@@ -1014,7 +1014,7 @@ func (d *Dccs) Initialize(chain consensus.ChainReader, header *types.Header, sta
 			log.Error("Failed to deploy Endurio stablecoin contracts", "err", err)
 			return nil, nil, err
 		}
-		state.Commit(false)
+		header.Root = state.IntermediateRoot(false)
 		log.Info("⚙ Successfully deploy Endurio stablecoin contracts")
 		return nil, nil, nil
 	}
@@ -1025,6 +1025,7 @@ func (d *Dccs) Initialize(chain consensus.ChainReader, header *types.Header, sta
 		}
 		if rate != nil {
 			d.PriceEngine().RecordNewAbsorptionRate(state, rate, chain)
+			header.Root = state.IntermediateRoot(false)
 		}
 	}
 	absorption, err := d.PriceEngine().CalcNextAbsorption(chain, header)
@@ -1036,6 +1037,7 @@ func (d *Dccs) Initialize(chain consensus.ChainReader, header *types.Header, sta
 		if err != nil {
 			return nil, nil, err
 		}
+		header.Root = state.IntermediateRoot(false)
 	}
 
 	return nil, nil, nil
@@ -1087,9 +1089,7 @@ func absorb(state *state.StateDB, absorption *big.Int, chain consensus.ChainRead
 	}
 	// update the new balance after absorption
 	state.SetBalance(params.VolatileTokenAddress, supply)
-
-	_, err = state.Commit(false)
-	return err
+	return nil
 }
 
 // Finalize implements consensus.Engine, ensuring no uncles are set, nor block

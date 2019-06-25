@@ -174,7 +174,6 @@ func (e *PriceEngine) RecordNewAbsorptionRate(state *state.StateDB, rate *Price,
 	}
 	number := chain.CurrentHeader().Number
 	e.setNewAbsorption(state, number, supply, targetSupply)
-	state.Commit(false)
 	return nil
 }
 
