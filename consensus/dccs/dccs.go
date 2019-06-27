@@ -142,13 +142,17 @@ var (
 	// be modified via out-of-range or non-contiguous headers.
 	errInvalidVotingChain = errors.New("invalid voting chain")
 
-	// errUnauthorized is returned if a header is signed by a non-authorized entity.
-	errUnauthorized = errors.New("unauthorized")
-
 	// errWaitTransactions is returned if an empty block is attempted to be sealed
 	// on an instant chain (0 second period). It's important to refuse these as the
 	// block reward is zero, so an empty block just bloats the chain... fast.
 	errWaitTransactions = errors.New("waiting for transactions")
+
+	// errUnauthorizedSigner is returned if a header is signed by a non-authorized entity.
+	errUnauthorizedSigner = errors.New("unauthorized signer")
+
+	// errRecentlySigned is returned if a header is signed by an authorized entity
+	// that already signed a header recently, thus is temporarily not allowed to.
+	errRecentlySigned = errors.New("recently signed")
 )
 
 // SignerFn is a signer callback function to request a header to be signed by a
@@ -460,7 +464,7 @@ func (d *Dccs) verifyCascadingFields2(chain consensus.ChainReader, header *types
 	if d.config.IsCheckpoint(number) {
 		signers := make([]byte, len(snap.Signers)*common.AddressLength)
 		for i, signer := range snap.signers2() {
-			copy(signers[i*common.AddressLength:], signer.Address[:])
+			copy(signers[i*common.AddressLength:], signer[:])
 		}
 		extraSuffix := len(header.Extra) - extraSeal
 		if !bytes.Equal(header.Extra[extraVanity:extraSuffix], signers) {
@@ -647,13 +651,13 @@ func (d *Dccs) verifySeal(chain consensus.ChainReader, header *types.Header, par
 		return err
 	}
 	if _, ok := snap.Signers[signer]; !ok {
-		return errUnauthorized
+		return errUnauthorizedSigner
 	}
 	for seen, recent := range snap.Recents {
 		if recent == signer {
 			// Signer is among recents, only fail if the current block doesn't shift it out
 			if limit := uint64(len(snap.Signers)/2 + 1); seen > number-limit {
-				return errUnauthorized
+				return errRecentlySigned
 			}
 		}
 	}
@@ -690,7 +694,7 @@ func (d *Dccs) verifySeal2(chain consensus.ChainReader, header *types.Header, pa
 		return err
 	}
 	if _, ok := snap.Signers[signer]; !ok {
-		return errUnauthorized
+		return errUnauthorizedSigner
 	}
 
 	headers, err := d.GetRecentHeaders(snap, chain, header, parents)
@@ -704,7 +708,7 @@ func (d *Dccs) verifySeal2(chain consensus.ChainReader, header *types.Header, pa
 		}
 		if signer == sig {
 			// Signer is among recents, only fail if the current block doesn't shift it out
-			return errUnauthorized
+			return errRecentlySigned
 		}
 	}
 
@@ -836,7 +840,7 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 
 	if d.config.IsCheckpoint(number) {
 		for _, signer := range snap.signers2() {
-			header.Extra = append(header.Extra, signer.Address[:]...)
+			header.Extra = append(header.Extra, signer[:]...)
 		}
 	}
 	header.Extra = append(header.Extra, make([]byte, extraSeal)...)
@@ -1062,7 +1066,7 @@ func (d *Dccs) seal(chain consensus.ChainReader, block *types.Block, results cha
 		return err
 	}
 	if _, authorized := snap.Signers[signer]; !authorized {
-		return errUnauthorized
+		return errUnauthorizedSigner
 	}
 	// If we're amongst the recent signers, wait for the next block
 	for seen, recent := range snap.Recents {
@@ -1133,7 +1137,7 @@ func (d *Dccs) seal2(chain consensus.ChainReader, block *types.Block, results ch
 		return err
 	}
 	if _, authorized := snap.Signers[signer]; !authorized {
-		return errUnauthorized
+		return errUnauthorizedSigner
 	}
 	// If we're amongst the recent signers, wait for the next block
 	headers, err := d.GetRecentHeaders(snap, chain, header, nil)
@@ -1199,7 +1203,7 @@ func (d *Dccs) calcDelayTime(snap *Snapshot, block *types.Block, signer common.A
 	sigs := snap.signers2()
 	pos := 0
 	for seen, sig := range sigs {
-		if sig.Address == signer {
+		if sig == signer {
 			pos = seen
 		}
 	}

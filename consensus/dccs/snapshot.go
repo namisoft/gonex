@@ -20,15 +20,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"sort"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
-	"github.com/ethereum/go-ethereum/rlp"
 	lru "github.com/hashicorp/golang-lru"
-	"golang.org/x/crypto/sha3"
 )
 
 // Vote represents a single vote that an authorized signer made to modify the
@@ -60,22 +59,12 @@ type Snapshot struct {
 	Tally   map[common.Address]Tally    `json:"tally"`   // Current vote tally to avoid recalculating
 }
 
-// Signer contain data of signer's address and checkpoint block hash
-type Signer struct {
-	Hash    common.Hash
-	Address common.Address
-}
+// signersAscending implements the sort interface to allow sorting a list of addresses
+type signersAscending []common.Address
 
-// Signers implements the sort interface to allow sorting a list of signers by hash
-type Signers []Signer
-
-func (sn Signers) Len() int { return len(sn) }
-func (sn Signers) Less(i, j int) bool {
-	h1 := rlpHash(sn[i])
-	h2 := rlpHash(sn[j])
-	return bytes.Compare(h1[:], h2[:]) < 0
-}
-func (sn Signers) Swap(i, j int) { sn[i], sn[j] = sn[j], sn[i] }
+func (s signersAscending) Len() int           { return len(s) }
+func (s signersAscending) Less(i, j int) bool { return bytes.Compare(s[i][:], s[j][:]) < 0 }
+func (s signersAscending) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 // newSnapshot creates a new snapshot with the specified startup parameters. This
 // method does not initialize the set of recent signers, so only ever use if for
@@ -210,7 +199,11 @@ func (s *Snapshot) apply(headers []*types.Header) (*Snapshot, error) {
 	// Iterate through the headers and create a new snapshot
 	snap := s.copy()
 
-	for _, header := range headers {
+	var (
+		start  = time.Now()
+		logged = time.Now()
+	)
+	for i, header := range headers {
 		// Remove any votes on checkpoint blocks
 		number := header.Number.Uint64()
 		if s.config.IsCheckpoint(number) {
@@ -227,11 +220,11 @@ func (s *Snapshot) apply(headers []*types.Header) (*Snapshot, error) {
 			return nil, err
 		}
 		if _, ok := snap.Signers[signer]; !ok {
-			return nil, errUnauthorized
+			return nil, errUnauthorizedSigner
 		}
 		for _, recent := range snap.Recents {
 			if recent == signer {
-				return nil, errUnauthorized
+				return nil, errRecentlySigned
 			}
 		}
 		snap.Recents[number] = signer
@@ -298,6 +291,14 @@ func (s *Snapshot) apply(headers []*types.Header) (*Snapshot, error) {
 			}
 			delete(snap.Tally, header.Coinbase)
 		}
+		// If we're taking too much time (ecrecover), notify the user once a while
+		if time.Since(logged) > 8*time.Second {
+			log.Info("Reconstructing voting history", "processed", i, "total", len(headers), "elapsed", common.PrettyDuration(time.Since(start)))
+			logged = time.Now()
+		}
+	}
+	if time.Since(start) > 8*time.Second {
+		log.Info("Reconstructed voting history", "processed", len(headers), "elapsed", common.PrettyDuration(time.Since(start)))
 	}
 	snap.Number += uint64(len(headers))
 	snap.Hash = headers[len(headers)-1].Hash()
@@ -307,28 +308,17 @@ func (s *Snapshot) apply(headers []*types.Header) (*Snapshot, error) {
 
 // signers retrieves the list of authorized signers in ascending order.
 func (s *Snapshot) signers() []common.Address {
-	signers := make([]common.Address, 0, len(s.Signers))
-	for signer := range s.Signers {
-		signers = append(signers, signer)
+	sigs := make([]common.Address, 0, len(s.Signers))
+	for sig := range s.Signers {
+		sigs = append(sigs, sig)
 	}
-	for i := 0; i < len(signers); i++ {
-		for j := i + 1; j < len(signers); j++ {
-			if bytes.Compare(signers[i][:], signers[j][:]) > 0 {
-				signers[i], signers[j] = signers[j], signers[i]
-			}
-		}
-	}
-	return signers
+	sort.Sort(signersAscending(sigs))
+	return sigs
 }
 
-// signers2 retrieves the list of authorized signers in hash ascending order.
-func (s *Snapshot) signers2() []Signer {
-	sigs := make([]Signer, 0, len(s.Signers))
-	for sig := range s.Signers {
-		sigs = append(sigs, Signer{Hash: s.Hash, Address: sig})
-	}
-	sort.Sort(Signers(sigs))
-	return sigs
+// signers retrieves the list of authorized signers in ascending order.
+func (s *Snapshot) signers2() []common.Address {
+	return s.signers()
 }
 
 // inturn returns if a signer at a given block height is in-turn or not.
@@ -351,9 +341,9 @@ func (s *Snapshot) inturn2(signer common.Address, parent *types.Header) bool {
 	return offset == 0
 }
 
-func signerPosition(signer common.Address, signers []Signer) (int, bool) {
+func signerPosition(signer common.Address, signers []common.Address) (int, bool) {
 	for i, sig := range signers {
-		if sig.Address == signer {
+		if sig == signer {
 			return i, true
 		}
 	}
@@ -371,7 +361,7 @@ func (s *Snapshot) offset(signer common.Address, parent *types.Header) (int, err
 	pos, ok := signerPosition(signer, signers)
 	if !ok {
 		// unable to find the signer position
-		return n, errUnauthorized
+		return n, errUnauthorizedSigner
 	}
 
 	if parent == nil || s.config.IsCheckpoint(parent.Number.Uint64()+1) {
@@ -388,7 +378,7 @@ func (s *Snapshot) offset(signer common.Address, parent *types.Header) (int, err
 	prevPos, ok := signerPosition(prevSigner, signers)
 	if !ok {
 		// unable to find the previous signer position
-		return n, errUnauthorized
+		return n, errUnauthorizedSigner
 	}
 
 	offset := pos - prevPos - 1
@@ -417,15 +407,4 @@ func (s *Snapshot) difficulty(signer common.Address, parent *types.Header) uint6
 	n := len(signers)
 
 	return uint64(n - offset)
-}
-
-// rlpHash return hash of an input
-func rlpHash(s Signer) (h common.Hash) {
-	hasher := sha3.NewLegacyKeccak256()
-	rlp.Encode(hasher, []interface{}{
-		s.Address,
-		s.Hash,
-	})
-	hasher.Sum(h[:0])
-	return h
 }
