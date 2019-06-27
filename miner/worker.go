@@ -479,6 +479,8 @@ func (w *worker) mainLoop() {
 				// advance sealing here.
 				if w.chainConfig.Clique != nil && w.chainConfig.Clique.Period == 0 {
 					w.commitNewWork(nil, true, time.Now().Unix())
+				} else if w.chainConfig.Dccs != nil && w.chainConfig.Dccs.Period == 0 {
+					w.commitNewWork(nil, true, time.Now().Unix())
 				}
 			}
 			atomic.AddInt32(&w.newTxs, int32(len(ev.Txs)))
@@ -915,7 +917,10 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 	commitUncles(w.localUncles)
 	commitUncles(w.remoteUncles)
 
-	if !noempty {
+	// pre-committing empty block only makes sense for PoW
+	pow := w.chainConfig.Ethash != nil
+	preCommitEmpty := !noempty && pow
+	if preCommitEmpty {
 		// Create an empty block based on temporary copied state for sealing in advance without waiting block
 		// execution finished.
 		w.commit(uncles, nil, false, tstart)
@@ -929,6 +934,11 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 	}
 	// Short circuit if there is no available pending transactions
 	if len(pending) == 0 {
+		if !preCommitEmpty {
+			// commit an empty block when there is no pending tx
+			w.commit(uncles, w.fullTaskHook, true, tstart)
+			return
+		}
 		w.updateSnapshot()
 		return
 	}

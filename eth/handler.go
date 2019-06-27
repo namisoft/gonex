@@ -230,7 +230,19 @@ func NewProtocolManager(config *params.ChainConfig, checkpoint *params.TrustedCh
 		}
 		return n, err
 	}
-	manager.fetcher = fetcher.New(blockchain.GetBlockByHash, validator, manager.BroadcastBlock, heighter, inserter, manager.removePeer)
+	headerRequest := func(id string) func(common.Hash) error {
+		if peer := manager.peers.Peer(id); peer != nil {
+			return peer.RequestOneHeader
+		}
+		return nil
+	}
+	bodyRequest := func(id string) func([]common.Hash) error {
+		if peer := manager.peers.Peer(id); peer != nil {
+			return peer.RequestBodies
+		}
+		return nil
+	}
+	manager.fetcher = fetcher.New(blockchain.GetBlockByHash, validator, manager.BroadcastBlock, heighter, inserter, manager.removePeer, headerRequest, bodyRequest)
 
 	return manager, nil
 }
@@ -718,7 +730,8 @@ func (pm *ProtocolManager) handleMsg(p *peer) error {
 			// a single block (as the true TD is below the propagated block), however this
 			// scenario should easily be covered by the fetcher.
 			currentBlock := pm.blockchain.CurrentBlock()
-			if trueTD.Cmp(pm.blockchain.GetTd(currentBlock.Hash(), currentBlock.NumberU64())) > 0 {
+			currentTd := pm.blockchain.GetTd(currentBlock.Hash(), currentBlock.NumberU64())
+			if core.ChainCompare(trueTD, currentTd, trueHead, currentBlock.Hash()) > 0 {
 				go pm.synchronise(p)
 			}
 		}

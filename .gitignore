@@ -5,6 +5,7 @@
 #   git config --global core.excludesfile ~/.gitignore_global
 
 /tmp
+/data/**
 */**/*un~
 */**/*.test
 *un~
@@ -21,7 +22,6 @@ build/_vendor/pkg
 *~
 .project
 .settings
-
 # used by the Makefile
 /build/_workspace/
 /build/bin/
@@ -46,3 +46,8 @@ profile.cov
 /dashboard/assets/package-lock.json
 
 **/yarn-error.log
+
+# intermediate files
+*.json
+*.key
+passwd

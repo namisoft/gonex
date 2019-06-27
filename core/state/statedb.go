@@ -237,6 +237,15 @@ func (self *StateDB) GetNonce(addr common.Address) uint64 {
 	return 0
 }
 
+func (self *StateDB) GetMRUNumber(addr common.Address) uint64 {
+	stateObject := self.getStateObject(addr)
+	if stateObject != nil {
+		return stateObject.MRUNumber()
+	}
+
+	return 0
+}
+
 // TxIndex returns the current transaction index set by Prepare.
 func (self *StateDB) TxIndex() int {
 	return self.txIndex
@@ -369,6 +378,13 @@ func (self *StateDB) SetNonce(addr common.Address, nonce uint64) {
 	stateObject := self.GetOrNewStateObject(addr)
 	if stateObject != nil {
 		stateObject.SetNonce(nonce)
+	}
+}
+
+func (self *StateDB) SetMRUNumber(addr common.Address, number uint64) {
+	stateObject := self.GetOrNewStateObject(addr)
+	if stateObject != nil {
+		stateObject.SetMRUNumber(number)
 	}
 }
 

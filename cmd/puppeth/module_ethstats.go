@@ -31,20 +31,20 @@ import (
 // ethstatsDockerfile is the Dockerfile required to build an ethstats backend
 // and associated monitoring site.
 var ethstatsDockerfile = `
-FROM puppeth/ethstats:latest
+FROM nextyio/nextats:latest
 
 RUN echo 'module.exports = {trusted: [{{.Trusted}}], banned: [{{.Banned}}], reserved: ["yournode"]};' > lib/utils/config.js
 `
 
 // ethstatsComposefile is the docker-compose.yml file required to deploy and
-// maintain an ethstats monitoring site.
+// maintain an nextats monitoring site.
 var ethstatsComposefile = `
 version: '2'
 services:
-  ethstats:
+  nextats:
     build: .
-    image: {{.Network}}/ethstats
-    container_name: {{.Network}}_ethstats_1{{if not .VHost}}
+    image: {{.Network}}/nextats
+    container_name: {{.Network}}_nextats_1{{if not .VHost}}
     ports:
       - "{{.Port}}:3000"{{end}}
     environment:
@@ -59,7 +59,7 @@ services:
     restart: always
 `
 
-// deployEthstats deploys a new ethstats container to a remote machine via SSH,
+// deployEthstats deploys a new nextats container to a remote machine via SSH,
 // docker and docker-compose. If an instance with the specified network name
 // already exists there, it will be overwritten!
 func deployEthstats(client *sshClient, network string, port int, secret string, vhost string, trusted []string, banned []string, nocache bool) ([]byte, error) {
@@ -106,7 +106,7 @@ func deployEthstats(client *sshClient, network string, port int, secret string, 
 	return nil, client.Stream(fmt.Sprintf("cd %s && docker-compose -p %s up -d --build --force-recreate --timeout 60", workdir, network))
 }
 
-// ethstatsInfos is returned from an ethstats status check to allow reporting
+// ethstatsInfos is returned from an nextats status check to allow reporting
 // various configuration parameters.
 type ethstatsInfos struct {
 	host   string
@@ -127,11 +127,11 @@ func (info *ethstatsInfos) Report() map[string]string {
 	}
 }
 
-// checkEthstats does a health-check against an ethstats server to verify whether
+// checkEthstats does a health-check against an nextats server to verify whether
 // it's running, and if yes, gathering a collection of useful infos about it.
 func checkEthstats(client *sshClient, network string) (*ethstatsInfos, error) {
-	// Inspect a possible ethstats container on the host
-	infos, err := inspectContainer(client, fmt.Sprintf("%s_ethstats_1", network))
+	// Inspect a possible nextats container on the host
+	infos, err := inspectContainer(client, fmt.Sprintf("%s_nextats_1", network))
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +163,7 @@ func checkEthstats(client *sshClient, network string) (*ethstatsInfos, error) {
 
 	// Run a sanity check to see if the port is reachable
 	if err = checkPort(host, port); err != nil {
-		log.Warn("Ethstats service seems unreachable", "server", host, "port", port, "err", err)
+		log.Warn("Nexstats service seems unreachable", "server", host, "port", port, "err", err)
 	}
 	// Container available, assemble and return the useful infos
 	return &ethstatsInfos{

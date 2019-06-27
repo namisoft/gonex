@@ -26,9 +26,9 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 )
 
-// emptyCodeHash is used by create to ensure deployment is disallowed to already
+// EmptyCodeHash is used by create to ensure deployment is disallowed to already
 // deployed contract addresses (relevant after the account abstraction).
-var emptyCodeHash = crypto.Keccak256Hash(nil)
+var EmptyCodeHash = crypto.Keccak256Hash(nil)
 
 type (
 	// CanTransferFunc is the signature of a transfer guard function
@@ -215,6 +215,9 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 			return nil, gas, nil
 		}
 		evm.StateDB.CreateAccount(addr)
+		if evm.ChainConfig().IsThangLong(evm.BlockNumber) {
+			evm.StateDB.SetMRUNumber(addr, evm.BlockNumber.Uint64())
+		}
 	}
 	evm.Transfer(evm.StateDB, caller.Address(), to.Address(), value)
 	// Initialise a new contract and set the code that is to be used by the EVM.
@@ -388,7 +391,7 @@ func (evm *EVM) create(caller ContractRef, codeAndHash *codeAndHash, gas uint64,
 
 	// Ensure there's no existing contract already at the designated address
 	contractHash := evm.StateDB.GetCodeHash(address)
-	if evm.StateDB.GetNonce(address) != 0 || (contractHash != (common.Hash{}) && contractHash != emptyCodeHash) {
+	if evm.StateDB.GetNonce(address) != 0 || (contractHash != (common.Hash{}) && contractHash != EmptyCodeHash) {
 		return nil, common.Address{}, 0, ErrContractAddressCollision
 	}
 	// Create a new account on the state

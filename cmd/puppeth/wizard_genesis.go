@@ -29,7 +29,11 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/deployer"
+	"github.com/ethereum/go-ethereum/contracts/nexty/token"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
@@ -58,6 +62,7 @@ func (w *wizard) makeGenesis() {
 	fmt.Println("Which consensus engine to use? (default = clique)")
 	fmt.Println(" 1. Ethash - proof-of-work")
 	fmt.Println(" 2. Clique - proof-of-authority")
+	fmt.Println(" 3. Dccs   - proof-of-foundation")
 
 	choice := w.read()
 	switch {
@@ -102,6 +107,102 @@ func (w *wizard) makeGenesis() {
 		genesis.ExtraData = make([]byte, 32+len(signers)*common.AddressLength+65)
 		for i, signer := range signers {
 			copy(genesis.ExtraData[32+i*common.AddressLength:], signer[:])
+		}
+
+	case choice == "3":
+		// In the case of dccs, configure the consensus parameters
+		genesis.GasLimit = 42000000
+		genesis.Difficulty = big.NewInt(1)
+		genesis.Config.Dccs = &params.DccsConfig{
+			Period:   2,
+			Epoch:    30000,
+			Contract: common.HexToAddress("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+			// Stake params
+			StakeRequire:    100,
+			StakeLockHeight: 24 * 60 * 60 / 2,
+			// ThangLong hardfork
+			ThangLongBlock: common.Big0,
+			ThangLongEpoch: 3000,
+		}
+		fmt.Println()
+		fmt.Println("How many seconds should blocks take? (default = 2)")
+		genesis.Config.Dccs.Period = uint64(w.readDefaultInt(2))
+
+		fmt.Println()
+		fmt.Println("How many blocks should epoch take? (default = 30000)")
+		genesis.Config.Dccs.Epoch = uint64(w.readDefaultInt(30000))
+
+		// We also need the initial list of signers
+		fmt.Println()
+		fmt.Println("Which accounts are allowed to seal? (mandatory at least one)")
+
+		var signers []common.Address
+		for {
+			if address := w.readAddress(); address != nil {
+				signers = append(signers, *address)
+				continue
+			}
+			if len(signers) > 0 {
+				break
+			}
+		}
+		// Sort the signers and embed into the extra-data section
+		for i := 0; i < len(signers); i++ {
+			for j := i + 1; j < len(signers); j++ {
+				if bytes.Compare(signers[i][:], signers[j][:]) > 0 {
+					signers[i], signers[j] = signers[j], signers[i]
+				}
+			}
+		}
+		genesis.ExtraData = make([]byte, 32+len(signers)*common.AddressLength+65)
+		for i, signer := range signers {
+			copy(genesis.ExtraData[32+i*common.AddressLength:], signer[:])
+		}
+
+		fmt.Println()
+		fmt.Printf("Which block should Thang Long come into effect? (default = %v)\n", genesis.Config.Dccs.ThangLongBlock)
+		genesis.Config.Dccs.ThangLongBlock = w.readDefaultBigInt(genesis.Config.Dccs.ThangLongBlock)
+
+		fmt.Println()
+		fmt.Printf("How many blocks should epoch take after the Thang Long hardfork? (default = %v)\n", genesis.Config.Dccs.ThangLongEpoch)
+		genesis.Config.Dccs.ThangLongEpoch = uint64(w.readDefaultInt(int(genesis.Config.Dccs.ThangLongEpoch)))
+
+		fmt.Println()
+		fmt.Printf("Which nexty governance smart contract address? (default = %v)\n", genesis.Config.Dccs.Contract.Hex())
+		if address := w.readAddress(); address != nil {
+			genesis.Config.Dccs.Contract = *address
+		}
+
+		fmt.Println()
+		fmt.Printf("How many NTF is required to join sealing? (default = %v)\n", genesis.Config.Dccs.StakeRequire)
+		genesis.Config.Dccs.StakeRequire = uint64(w.readDefaultInt(int(genesis.Config.Dccs.StakeRequire)))
+
+		fmt.Println()
+		fmt.Printf("How many block to lock the NTF after a sealer leaving? (default = %v)\n", genesis.Config.Dccs.StakeLockHeight)
+		genesis.Config.Dccs.StakeLockHeight = uint64(w.readDefaultInt(int(genesis.Config.Dccs.StakeLockHeight)))
+
+		// Generate nexty token foundation contract
+		fmt.Println()
+		fmt.Println("Which account is allowed to be the onwer of NTF token contract? (optional)")
+		var onwer *common.Address
+		if address := w.readAddress(); address != nil {
+			onwer = address
+		}
+		if onwer != nil {
+			code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
+				address, _, _, err := token.DeployNtfToken(auth, sim, *onwer)
+				return address, err
+			})
+			if err != nil {
+				fmt.Println("Can't deploy nexty foundation token smart contract")
+				return
+			}
+
+			genesis.Alloc[params.TokenAddress] = core.GenesisAccount{
+				Balance: big.NewInt(0),
+				Code:    code,
+				Storage: storage,
+			}
 		}
 
 	default:
@@ -229,6 +330,21 @@ func (w *wizard) manageGenesis() {
 		fmt.Println()
 		fmt.Printf("Which block should Petersburg come into effect? (default = %v)\n", w.conf.Genesis.Config.PetersburgBlock)
 		w.conf.Genesis.Config.PetersburgBlock = w.readDefaultBigInt(w.conf.Genesis.Config.PetersburgBlock)
+		if w.conf.Genesis.Config.PetersburgBlock == nil {
+			w.conf.Genesis.Config.PetersburgBlock = w.conf.Genesis.Config.ConstantinopleBlock
+		}
+
+		if w.conf.Genesis.Config.Dccs != nil {
+			fmt.Println()
+			fmt.Printf("Which block should ThangLong come into effect? (default = %v)\n", w.conf.Genesis.Config.Dccs.ThangLongBlock)
+			w.conf.Genesis.Config.Dccs.ThangLongBlock = w.readDefaultBigInt(w.conf.Genesis.Config.Dccs.ThangLongBlock)
+
+			fmt.Println()
+			fmt.Printf("Which nexty governance smart contract address? (default = %v)\n", w.conf.Genesis.Config.Dccs.Contract.Hex())
+			if address := w.readAddress(); address != nil {
+				w.conf.Genesis.Config.Dccs.Contract = *address
+			}
+		}
 
 		out, _ := json.MarshalIndent(w.conf.Genesis.Config, "", "  ")
 		fmt.Printf("Chain configuration updated:\n\n%s\n", out)
@@ -249,12 +365,12 @@ func (w *wizard) manageGenesis() {
 		out, _ := json.MarshalIndent(w.conf.Genesis, "", "  ")
 
 		// Export the native genesis spec used by puppeth and Geth
-		gethJson := filepath.Join(folder, fmt.Sprintf("%s.json", w.network))
-		if err := ioutil.WriteFile((gethJson), out, 0644); err != nil {
+		gethJSON := filepath.Join(folder, fmt.Sprintf("%s.json", w.network))
+		if err := ioutil.WriteFile((gethJSON), out, 0644); err != nil {
 			log.Error("Failed to save genesis file", "err", err)
 			return
 		}
-		log.Info("Saved native genesis chain spec", "path", gethJson)
+		log.Info("Saved native genesis chain spec", "path", gethJSON)
 
 		// Export the genesis spec used by Aleth (formerly C++ Ethereum)
 		if spec, err := newAlethGenesisSpec(w.network, w.conf.Genesis); err != nil {
