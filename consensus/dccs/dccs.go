@@ -630,6 +630,9 @@ func (d *Dccs) snapshot2(chain consensus.ChainReader, number uint64, hash common
 			} else {
 				return nil, fmt.Errorf("Epoch checkpoint data is not available")
 			}
+		} else {
+			// cannot get data from db in the --fast sync mode
+			return nil, fmt.Errorf("checkpoint header is not available")
 		}
 	}
 
