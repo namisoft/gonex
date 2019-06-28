@@ -602,7 +602,7 @@ func (d *Dccs) snapshot2(chain consensus.ChainReader, number uint64, hash common
 			log.Trace("Loading snapshot from mem-cache", "hash", snap.Hash, "length", len(snap.signers()))
 			break
 		}
-		state, err := chain.StateAt(checkpoint.Root)
+		state, err := d.checkpointState(chain, number)
 		if state == nil || err != nil {
 			log.Error("snapshot state not available", "number", cp, "err", err)
 			continue
@@ -828,26 +828,40 @@ func (d *Dccs) prepare(chain consensus.ChainReader, header *types.Header) error 
 	return nil
 }
 
+func (d *Dccs) checkpointState(chain consensus.ChainReader, number uint64) (*state.StateDB, error) {
+	cp := d.config.Snapshot(number)
+	checkpoint := chain.GetHeaderByNumber(cp)
+	if checkpoint == nil {
+		log.Error("header is not available at the block number", "number", cp)
+		checkpoint = chain.CurrentHeader()
+		//return errors.New("header is not available at the block number")
+	}
+	root, err := chain.StateAt(checkpoint.Root)
+	if root == nil {
+		log.Error("state is not available at the block number", "number", cp, "err", err)
+		// return errors.New("state is not available at the block number")
+		root, err = chain.State()
+		if err != nil {
+			log.Error("state is not available", "number", cp, "err", err)
+			return nil, errors.New("state is not available")
+		}
+	}
+	return root, err
+}
+
 // prepare2 implements consensus.Engine, preparing all the consensus fields of the
 // header for running the transactions on top.
 func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error {
 	header.Nonce = types.BlockNonce{}
 	// Get the beneficiary of signer from smart contract and set to header's coinbase to give sealing reward later
 	number := header.Number.Uint64()
-	cp := d.config.Snapshot(number)
-	checkpoint := chain.GetHeaderByNumber(cp)
-	if checkpoint != nil {
-		root, _ := chain.StateAt(checkpoint.Root)
-		index := common.BigToHash(common.Big1).String()[2:]
-		coinbase := "0x000000000000000000000000" + header.Coinbase.String()[2:]
-		key := crypto.Keccak256Hash(hexutil.MustDecode(coinbase + index))
-		result := root.GetState(chain.Config().Dccs.Contract, key)
-		beneficiary := common.HexToAddress(result.Hex())
-		header.Coinbase = beneficiary
-	} else {
-		log.Error("state is not available at the block number", "number", cp)
-		return errors.New("state is not available at the block number")
-	}
+	root, _ := d.checkpointState(chain, number)
+	index := common.BigToHash(common.Big1).String()[2:]
+	coinbase := "0x000000000000000000000000" + header.Coinbase.String()[2:]
+	key := crypto.Keccak256Hash(hexutil.MustDecode(coinbase + index))
+	result := root.GetState(chain.Config().Dccs.Contract, key)
+	beneficiary := common.HexToAddress(result.Hex())
+	header.Coinbase = beneficiary
 
 	// Set the correct difficulty
 	snap, err := d.snapshot2(chain, number-1, header.ParentHash, nil)

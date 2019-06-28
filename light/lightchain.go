@@ -35,7 +35,7 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rlp"
-	"github.com/hashicorp/golang-lru"
+	lru "github.com/hashicorp/golang-lru"
 )
 
 var (
@@ -356,7 +356,7 @@ func (self *LightChain) postChainEvents(events []interface{}) {
 // chain events when necessary.
 func (self *LightChain) InsertHeaderChain(chain []*types.Header, checkFreq int) (int, error) {
 	start := time.Now()
-	if i, err := self.hc.ValidateHeaderChain(chain, checkFreq); err != nil {
+	if i, err := self.hc.ValidateHeaderChain(chain, checkFreq, true); err != nil {
 		return i, err
 	}
 
