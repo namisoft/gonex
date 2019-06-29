@@ -20,7 +20,6 @@ package dccs
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"math"
 	"math/big"
@@ -485,6 +484,7 @@ func (d *Dccs) verifyCascadingFields2(chain consensus.ChainReader, header *types
 	// Retrieve the snapshot needed to verify this header and cache it
 	snap, err := d.snapshot2(chain, number-1, header.ParentHash, parents)
 	if err != nil {
+		log.Error("cannot get snapshot", "err", err)
 		return err
 	}
 	// If the block is a checkpoint block, verify the signer list
@@ -495,6 +495,7 @@ func (d *Dccs) verifyCascadingFields2(chain consensus.ChainReader, header *types
 		}
 		extraSuffix := len(header.Extra) - extraSeal
 		if !bytes.Equal(header.Extra[extraVanity:extraSuffix], signers) {
+			log.Error("errInvalidCheckpointSigners", "number", number, "extra", header.Extra[extraVanity:extraSuffix], "signers", signers)
 			return errInvalidCheckpointSigners
 		}
 	}
@@ -584,60 +585,125 @@ func (d *Dccs) snapshot(chain consensus.ChainReader, number uint64, hash common.
 func (d *Dccs) snapshot2(chain consensus.ChainReader, number uint64, hash common.Hash, parents []*types.Header) (*Snapshot, error) {
 	// Search for a snapshot in memory or on disk for checkpoints
 	var (
-		snap *Snapshot
+		snap   *Snapshot
+		cpHash common.Hash
 	)
+loop:
 	for snap == nil {
 		// Get signers from Nexty staking smart contract at the latest epoch checkpoint from block number
-		cp := d.config.Snapshot(number + 1)
-		checkpoint := chain.GetHeaderByNumber(cp)
+		cpNumber := d.config.Snapshot(number + 1)
+		checkpoint := chain.GetHeaderByNumber(cpNumber)
 		if checkpoint != nil {
-			hash := checkpoint.Hash()
-			log.Trace("Reading signers from epoch checkpoint", "number", cp, "hash", hash)
+			cpHash = checkpoint.Hash()
+			log.Trace("Reading signers from epoch checkpoint", "number", cpNumber, "hash", cpHash)
 			// If an in-memory snapshot was found, use that
-			if s, ok := d.recents.Get(hash); ok && number+1 != d.config.ThangLongBlock.Uint64() {
+			if s, ok := d.recents.Get(cpHash); ok && number+1 != d.config.ThangLongBlock.Uint64() {
 				snap = s.(*Snapshot)
 				log.Trace("Loading snapshot from mem-cache", "hash", snap.Hash, "length", len(snap.signers()))
 				break
 			}
-			state, err := chain.StateAt(checkpoint.Root)
-			if state == nil || err != nil {
-				log.Error("Cannot read state of the checkpoint header", "err", err, "number", cp, "hash", hash, "root", checkpoint.Root)
-				return nil, fmt.Errorf("cannot read state of checkpoint header: %v", err)
+			if state, err := chain.StateAt(checkpoint.Root); state != nil && err == nil {
+				if size := state.GetCodeSize(chain.Config().Dccs.Contract); size > 0 && state.Error() == nil {
+					index := common.BigToHash(common.Big0)
+					result := state.GetState(chain.Config().Dccs.Contract, index)
+					var length int64
+					if (result == common.Hash{}) {
+						length = 0
+					} else {
+						length = result.Big().Int64()
+					}
+					log.Trace("Total number of signer from staking smart contract", "length", length)
+					signers := make([]common.Address, length)
+					key := crypto.Keccak256Hash(hexutil.MustDecode(index.String()))
+					for i := 0; i < len(signers); i++ {
+						log.Trace("key hash", "key", key)
+						singer := state.GetState(chain.Config().Dccs.Contract, key)
+						signers[i] = common.HexToAddress(singer.Hex())
+						key = key.Plus()
+					}
+					snap = newSnapshot(d.config, d.signatures, cpNumber, cpHash, signers)
+					// Store found snapshot into mem-cache
+					d.recents.Add(snap.Hash, snap)
+					break
+				}
 			}
-			size := state.GetCodeSize(chain.Config().Dccs.Contract)
-			if size > 0 && state.Error() == nil {
-				index := common.BigToHash(common.Big0)
-				result := state.GetState(chain.Config().Dccs.Contract, index)
-				var length int64
-				if (result == common.Hash{}) {
-					length = 0
-				} else {
-					length = result.Big().Int64()
+		}
+		log.Warn("cannot get snapshot from state")
+		// No snapshot for this header, gather signers from header data
+		found := false
+		n, h := number, hash
+		if len(parents) > 0 {
+			// If we have explicit parents, pick from there (enforced)
+			var header *types.Header
+			for i := len(parents) - 1; i >= 0; i-- {
+				header = parents[i]
+				if header.Hash() != h || header.Number.Uint64() != n {
+					log.Error("cannot get signer from parents' header - ErrUnknownAncestor")
+					return nil, consensus.ErrUnknownAncestor
 				}
-				log.Trace("Total number of signer from staking smart contract", "length", length)
-				signers := make([]common.Address, length)
-				key := crypto.Keccak256Hash(hexutil.MustDecode(index.String()))
-				for i := 0; i < len(signers); i++ {
-					log.Trace("key hash", "key", key)
-					singer := state.GetState(chain.Config().Dccs.Contract, key)
-					signers[i] = common.HexToAddress(singer.Hex())
-					key = key.Plus()
+				if header.Number.Uint64() == cpNumber {
+					cpHash = header.Hash()
+					log.Debug("snapshot hash found", "hash", cpHash)
+					// If an in-memory snapshot was found, use that
+					if s, ok := d.recents.Get(cpHash); ok {
+						snap = s.(*Snapshot)
+						log.Trace("Loading snapshot from mem-cache", "hash", snap.Hash, "length", len(snap.signers()))
+						break loop
+					}
 				}
-				snap = newSnapshot(d.config, d.signatures, number, hash, signers)
+				if d.config.IsCheckpoint(header.Number.Uint64()) && header.Number.Uint64() < cpNumber {
+					log.Warn("get signer from parents' header", "number", header.Number)
+					signers := make([]common.Address, (len(header.Extra)-extraVanity-extraSeal)/common.AddressLength)
+					for k := 0; k < len(signers); k++ {
+						copy(signers[k][:], header.Extra[extraVanity+k*common.AddressLength:])
+					}
+					found = true
+					snap = newSnapshot(d.config, d.signatures, cpNumber, cpHash, signers)
+					// Store found snapshot into mem-cache
+					d.recents.Add(snap.Hash, snap)
+					break
+				}
+				n, h = n-1, header.ParentHash
+			}
+		}
+		// No snapshot found in the parents (or no more left), reach out to the database
+		log.Info("starting to get singers from chain db")
+	db:
+		for !found {
+			header := chain.GetHeader(h, n)
+			if header == nil {
+				log.Error("cannot get signer from chain db - ErrUnknownAncestor")
+				return nil, consensus.ErrUnknownAncestor
+			}
+			if header.Number.Uint64() == cpNumber {
+				cpHash = header.Hash()
+				log.Debug("snapshot hash found", "hash", cpHash)
+				// If an in-memory snapshot was found, use that
+				if s, ok := d.recents.Get(cpHash); ok {
+					snap = s.(*Snapshot)
+					log.Trace("Loading snapshot from mem-cache", "hash", snap.Hash, "length", len(snap.signers()))
+					break loop
+				}
+			}
+			if d.config.IsCheckpoint(header.Number.Uint64()) && header.Number.Uint64() < cpNumber {
+				log.Info("got singers from chain db", "number", header.Number)
+				signers := make([]common.Address, (len(header.Extra)-extraVanity-extraSeal)/common.AddressLength)
+				for k := 0; k < len(signers); k++ {
+					copy(signers[k][:], header.Extra[extraVanity+k*common.AddressLength:])
+				}
+				snap = newSnapshot(d.config, d.signatures, cpNumber, cpHash, signers)
 				// Store found snapshot into mem-cache
 				d.recents.Add(snap.Hash, snap)
-				break
-			} else {
-				return nil, fmt.Errorf("Epoch checkpoint data is not available")
+				break db
 			}
-		} else {
-			// cannot get data from db in the --fast sync mode
-			return nil, fmt.Errorf("checkpoint header is not available")
+			n, h = n-1, header.ParentHash
 		}
+		break loop
 	}
 
 	// Set current block number for snapshot to calculate the inturn & difficulty
 	snap.Number = number
+	log.Warn("snapshot found", "number", snap.Number, "hash", snap.Hash)
 	return snap, nil
 }
 
@@ -712,9 +778,11 @@ func (d *Dccs) verifySeal2(chain consensus.ChainReader, header *types.Header, pa
 	if number == 0 {
 		return errUnknownBlock
 	}
+
 	// Retrieve the snapshot needed to verify this header and cache it
 	snap, err := d.snapshot2(chain, number-1, header.ParentHash, parents)
 	if err != nil {
+		log.Error("cannot get snapshot", "err", err)
 		return err
 	}
 
@@ -729,6 +797,7 @@ func (d *Dccs) verifySeal2(chain consensus.ChainReader, header *types.Header, pa
 
 	headers, err := d.GetRecentHeaders(snap, chain, header, parents)
 	if err != nil {
+		log.Error("cannot get recent headers", "err", err)
 		return err
 	}
 	for _, h := range headers {

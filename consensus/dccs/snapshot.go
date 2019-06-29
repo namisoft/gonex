@@ -81,6 +81,7 @@ func (sn Signers) Swap(i, j int) { sn[i], sn[j] = sn[j], sn[i] }
 // method does not initialize the set of recent signers, so only ever use if for
 // the genesis block.
 func newSnapshot(config *params.DccsConfig, sigcache *lru.ARCCache, number uint64, hash common.Hash, signers []common.Address) *Snapshot {
+	log.Debug("create new snapshot", "number", number, "hash", hash)
 	snap := &Snapshot{
 		config:   config,
 		sigcache: sigcache,
