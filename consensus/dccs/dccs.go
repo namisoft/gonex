@@ -20,7 +20,6 @@ package dccs
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"math"
 	"math/big"
@@ -600,34 +599,30 @@ func (d *Dccs) snapshot2(chain consensus.ChainReader, number uint64, hash common
 				log.Trace("Loading snapshot from mem-cache", "hash", snap.Hash, "length", len(snap.signers()))
 				break
 			}
-			state, err := chain.StateAt(checkpoint.Root)
-			if state == nil || err != nil {
-				log.Error("Cannot read state of the checkpoint header", "err", err, "number", cp, "hash", hash, "root", checkpoint.Root)
-				return nil, fmt.Errorf("cannot read state of checkpoint header: %v", err)
-			}
-			size := state.GetCodeSize(chain.Config().Dccs.Contract)
-			if size > 0 && state.Error() == nil {
-				index := common.BigToHash(common.Big0)
-				result := state.GetState(chain.Config().Dccs.Contract, index)
-				var length int64
-				if (result == common.Hash{}) {
-					length = 0
-				} else {
-					length = result.Big().Int64()
+			if state, err := chain.StateAt(checkpoint.Root); state != nil && err == nil {
+				if size := state.GetCodeSize(chain.Config().Dccs.Contract); size > 0 && state.Error() == nil {
+					index := common.BigToHash(common.Big0)
+					result := state.GetState(chain.Config().Dccs.Contract, index)
+					var length int64
+					if (result == common.Hash{}) {
+						length = 0
+					} else {
+						length = result.Big().Int64()
+					}
+					log.Trace("Total number of signer from staking smart contract", "length", length)
+					signers := make([]common.Address, length)
+					key := crypto.Keccak256Hash(hexutil.MustDecode(index.String()))
+					for i := 0; i < len(signers); i++ {
+						log.Trace("key hash", "key", key)
+						singer := state.GetState(chain.Config().Dccs.Contract, key)
+						signers[i] = common.HexToAddress(singer.Hex())
+						key = key.Plus()
+					}
+					snap = newSnapshot(d.config, d.signatures, number, hash, signers)
+					// Store found snapshot into mem-cache
+					d.recents.Add(snap.Hash, snap)
+					break
 				}
-				log.Trace("Total number of signer from staking smart contract", "length", length)
-				signers := make([]common.Address, length)
-				key := crypto.Keccak256Hash(hexutil.MustDecode(index.String()))
-				for i := 0; i < len(signers); i++ {
-					log.Trace("key hash", "key", key)
-					singer := state.GetState(chain.Config().Dccs.Contract, key)
-					signers[i] = common.HexToAddress(singer.Hex())
-					key = key.Plus()
-				}
-				snap = newSnapshot(d.config, d.signatures, number, hash, signers)
-				// Store found snapshot into mem-cache
-				d.recents.Add(snap.Hash, snap)
-				break
 			}
 		}
 	}
