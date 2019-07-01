@@ -366,7 +366,7 @@ func (s *Snapshot) offset(signer common.Address, parent *types.Header) (int, err
 
 	if parent == nil || s.config.IsCheckpoint(parent.Number.Uint64()+1) {
 		// first block of an epoch, just return the rightful order
-		log.Info("the first block of an epoch")
+		log.Debug("the first block of an epoch")
 		return pos, nil
 	}
 
@@ -386,7 +386,7 @@ func (s *Snapshot) offset(signer common.Address, parent *types.Header) (int, err
 		offset += n
 	}
 
-	log.Info("offset", "signer position", pos, "previous signer position", prevPos, "len(signers)", n, "offset", offset)
+	log.Debug("offset", "signer position", pos, "previous signer position", prevPos, "len(signers)", n, "offset", offset)
 
 	return offset, nil
 }
