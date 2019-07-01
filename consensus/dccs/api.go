@@ -56,7 +56,7 @@ func (api *API) GetSnapshotAtHash(hash common.Hash) (*Snapshot, error) {
 }
 
 // GetSigners retrieves the list of authorized signers at the specified block.
-func (api *API) GetSigners(number *rpc.BlockNumber) ([]Signer, error) {
+func (api *API) GetSigners(number *rpc.BlockNumber) ([]common.Address, error) {
 	// Retrieve the requested block number (or current if none requested)
 	var header *types.Header
 	if number == nil || *number == rpc.LatestBlockNumber {
@@ -75,8 +75,8 @@ func (api *API) GetSigners(number *rpc.BlockNumber) ([]Signer, error) {
 	return snap.signers2(), nil
 }
 
-// GetSignersAtHash retrieves the state snapshot at a given block.
-func (api *API) GetSignersAtHash(hash common.Hash) ([]Signer, error) {
+// GetSignersAtHash retrieves the list of authorized signers at the specified block.
+func (api *API) GetSignersAtHash(hash common.Hash) ([]common.Address, error) {
 	header := api.chain.GetHeaderByHash(hash)
 	if header == nil {
 		return nil, errUnknownBlock

@@ -141,49 +141,22 @@ var (
 	// be modified via out-of-range or non-contiguous headers.
 	errInvalidVotingChain = errors.New("invalid voting chain")
 
-	// errUnauthorized is returned if a header is signed by a non-authorized entity.
-	errUnauthorized = errors.New("unauthorized")
-
 	// errWaitTransactions is returned if an empty block is attempted to be sealed
 	// on an instant chain (0 second period). It's important to refuse these as the
 	// block reward is zero, so an empty block just bloats the chain... fast.
 	errWaitTransactions = errors.New("waiting for transactions")
+
+	// errUnauthorizedSigner is returned if a header is signed by a non-authorized entity.
+	errUnauthorizedSigner = errors.New("unauthorized signer")
+
+	// errRecentlySigned is returned if a header is signed by an authorized entity
+	// that already signed a header recently, thus is temporarily not allowed to.
+	errRecentlySigned = errors.New("recently signed")
 )
 
-// SignerFn is a signer callback function to request a hash to be signed by a
+// SignerFn is a signer callback function to request a header to be signed by a
 // backing account.
-type SignerFn func(accounts.Account, []byte) ([]byte, error)
-
-// sigHash returns the hash which is used as input for the proof-of-authority
-// signing. It is the hash of the entire header apart from the 65 byte signature
-// contained at the end of the extra data.
-//
-// Note, the method requires the extra data to be at least 65 bytes, otherwise it
-// panics. This is done to avoid accidentally using both forms (signature present
-// or not), which could be abused to produce different hashes for the same header.
-func sigHash(header *types.Header) (hash common.Hash) {
-	hasher := sha3.NewLegacyKeccak256()
-
-	rlp.Encode(hasher, []interface{}{
-		header.ParentHash,
-		header.UncleHash,
-		header.Coinbase,
-		header.Root,
-		header.TxHash,
-		header.ReceiptHash,
-		header.Bloom,
-		header.Difficulty,
-		header.Number,
-		header.GasLimit,
-		header.GasUsed,
-		header.Time,
-		header.Extra[:len(header.Extra)-65], // Yes, this will panic if extra is too short
-		header.MixDigest,
-		header.Nonce,
-	})
-	hasher.Sum(hash[:0])
-	return hash
-}
+type SignerFn func(accounts.Account, string, []byte) ([]byte, error)
 
 // ecrecover extracts the Ethereum account address from a signed header.
 func ecrecover(header *types.Header, sigcache *lru.ARCCache) (common.Address, error) {
@@ -199,7 +172,7 @@ func ecrecover(header *types.Header, sigcache *lru.ARCCache) (common.Address, er
 	signature := header.Extra[len(header.Extra)-extraSeal:]
 
 	// Recover the public key and the Ethereum address
-	pubkey, err := crypto.Ecrecover(sigHash(header).Bytes(), signature)
+	pubkey, err := crypto.Ecrecover(SealHash(header).Bytes(), signature)
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -490,7 +463,7 @@ func (d *Dccs) verifyCascadingFields2(chain consensus.ChainReader, header *types
 	if d.config.IsCheckpoint(number) {
 		signers := make([]byte, len(snap.Signers)*common.AddressLength)
 		for i, signer := range snap.signers2() {
-			copy(signers[i*common.AddressLength:], signer.Address[:])
+			copy(signers[i*common.AddressLength:], signer[:])
 		}
 		extraSuffix := len(header.Extra) - extraSeal
 		if !bytes.Equal(header.Extra[extraVanity:extraSuffix], signers) {
@@ -680,13 +653,13 @@ func (d *Dccs) verifySeal(chain consensus.ChainReader, header *types.Header, par
 		return err
 	}
 	if _, ok := snap.Signers[signer]; !ok {
-		return errUnauthorized
+		return errUnauthorizedSigner
 	}
 	for seen, recent := range snap.Recents {
 		if recent == signer {
 			// Signer is among recents, only fail if the current block doesn't shift it out
 			if limit := uint64(len(snap.Signers)/2 + 1); seen > number-limit {
-				return errUnauthorized
+				return errRecentlySigned
 			}
 		}
 	}
@@ -723,7 +696,7 @@ func (d *Dccs) verifySeal2(chain consensus.ChainReader, header *types.Header, pa
 		return err
 	}
 	if _, ok := snap.Signers[signer]; !ok {
-		return errUnauthorized
+		return errUnauthorizedSigner
 	}
 
 	headers, err := d.GetRecentHeaders(snap, chain, header, parents)
@@ -737,7 +710,7 @@ func (d *Dccs) verifySeal2(chain consensus.ChainReader, header *types.Header, pa
 		}
 		if signer == sig {
 			// Signer is among recents, only fail if the current block doesn't shift it out
-			return errUnauthorized
+			return errRecentlySigned
 		}
 	}
 
@@ -869,7 +842,7 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 
 	if d.config.IsCheckpoint(number) {
 		for _, signer := range snap.signers2() {
-			header.Extra = append(header.Extra, signer.Address[:]...)
+			header.Extra = append(header.Extra, signer[:]...)
 		}
 	}
 	header.Extra = append(header.Extra, make([]byte, extraSeal)...)
@@ -1095,7 +1068,7 @@ func (d *Dccs) seal(chain consensus.ChainReader, block *types.Block, results cha
 		return err
 	}
 	if _, authorized := snap.Signers[signer]; !authorized {
-		return errUnauthorized
+		return errUnauthorizedSigner
 	}
 	// If we're amongst the recent signers, wait for the next block
 	for seen, recent := range snap.Recents {
@@ -1117,7 +1090,7 @@ func (d *Dccs) seal(chain consensus.ChainReader, block *types.Block, results cha
 		log.Trace("Out-of-turn signing requested", "wiggle", common.PrettyDuration(wiggle))
 	}
 	// Sign all the things!
-	sighash, err := signFn(accounts.Account{Address: signer}, sigHash(header).Bytes())
+	sighash, err := signFn(accounts.Account{Address: signer}, accounts.MimetypeClique, DccsRLP(header))
 	if err != nil {
 		return err
 	}
@@ -1134,7 +1107,7 @@ func (d *Dccs) seal(chain consensus.ChainReader, block *types.Block, results cha
 		select {
 		case results <- block.WithSeal(header):
 		default:
-			log.Warn("Sealing result is not read by miner", "sealhash", d.SealHash(header))
+			log.Warn("Sealing result is not read by miner", "sealhash", SealHash(header))
 		}
 	}()
 
@@ -1166,7 +1139,7 @@ func (d *Dccs) seal2(chain consensus.ChainReader, block *types.Block, results ch
 		return err
 	}
 	if _, authorized := snap.Signers[signer]; !authorized {
-		return errUnauthorized
+		return errUnauthorizedSigner
 	}
 	// If we're amongst the recent signers, wait for the next block
 	headers, err := d.GetRecentHeaders(snap, chain, header, nil)
@@ -1201,7 +1174,7 @@ func (d *Dccs) seal2(chain consensus.ChainReader, block *types.Block, results ch
 		log.Trace("Out-of-turn signing requested", "wiggle", common.PrettyDuration(wiggle))
 	}
 	// Sign all the things!
-	sighash, err := signFn(accounts.Account{Address: signer}, sigHash(header).Bytes())
+	sighash, err := signFn(accounts.Account{Address: signer}, accounts.MimetypeClique, DccsRLP(header))
 	if err != nil {
 		return err
 	}
@@ -1218,7 +1191,7 @@ func (d *Dccs) seal2(chain consensus.ChainReader, block *types.Block, results ch
 		select {
 		case results <- block.WithSeal(header):
 		default:
-			log.Warn("Sealing result is not read by miner", "sealhash", d.SealHash(header))
+			log.Warn("Sealing result is not read by miner", "sealhash", SealHash(header))
 		}
 	}()
 
@@ -1232,7 +1205,7 @@ func (d *Dccs) calcDelayTime(snap *Snapshot, block *types.Block, signer common.A
 	sigs := snap.signers2()
 	pos := 0
 	for seen, sig := range sigs {
-		if sig.Address == signer {
+		if sig == signer {
 			pos = seen
 		}
 	}
@@ -1297,7 +1270,7 @@ func CalcDifficulty2(snap *Snapshot, signer common.Address, parent *types.Header
 
 // SealHash returns the hash of a block prior to it being sealed.
 func (d *Dccs) SealHash(header *types.Header) common.Hash {
-	return sigHash(header)
+	return SealHash(header)
 }
 
 // Close implements consensus.Engine. It's a noop for clique as there is are no background threads.

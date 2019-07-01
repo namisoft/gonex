@@ -28,7 +28,7 @@ import (
 	"github.com/ethereum/go-ethereum/console"
 	"github.com/ethereum/go-ethereum/node"
 	"github.com/ethereum/go-ethereum/rpc"
-	cli "gopkg.in/urfave/cli.v1"
+	"gopkg.in/urfave/cli.v1"
 )
 
 var (
@@ -79,7 +79,7 @@ func localConsole(ctx *cli.Context) error {
 	// Create and start the node based on the CLI flags
 	node := makeFullNode(ctx)
 	startNode(ctx, node)
-	defer node.Stop()
+	defer node.Close()
 
 	// Attach to the newly started node and start the JavaScript console
 	client, err := node.Attach()
@@ -182,7 +182,7 @@ func ephemeralConsole(ctx *cli.Context) error {
 	// Create and start the node based on the CLI flags
 	node := makeFullNode(ctx)
 	startNode(ctx, node)
-	defer node.Stop()
+	defer node.Close()
 
 	// Attach to the newly started node and start the JavaScript console
 	client, err := node.Attach()

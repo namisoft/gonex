@@ -97,7 +97,7 @@ type ChainIndexer struct {
 // NewChainIndexer creates a new chain indexer to do background processing on
 // chain segments of a given size after certain number of confirmations passed.
 // The throttling parameter might be used to prevent database thrashing.
-func NewChainIndexer(chainDb, indexDb ethdb.Database, backend ChainIndexerBackend, section, confirm uint64, throttling time.Duration, kind string) *ChainIndexer {
+func NewChainIndexer(chainDb ethdb.Database, indexDb ethdb.Database, backend ChainIndexerBackend, section, confirm uint64, throttling time.Duration, kind string) *ChainIndexer {
 	c := &ChainIndexer{
 		chainDb:     chainDb,
 		indexDb:     indexDb,
@@ -128,12 +128,13 @@ func (c *ChainIndexer) AddCheckpoint(section uint64, shead common.Hash) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
+	// Short circuit if the given checkpoint is below than local's.
+	if c.checkpointSections >= section+1 || section < c.storedSections {
+		return
+	}
 	c.checkpointSections = section + 1
 	c.checkpointHead = shead
 
-	if section < c.storedSections {
-		return
-	}
 	c.setSectionHead(section, shead)
 	c.setValidSections(section + 1)
 }
