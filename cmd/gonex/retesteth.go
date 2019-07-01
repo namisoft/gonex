@@ -228,6 +228,10 @@ func (e *NoRewardEngine) accumulateRewards(config *params.ChainConfig, state *st
 	state.AddBalance(header.Coinbase, reward)
 }
 
+func (e *NoRewardEngine) Initialize(chain consensus.ChainReader, header *types.Header, state *state.StateDB) (types.Transactions, types.Receipts, error) {
+	return nil, nil, nil
+}
+
 func (e *NoRewardEngine) Finalize(chain consensus.ChainReader, header *types.Header, statedb *state.StateDB, txs []*types.Transaction,
 	uncles []*types.Header) {
 	if e.rewardsOn {
