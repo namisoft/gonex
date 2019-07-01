@@ -589,8 +589,7 @@ func (d *Dccs) snapshot2(chain consensus.ChainReader, number uint64, hash common
 	for snap == nil {
 		// Get signers from Nexty staking smart contract at the latest epoch checkpoint from block number
 		cp := d.config.Snapshot(number + 1)
-		checkpoint := chain.GetHeaderByNumber(cp)
-		if checkpoint != nil {
+		if checkpoint := chain.GetHeaderByNumber(cp); checkpoint != nil {
 			hash := checkpoint.Hash()
 			log.Trace("Reading signers from epoch checkpoint", "number", cp, "hash", hash)
 			// If an in-memory snapshot was found, use that
@@ -623,8 +622,11 @@ func (d *Dccs) snapshot2(chain consensus.ChainReader, number uint64, hash common
 					d.recents.Add(snap.Hash, snap)
 					break
 				}
+				log.Error("state is not available", "number", cp, "hash", hash)
 			}
+			log.Error("state is not available", "number", cp, "hash", hash)
 		}
+		log.Warn("Need to wait for applying pending txs to build data/state available")
 	}
 
 	// Set current block number for snapshot to calculate the inturn & difficulty
