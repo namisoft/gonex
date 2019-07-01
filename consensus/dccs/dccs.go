@@ -586,6 +586,7 @@ func (d *Dccs) snapshot2(chain consensus.ChainReader, number uint64, hash common
 	var (
 		snap *Snapshot
 	)
+	// looping until data/state are available on local
 	for snap == nil {
 		// Get signers from Nexty staking smart contract at the latest epoch checkpoint from block number
 		cp := d.config.Snapshot(number + 1)
@@ -627,12 +628,7 @@ func (d *Dccs) snapshot2(chain consensus.ChainReader, number uint64, hash common
 				// Store found snapshot into mem-cache
 				d.recents.Add(snap.Hash, snap)
 				break
-			} else {
-				return nil, fmt.Errorf("Epoch checkpoint data is not available")
 			}
-		} else {
-			// cannot get data from db in the --fast sync mode
-			return nil, fmt.Errorf("checkpoint header is not available")
 		}
 	}
 
