@@ -15,16 +15,16 @@ contract NextyGovernance {
     enum Status {
         PENDING_ACTIVE,     // Sealer deposited enough NTFs into registration contract successfully.
 
-        ACTIVE,             // Sealer send request to become a sealer 
+        ACTIVE,             // Sealer send request to become a sealer
                             // and added into activation sealer set successfully
 
-        PENDING_WITHDRAW,   // Sealer send request to exit from activation sealer set successfully. 
+        PENDING_WITHDRAW,   // Sealer send request to exit from activation sealer set successfully.
                             // Sealer casted out of activation sealer set
 
-        WITHDRAWN,          // Sealer already withdrawn their deposit NTFs successfully. 
+        WITHDRAWN,          // Sealer already withdrawn their deposit NTFs successfully.
                             // They can only make withdrawal after withdrawal period.
 
-        PENALIZED           //Sealer marked as penalized node (update by consensus or voting result via dapp) 
+        PENALIZED           //Sealer marked as penalized node (update by consensus or voting result via dapp)
                             //and cannot become active sealer and cannot withdraw balance neither.
     }
 
@@ -114,7 +114,7 @@ contract NextyGovernance {
             signers.push(_signers[i]);
             signerCoinbase[_signers[i]] = _signers[i];
             account[_signers[i]].signer = _signers[i];
-            account[_signers[i]].status = Status.ACTIVE;    
+            account[_signers[i]].status = Status.ACTIVE;
         }
     }
 
@@ -140,7 +140,7 @@ contract NextyGovernance {
     }
 
     /**
-    * Transfer the NTF from token holder to registration contract. 
+    * Transfer the NTF from token holder to registration contract.
     * Sealer might have to approve contract to transfer an amount of NTF before calling this function.
     * @param _amount NTF Tokens to deposit
     */
@@ -150,10 +150,10 @@ contract NextyGovernance {
         emit Deposited(msg.sender, _amount);
         return true;
     }
-    
+
     /**
-    * To allow deposited NTF participate joining in as sealer. 
-    * Participate already must deposit enough NTF via Deposit function. 
+    * To allow deposited NTF participate joining in as sealer.
+    * Participate already must deposit enough NTF via Deposit function.
     * It takes signer as parameter.
     * @param _signer Destination address
     */
@@ -187,7 +187,7 @@ contract NextyGovernance {
     function withdraw() public notBanned withdrawable returns (bool) {
         uint256 amount = account[msg.sender].balance;
         account[msg.sender].balance = 0;
-        account[msg.sender].status = Status.WITHDRAWN;        
+        account[msg.sender].status = Status.WITHDRAWN;
         token.transfer(msg.sender, amount);
         emit Withdrawn(msg.sender, amount);
         return true;
@@ -207,20 +207,20 @@ contract NextyGovernance {
 
     function getBalance(address _address) public view returns(uint256) {
         return account[_address].balance;
-    }  
+    }
 
     function getCoinbase(address _address) public view returns(address) {
         return account[_address].signer;
-    }  
+    }
 
     function getUnlockHeight(address _address) public view returns(uint256) {
         return account[_address].unlockHeight;
     }
 
     function isWithdrawable(address _address) public view returns(bool) {
-        return 
-        (account[_address].status != Status.ACTIVE) && 
-        (account[_address].status != Status.PENALIZED) && 
+        return
+        (account[_address].status != Status.ACTIVE) &&
+        (account[_address].status != Status.PENALIZED) &&
         (account[_address].unlockHeight < block.number);
     }
 }
