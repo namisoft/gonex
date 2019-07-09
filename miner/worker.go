@@ -887,6 +887,12 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 		log.Error("Failed to create mining context", "err", err)
 		return
 	}
+	// Initialize the block state
+	_, _, err = w.engine.Initialize(w.chain, w.current.header, w.current.state)
+	if err != nil {
+		log.Error("Failed to initialize the block", "err", err)
+		return
+	}
 	// Create the current work task and check any fork transitions needed
 	env := w.current
 	if w.chainConfig.DAOForkSupport && w.chainConfig.DAOForkBlock != nil && w.chainConfig.DAOForkBlock.Cmp(header.Number) == 0 {

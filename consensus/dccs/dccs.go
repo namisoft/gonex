@@ -858,6 +858,11 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 	return nil
 }
 
+// Initialize implements the consensus.Engine
+func (d *Dccs) Initialize(chain consensus.ChainReader, header *types.Header, state *state.StateDB) (types.Transactions, types.Receipts, error) {
+	return nil, nil, nil
+}
+
 func deployContract(state *state.StateDB, address common.Address, code []byte, storage map[common.Hash]common.Hash, overwrite bool) {
 	// Ensure there's no existing contract already at the designated address
 	contractHash := state.GetCodeHash(address)
