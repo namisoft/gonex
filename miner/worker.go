@@ -407,10 +407,7 @@ func (w *worker) mainLoop() {
 	for {
 		select {
 		case req := <-w.newWorkCh:
-			// only commit work if we're mining
-			if w.isRunning() && w.current != nil {
-				w.commitNewWork(req.interrupt, req.noempty, req.timestamp)
-			}
+			w.commitNewWork(req.interrupt, req.noempty, req.timestamp)
 
 		case ev := <-w.chainSideCh:
 			// Short circuit for duplicate side blocks
