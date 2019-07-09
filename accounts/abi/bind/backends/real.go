@@ -30,7 +30,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/eth/filters"
 	"github.com/ethereum/go-ethereum/event"
 	"github.com/ethereum/go-ethereum/params"
@@ -56,10 +55,7 @@ type RealBackend struct {
 // NewRealBackend creates a new binding backend for modifying the real blockchain state.
 func NewRealBackend(state *state.StateDB, chain consensus.ChainReader, caller *common.Address) *RealBackend {
 	if caller == nil {
-		// A random key to make sure no one has any special permission
-		key, _ := crypto.GenerateKey()
-		address := crypto.PubkeyToAddress(key.PublicKey)
-		caller = &address
+		caller = &params.ZeroAddress
 	}
 	backend := &RealBackend{
 		blockchain: chain,
@@ -265,7 +261,7 @@ func (b *RealBackend) callContract(ctx context.Context, call ethereum.CallMsg, h
 // It panics if the transaction is invalid.
 func (b *RealBackend) SendTransaction(ctx context.Context, tx *types.Transaction) error {
 	_, err := b.PendingCallContract(ctx, ethereum.CallMsg{
-		From:     params.PairExAddress,
+		From:     *b.caller,
 		To:       tx.To(),
 		Gas:      tx.Gas(),
 		GasPrice: tx.GasPrice(),
