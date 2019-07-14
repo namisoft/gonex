@@ -17,6 +17,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -25,6 +26,15 @@ import (
 
 // deployExplorer creates a new block explorer based on some user input.
 func (w *wizard) deployExplorer() {
+	// Do some sanity check before the user wastes time on input
+	if w.conf.Genesis == nil {
+		log.Error("No genesis block configured")
+		return
+	}
+	if w.conf.ethstats == "" {
+		log.Error("No ethstats server configured")
+		return
+	}
 	// Select the server to interact with
 	server := w.selectServer()
 	if server == "" {
@@ -36,35 +46,36 @@ func (w *wizard) deployExplorer() {
 	infos, err := checkExplorer(client, w.network)
 	if err != nil {
 		infos = &explorerInfos{
-			httpRPCURL: "http://localhost:8545",
-			wsRPCURL:   "ws://localhost:8546",
-			webPort:    80,
-			webHost:    client.server,
+			node: &nodeInfos{port: 30303},
+			port: 80,
+			host: client.server,
 		}
 	}
 	existed := err == nil
 
+	infos.node.genesis, _ = json.MarshalIndent(w.conf.Genesis, "", "  ")
+	infos.node.network = w.conf.Genesis.Config.ChainID.Int64()
+
 	// Figure out which port to listen on
 	fmt.Println()
-	fmt.Printf("Which port should the explorer listen on? (default = %d)\n", infos.webPort)
-	infos.webPort = w.readDefaultInt(infos.webPort)
+	fmt.Printf("Which port should the explorer listen on? (default = %d)\n", infos.port)
+	infos.port = w.readDefaultInt(infos.port)
 
-	// Figure which virtual-host to deploy nextats on
-	if infos.webHost, err = w.ensureVirtualHost(client, infos.webPort, infos.webHost); err != nil {
+	// Figure which virtual-host to deploy ethstats on
+	if infos.host, err = w.ensureVirtualHost(client, infos.port, infos.host); err != nil {
 		log.Error("Failed to decide on explorer host", "err", err)
 		return
 	}
 
 	// Figure out which JSONRPC_HTTP_URL for explorer to connect
 	fmt.Println()
-	fmt.Printf("Which JSON RPC http url? (default = %s)\n", infos.httpRPCURL)
-	infos.httpRPCURL = w.readDefaultString(infos.httpRPCURL)
-
-	// Figure out which JSONRPC_HTTP_URL for explorer to connect
-	fmt.Println()
-	fmt.Printf("Which JSON RPC websocket url? (default = %s)\n", infos.wsRPCURL)
-	infos.wsRPCURL = w.readDefaultString(infos.wsRPCURL)
-
+	if infos.node.datadir == "" {
+		fmt.Printf("Where should node data be stored on the remote machine?\n")
+		infos.node.datadir = w.readString()
+	} else {
+		fmt.Printf("Where should node data be stored on the remote machine? (default = %s)\n", infos.node.datadir)
+		infos.node.datadir = w.readDefaultString(infos.node.datadir)
+	}
 	// Figure out where the user wants to store the persistent data for backend database
 	fmt.Println()
 	if infos.dbdir == "" {
@@ -74,6 +85,20 @@ func (w *wizard) deployExplorer() {
 		fmt.Printf("Where should postgres data be stored on the remote machine? (default = %s)\n", infos.dbdir)
 		infos.dbdir = w.readDefaultString(infos.dbdir)
 	}
+	// Figure out which port to listen on
+	fmt.Println()
+	fmt.Printf("Which TCP/UDP port should the archive node listen on? (default = %d)\n", infos.node.port)
+	infos.node.port = w.readDefaultInt(infos.node.port)
+
+	// Figure out where the user wants to store the persistent data for backend database
+	fmt.Println()
+	if infos.node.ethstats == "" {
+		fmt.Printf("What should the explorer be called on the stats page?\n")
+		infos.node.ethstats = w.readString() + ":" + w.conf.ethstats
+	} else {
+		fmt.Printf("What should the explorer be called on the stats page? (default = %s)\n", infos.node.ethstats)
+		infos.node.ethstats = w.readDefaultString(infos.node.ethstats) + ":" + w.conf.ethstats
+	}
 
 	// Try to deploy the explorer on the host
 	nocache := false
@@ -82,7 +107,7 @@ func (w *wizard) deployExplorer() {
 		fmt.Printf("Should the explorer be built from scratch (y/n)? (default = no)\n")
 		nocache = w.readDefaultYesNo(false)
 	}
-	if out, err := deployExplorer(client, w.network, infos, nocache); err != nil {
+	if out, err := deployExplorer(client, w.network, w.conf.bootnodes, infos, nocache, w.conf.Genesis.Config.Clique != nil); err != nil {
 		log.Error("Failed to deploy explorer container", "err", err)
 		if len(out) > 0 {
 			fmt.Printf("%s\n", out)
