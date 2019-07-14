@@ -20,6 +20,7 @@ package dccs
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"math"
 	"math/big"
@@ -35,11 +36,13 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/consensus/misc"
-	"github.com/ethereum/go-ethereum/contracts/nexty/contract"
-	"github.com/ethereum/go-ethereum/contracts/nexty/token"
+	"github.com/ethereum/go-ethereum/contracts/nexty/endurio/pairex"
+	"github.com/ethereum/go-ethereum/contracts/nexty/endurio/stable"
+	"github.com/ethereum/go-ethereum/contracts/nexty/endurio/volatile"
+	"github.com/ethereum/go-ethereum/contracts/nexty/governance"
+	"github.com/ethereum/go-ethereum/contracts/nexty/ntf"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/log"
@@ -117,6 +120,10 @@ var (
 	// errExtraSigners is returned if non-checkpoint block contain signer data in
 	// their extra-data fields.
 	errExtraSigners = errors.New("non-checkpoint block contains extra signer list")
+
+	// errInvalidPrice is returned if price block contains invalid price value in
+	// their extra-data fields.
+	errInvalidPrice = errors.New("price block contains invalid price value")
 
 	// errInvalidCheckpointSigners is returned if a checkpoint block contains an
 	// invalid list of signers (i.e. non divisible by 20 bytes, or not the correct
@@ -197,6 +204,17 @@ type Dccs struct {
 	signer common.Address // Ethereum address of the signing key
 	signFn SignerFn       // Signer function to authorize hashes with
 	lock   sync.RWMutex   // Protects the signer fields
+
+	priceEngine     *PriceEngine
+	priceEngineOnce sync.Once
+}
+
+// PriceEngine creates and returns the PriceEngine singleton instance
+func (d *Dccs) PriceEngine() *PriceEngine {
+	d.priceEngineOnce.Do(func() {
+		d.priceEngine = newPriceEngine(d.config)
+	})
+	return d.priceEngine
 }
 
 // New creates a Dccs proof-of-foundation consensus engine with the initial
@@ -219,6 +237,7 @@ func New(config *params.DccsConfig, db ethdb.Database) *Dccs {
 			return nil
 		}
 	}
+
 	// Allocate the snapshot caches and create the engine
 	recents, _ := lru.NewARC(inmemorySnapshots)
 	signatures, _ := lru.NewARC(inmemorySignatures)
@@ -358,13 +377,16 @@ func (d *Dccs) verifyHeader2(chain consensus.ChainReader, header *types.Header, 
 	if len(header.Extra) < extraVanity+extraSeal {
 		return errMissingSignature
 	}
-	// Ensure that the extra-data contains a signer list on checkpoint, but none otherwise
-	signersBytes := len(header.Extra) - extraVanity - extraSeal
-	if !checkpoint && signersBytes != 0 {
-		return errExtraSigners
-	}
-	if checkpoint && signersBytes%common.AddressLength != 0 {
-		return errInvalidCheckpointSigners
+	// Only check header's signer list before Endurio hardfork
+	if !d.config.IsEndurio(header.Number) {
+		// Ensure that the extra-data contains a signer list on checkpoint, but none otherwise
+		signersBytes := len(header.Extra) - extraVanity - extraSeal
+		if !checkpoint && signersBytes != 0 {
+			return errExtraSigners
+		}
+		if checkpoint && signersBytes%common.AddressLength != 0 {
+			return errInvalidCheckpointSigners
+		}
 	}
 	// Ensure that the mix digest is zero as we don't have fork protection currently
 	if header.MixDigest != (common.Hash{}) {
@@ -459,16 +481,33 @@ func (d *Dccs) verifyCascadingFields2(chain consensus.ChainReader, header *types
 	if err != nil {
 		return err
 	}
-	// If the block is a checkpoint block, verify the signer list
-	if d.config.IsCheckpoint(number) {
-		signers := make([]byte, len(snap.Signers)*common.AddressLength)
-		for i, signer := range snap.signers2() {
-			copy(signers[i*common.AddressLength:], signer.Address[:])
+	// Stop recording signers list in checkpoint after Endurio hardfork
+	if !d.config.IsEndurio(header.Number) {
+		// If the block is a checkpoint block, verify the signer list
+		if d.config.IsCheckpoint(number) {
+			signers := make([]byte, len(snap.Signers)*common.AddressLength)
+			for i, signer := range snap.signers2() {
+				copy(signers[i*common.AddressLength:], signer.Address[:])
+			}
+			// for checkpoint: extra = [vanity(32), signers(...), signature(65)]
+			extraSuffix := len(header.Extra) - extraSeal
+			if !bytes.Equal(header.Extra[extraVanity:extraSuffix], signers) {
+				return errInvalidCheckpointSigners
+			}
 		}
-		extraSuffix := len(header.Extra) - extraSeal
-		if !bytes.Equal(header.Extra[extraVanity:extraSuffix], signers) {
-			return errInvalidCheckpointSigners
+	} else if d.config.IsPriceBlock(number) {
+		// for price block: extra = [vanity(32), price(...), signature(65)]
+		price := PriceDecodeFromExtra(header.Extra)
+		if price == nil {
+			log.Warn("Missing price data in block", "number", number)
+		} else if price.Rat().Cmp(common.Rat0) <= 0 {
+			log.Error("Invalid price data in block", "number", number, "price", price.Rat().RatString())
+			return errInvalidPrice
+		} else {
+			log.Info("Block price data found", "number", number, "price", price)
 		}
+	} else {
+		// for regular block: extra = [vanity(32), signature(65)]
 	}
 	// All basic checks passed, verify the seal and return
 	return d.verifySeal2(chain, header, parents)
@@ -840,9 +879,22 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 	}
 	header.Extra = header.Extra[:extraVanity]
 
-	if d.config.IsCheckpoint(number) {
-		for _, signer := range snap.signers2() {
-			header.Extra = append(header.Extra, signer.Address[:]...)
+	// Stop recording signers list in checkpoint after Endurio hardfork
+	if !d.config.IsEndurio(header.Number) {
+		if d.config.IsCheckpoint(number) {
+			for _, signer := range snap.signers2() {
+				header.Extra = append(header.Extra, signer.Address[:]...)
+			}
+		}
+	} else if d.config.IsPriceBlock(number) {
+		price := d.PriceEngine().CurrentPrice()
+		if price == nil {
+			log.Warn("No price to record in block", "number", number)
+		} else if price.Rat().Cmp(common.Rat0) <= 0 {
+			log.Error("Skip recording invalid price data", "price", price.Rat().RatString())
+		} else {
+			log.Info("Encode price to block extra", "price", price.Rat().RatString())
+			header.Extra = append(header.Extra, PriceEncode(price)...)
 		}
 	}
 	header.Extra = append(header.Extra, make([]byte, extraSeal)...)
@@ -858,29 +910,6 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 	return nil
 }
 
-func deployContract(state *state.StateDB, address common.Address, code []byte, storage map[common.Hash]common.Hash, overwrite bool) {
-	// Ensure there's no existing contract already at the designated address
-	contractHash := state.GetCodeHash(address)
-	// this is an consensus upgrade
-	exist := state.GetNonce(address) != 0 || (contractHash != (common.Hash{}) && contractHash != vm.EmptyCodeHash)
-	if !exist {
-		// Create a new account on the state
-		state.CreateAccount(address)
-		// Assuming chainConfig.IsEIP158(BlockNumber)
-		state.SetNonce(address, 1)
-	} else if !overwrite {
-		// disable overwrite flag to prevent unintentional contract upgrade
-		return
-	}
-
-	// Transfer the code and state from simulated backend to the real state db
-	state.SetCode(address, code)
-	for key, value := range storage {
-		state.SetState(address, key, value)
-	}
-	state.Commit(true)
-}
-
 // deployConsensusContracts deploys the consensus contract without any owner
 func deployConsensusContracts(state *state.StateDB, chainConfig *params.ChainConfig, signers []common.Address) error {
 	// Deploy NTF ERC20 Token Contract
@@ -888,7 +917,7 @@ func deployConsensusContracts(state *state.StateDB, chainConfig *params.ChainCon
 		owner := common.HexToAddress("0x000000270840d8ebdffc7d162193cc5ba1ad8707")
 		// Generate contract code and data using a simulated backend
 		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
-			address, _, _, err := token.DeployNtfToken(auth, sim, owner)
+			address, _, _, err := ntf.DeployNtfToken(auth, sim, owner)
 			return address, err
 		})
 		if err != nil {
@@ -899,7 +928,8 @@ func deployConsensusContracts(state *state.StateDB, chainConfig *params.ChainCon
 		storage[common.BigToHash(common.Big0)] = owner.Hash()
 
 		// Deploy only, no upgrade
-		deployContract(state, params.TokenAddress, code, storage, false)
+		deployer.CopyContractToAddress(state, params.TokenAddress, code, storage, false)
+		log.Info("⚙ Contract deployed successful", "contract", "NTFToken")
 	}
 
 	// Deploy Nexty Governance Contract
@@ -908,16 +938,157 @@ func deployConsensusContracts(state *state.StateDB, chainConfig *params.ChainCon
 		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
 			stakeRequire := new(big.Int).Mul(new(big.Int).SetUint64(chainConfig.Dccs.StakeRequire), new(big.Int).SetUint64(1e+18))
 			stakeLockHeight := new(big.Int).SetUint64(chainConfig.Dccs.StakeLockHeight)
-			address, _, _, err := contract.DeployNextyGovernance(auth, sim, params.TokenAddress, stakeRequire, stakeLockHeight, signers)
+			address, _, _, err := governance.DeployNextyGovernance(auth, sim, params.TokenAddress, stakeRequire, stakeLockHeight, signers)
 			return address, err
 		})
 		if err != nil {
 			return err
 		}
 		// Deploy or update
-		deployContract(state, chainConfig.Dccs.Contract, code, storage, true)
+		deployer.CopyContractToAddress(state, chainConfig.Dccs.Contract, code, storage, true)
+		log.Info("⚙ Contract deployed successful", "contract", "NextyGovernance")
 	}
 
+	return nil
+}
+
+func deployEndurioContracts(state *state.StateDB) error {
+	// Deploy PairEx Contract
+	{
+		// Generate contract code and data using a simulated backend
+		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
+			address, _, _, err := pairex.DeployPairEx(auth, sim, params.VolatileTokenAddress, params.StableTokenAddress)
+			return address, err
+		})
+		if err != nil {
+			return err
+		}
+
+		// Deploy only, no upgrade
+		deployer.CopyContractToAddress(state, params.PairExAddress, code, storage, false)
+		log.Info("⚙ Contract deployed successful", "contract", "PairEx")
+	}
+
+	// Deploy VolatileToken Contract
+	{
+		// Generate contract code and data using a simulated backend
+		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
+			address, _, _, err := volatile.DeployVolatileToken(auth, sim, params.PairExAddress, common.Address{}, common.Big0)
+			return address, err
+		})
+		if err != nil {
+			return err
+		}
+
+		// Deploy only, no upgrade
+		deployer.CopyContractToAddress(state, params.VolatileTokenAddress, code, storage, false)
+		log.Info("⚙ Contract deployed successful", "contract", "VolatileToken")
+	}
+
+	// Deploy StableToken Contract
+	{
+		// Generate contract code and data using a simulated backend
+		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
+			address, _, _, err := stable.DeployStableToken(auth, sim, params.PairExAddress, common.Address{}, common.Big0)
+			return address, err
+		})
+		if err != nil {
+			return err
+		}
+
+		// Deploy only, no upgrade
+		deployer.CopyContractToAddress(state, params.StableTokenAddress, code, storage, false)
+		log.Info("⚙ Contract deployed successful", "contract", "StableToken")
+	}
+
+	return nil
+}
+
+// Initialize implements the consensus.Engine
+func (d *Dccs) Initialize(chain consensus.ChainReader, header *types.Header, state *state.StateDB) (types.Transactions, types.Receipts, error) {
+	if !chain.Config().IsEndurio(header.Number) {
+		return nil, nil, nil
+	}
+	if header.Number.Cmp(d.config.EndurioBlock) == 0 {
+		if err := deployEndurioContracts(state); err != nil {
+			log.Error("Failed to deploy Endurio stablecoin contracts", "err", err)
+			return nil, nil, err
+		}
+		header.Root = state.IntermediateRoot(false)
+		log.Info("⚙ Successfully deploy Endurio stablecoin contracts")
+		return nil, nil, nil
+	}
+	if d.config.IsAbsorptionBlock(header.Number.Uint64()) {
+		rate, err := d.PriceEngine().CalcNewAbsorptionRate(chain, state, header.Number.Uint64())
+		if err != nil {
+			log.Error("Failed to calculate new absorption rate", "err", err, "number", header.Number)
+		}
+		if rate != nil {
+			d.PriceEngine().RecordNewAbsorptionRate(state, rate, chain)
+			header.Root = state.IntermediateRoot(false)
+		}
+	}
+	absorption, err := d.PriceEngine().CalcNextAbsorption(chain, header)
+	if err != nil {
+		return nil, nil, err
+	}
+	if absorption != nil {
+		err = absorb(state, absorption, chain)
+		if err != nil {
+			return nil, nil, err
+		}
+		header.Root = state.IntermediateRoot(false)
+	}
+
+	return nil, nil, nil
+}
+
+func absorb(state *state.StateDB, absorption *big.Int, chain consensus.ChainReader) error {
+	log.Info("dccs.absorb", "absorption", absorption)
+	inflate := absorption.Sign() > 0
+	if !inflate {
+		absorption.Neg(absorption)
+	}
+
+	backend := backends.NewRealBackend(state, chain, &params.PairExAddress)
+	emptyTransactOpts := &bind.TransactOpts{
+		From:     params.PairExAddress,
+		GasLimit: math.MaxUint64,
+		Signer: func(_ types.Signer, _ common.Address, tx *types.Transaction) (*types.Transaction, error) {
+			return tx, nil
+		},
+	}
+
+	volatileToken, err := volatile.NewVolatileToken(params.VolatileTokenAddress, backend)
+	if err != nil {
+		return err
+	}
+	supply, err := volatileToken.TotalSupply(&bind.CallOpts{})
+	if err != nil {
+		return err
+	}
+	balance := state.GetBalance(params.VolatileTokenAddress)
+	if supply.Cmp(balance) != 0 {
+		log.Error("Volatile token balance and supply do not match", "supply", supply, "balance", balance)
+		return fmt.Errorf("Volatile token balance and supply do not match: supply=%v, balance=%v", supply, balance)
+	}
+
+	pairEx, err := pairex.NewPairEx(params.PairExAddress, backend)
+	if err != nil {
+		return err
+	}
+
+	_, err = pairEx.Absorb(emptyTransactOpts, inflate, absorption)
+	if err != nil {
+		return err
+	}
+
+	supply, err = volatileToken.TotalSupply(&bind.CallOpts{})
+	if err != nil {
+		return err
+	}
+	// update the new balance after absorption
+	state.SetBalance(params.VolatileTokenAddress, supply)
 	return nil
 }
 
@@ -1397,4 +1568,118 @@ func (d *Dccs) GetRecentHeaders(snap *Snapshot, chain consensus.ChainReader, hea
 		num, hash = num-1, h.ParentHash
 	}
 	return headers, nil
+}
+
+// BlockPriceStat returns ethstats data for block price
+func (d *Dccs) BlockPriceStat(chain consensus.ChainReader, number uint64) string {
+	if !d.config.IsPriceBlock(number) {
+		return ""
+	}
+	price := d.PriceEngine().GetBlockPrice(chain, number)
+	if price == nil {
+		return "0"
+	}
+	return price.Rat().FloatString(4)
+}
+
+// MedianPriceStat returns ethstats data for median price
+func (d *Dccs) MedianPriceStat(chain consensus.ChainReader, number uint64) string {
+	if !d.config.IsPriceBlock(number) {
+		return ""
+	}
+	price, _ := d.PriceEngine().CalcMedianPrice(chain, number)
+	if price == nil {
+		return "0"
+	}
+	return price.Rat().FloatString(4)
+}
+
+// AbsorbedStat returns ethstats data for stablecoin supply absorbed by the block
+func (d *Dccs) AbsorbedStat(chain consensus.ChainReader, number uint64) string {
+	if number <= 0 {
+		return ""
+	}
+	state, err := chain.StateAt(chain.GetHeaderByNumber(number - 1).Root)
+	if err != nil {
+		return err.Error()
+	}
+	if state == nil {
+		return "No state at " + string(number-1)
+	}
+	oldSupply, err := GetStableTokenSupply(state, chain)
+	if err != nil {
+		return err.Error()
+	}
+	if oldSupply == nil {
+		return "No Old Supply"
+	}
+	state, err = chain.StateAt(chain.GetHeaderByNumber(number).Root)
+	if err != nil {
+		return err.Error()
+	}
+	if state == nil {
+		return "No state at " + string(number)
+	}
+	supply, err := GetStableTokenSupply(state, chain)
+	if err != nil {
+		return err.Error()
+	}
+	if supply == nil {
+		return "No New Supply"
+	}
+	return supply.Sub(supply, oldSupply).String()
+}
+
+// RemainToAbsorbStat returns ethstats data for stablecoin supply remain to absorb
+func (d *Dccs) RemainToAbsorbStat(chain consensus.ChainReader, number uint64) string {
+	header := chain.GetHeaderByNumber(number)
+	if header == nil {
+		return "No Header"
+	}
+	state, err := chain.StateAt(chain.GetHeaderByNumber(number).Root)
+	if err != nil {
+		return err.Error()
+	}
+	if state == nil {
+		return "No state at " + string(number)
+	}
+	supply, err := GetStableTokenSupply(state, chain)
+	if err != nil {
+		return err.Error()
+	}
+	if supply == nil {
+		return "No Supply"
+	}
+	remain, err := d.PriceEngine().CalcRemainToAbsorption(chain, number)
+	if err != nil {
+		return err.Error()
+	}
+	if remain == nil {
+		return "0"
+	}
+	ratio := new(big.Rat).SetFrac(remain, supply)
+	return ratio.FloatString(4)
+}
+
+// StableSupplyStat returns ethstats data for stablecoin supply
+func (d *Dccs) StableSupplyStat(chain consensus.ChainReader, number uint64) string {
+	header := chain.GetHeaderByNumber(number)
+	if header == nil {
+		return "No Header"
+	}
+	state, err := chain.StateAt(chain.GetHeaderByNumber(number).Root)
+	if err != nil {
+		return err.Error()
+	}
+	if state == nil {
+		return "No state at " + string(number)
+	}
+	supply, err := GetStableTokenSupply(state, chain)
+	if err != nil {
+		return err.Error()
+	}
+	if supply == nil {
+		return "No Supply"
+	}
+	return supply.String()
 }

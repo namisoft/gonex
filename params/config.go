@@ -39,6 +39,12 @@ var (
 	GoerliGenesisHash  = common.HexToHash("0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a")
 	BurnAddress        = common.HexToAddress("0x0000000000000000000000000000000000000000")
 	TokenAddress       = common.HexToAddress("0x2c783ad80ff980ec75468477e3dd9f86123ecbda") // NTF token contract address
+	// Endurio contract addresses
+	PairExAddress        = common.HexToAddress("0x0000000000000000000000000000000000123456") // PairEx contract address
+	VolatileTokenAddress = common.HexToAddress("0x0000000000000000000000000000000001234567") // MNTY token contract address
+	StableTokenAddress   = common.HexToAddress("0x0000000000000000000000000000000012345678") // NUSD token contract address
+	// Endurio consensus state addresses
+	AbsorptionAddress = BurnAddress
 )
 
 // TrustedCheckpoints associates each known checkpoint with the genesis hash of
@@ -80,6 +86,11 @@ var (
 			StakeLockHeight: 30000,
 			ThangLongBlock:  big.NewInt(15360000),
 			ThangLongEpoch:  3000,
+			// Endurio hard-fork
+			EndurioBlock:          big.NewInt(20000000),
+			PriceSamplingDuration: 7 * 24 * 60 * 60 / 2,
+			PriceSamplingInterval: 10*60/2 - 7,
+			AbsorptionLength:      7 * 24 * 60 * 60 / 2,
 		},
 	}
 
@@ -339,6 +350,23 @@ type DccsConfig struct {
 	// ThangLong hardfork
 	ThangLongBlock *big.Int `json:"thangLongBlock,omitempty"` // ThangLong switch block (nil = no fork, 0 = already activated)
 	ThangLongEpoch uint64   `json:"thangLongEpoch"`           // Epoch length to reset votes and checkpoint
+	// Endurio hardfork
+	EndurioBlock          *big.Int `json:"endurioBlock,omitempty"`
+	PriceSamplingDuration uint64   `json:"priceSamplingDuration"` // number of blocks to take price samples (a week)
+	PriceSamplingInterval uint64   `json:"priceSamplingInterval"` // the largest prime number of blocks in 10 minutes
+	AbsorptionLength      uint64   `json:"absorptionLength"`      // number of blocks that the absorption will be taken place (half a week)
+}
+
+func (c *DccsConfig) IsAbsorptionBlock(number uint64) bool {
+	return c.IsPriceBlock(number - CanonicalDepth)
+}
+
+// IsPriceBlock returns whether a block could include a price
+func (c *DccsConfig) IsPriceBlock(number uint64) bool {
+	if c.IsEndurio(new(big.Int).SetUint64(number)) {
+		return number%c.PriceSamplingInterval == 0
+	}
+	return false
 }
 
 // PositionInEpoch returns the offset of a block from the start of an epoch
@@ -374,13 +402,19 @@ func (c *DccsConfig) Snapshot(number uint64) uint64 {
 
 // String implements the stringer interface, returning the consensus engine details.
 func (c *DccsConfig) String() string {
-	return "dccs"
+	return fmt.Sprintf("dccs {ThangLong: %v Epoch: %v Contract: %v Endurio: %v PriceDuration: %v PriceInterval: %v AbsorptionLength: %v}",
+		c.ThangLongBlock,
+		c.ThangLongEpoch,
+		c.Contract.String(),
+		c.EndurioBlock,
+		c.PriceSamplingDuration,
+		c.PriceSamplingInterval,
+		c.AbsorptionLength,
+	)
 }
 
 // String implements the fmt.Stringer interface.
 func (c *ChainConfig) String() string {
-	var thangLongBlock *big.Int
-	var contract string
 	var engine interface{}
 	switch {
 	case c.Ethash != nil:
@@ -389,12 +423,10 @@ func (c *ChainConfig) String() string {
 		engine = c.Clique
 	case c.Dccs != nil:
 		engine = c.Dccs
-		thangLongBlock = c.Dccs.ThangLongBlock
-		contract = c.Dccs.Contract.Hex()
 	default:
 		engine = "unknown"
 	}
-	return fmt.Sprintf("{ChainID: %v Homestead: %v DAO: %v DAOSupport: %v EIP150: %v EIP155: %v EIP158: %v Byzantium: %v Constantinople: %v ConstantinopleFix: %v Thang Long: %v Contract: %v Engine: %v}",
+	return fmt.Sprintf("{ChainID: %v Homestead: %v DAO: %v DAOSupport: %v EIP150: %v EIP155: %v EIP158: %v Byzantium: %v Constantinople: %v ConstantinopleFix: %v Engine: %v}",
 		c.ChainID,
 		c.HomesteadBlock,
 		c.DAOForkBlock,
@@ -405,8 +437,6 @@ func (c *ChainConfig) String() string {
 		c.ByzantiumBlock,
 		c.ConstantinopleBlock,
 		c.PetersburgBlock,
-		thangLongBlock,
-		contract,
 		engine,
 	)
 }
@@ -494,6 +524,16 @@ func (c *ChainConfig) IsThangLong(num *big.Int) bool {
 // IsThangLong returns whether num represents a block number after the ThangLong fork
 func (c *DccsConfig) IsThangLong(num *big.Int) bool {
 	return isForked(c.ThangLongBlock, num)
+}
+
+// IsEndurio returns whether num represents a block number after the Endurio fork
+func (c *ChainConfig) IsEndurio(num *big.Int) bool {
+	return c.Dccs != nil && c.Dccs.IsEndurio(num)
+}
+
+// IsEndurio returns whether num represents a block number after the Endurio fork
+func (c *DccsConfig) IsEndurio(num *big.Int) bool {
+	return isForked(c.EndurioBlock, num)
 }
 
 // GasTable returns the gas table corresponding to the current phase (homestead or homestead reprice).

@@ -560,6 +560,11 @@ func (ethash *Ethash) Prepare(chain consensus.ChainReader, header *types.Header)
 	return nil
 }
 
+// Initialize implements the consensus.Engine
+func (ethash *Ethash) Initialize(chain consensus.ChainReader, header *types.Header, state *state.StateDB) (types.Transactions, types.Receipts, error) {
+	return nil, nil, nil
+}
+
 // Finalize implements consensus.Engine, accumulating the block and uncle rewards,
 // setting the final state on the header
 func (ethash *Ethash) Finalize(chain consensus.ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header) {
