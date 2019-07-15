@@ -2,7 +2,6 @@ pragma solidity ^0.5.2;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./ERC223.sol";
-import "../interfaces/IPairEx.sol";
 
 /*
     . Exchanged with NTY with rate 1 MegaNTY = 1000000 NTY
@@ -10,91 +9,115 @@ import "../interfaces/IPairEx.sol";
 */
 
 contract VolatileToken is ERC223 {
-    string public constant name = "MNTY";
-    string public constant symbol = "Mega NTY";
-    uint256 public constant decimals = 24;
-
-    IPairEx internal orderbook;
+    string public constant symbol = "MNTY";
+    string public constant name = "Mega NTY";
+    uint public constant decimals = 24;
 
     constructor (
-        address _orderbook,      // mandatory
-        address _prefundAddress, // optional
-        uint256 _prefundAmount   // optional
+        address orderbook,      // mandatory
+        address prefundAddress, // optional
+        uint prefundAmount      // optional
     )
         public
     {
-        if (_prefundAmount > 0 ) {
-            _mint(_prefundAddress, _prefundAmount * 10**decimals);
+        if (prefundAmount > 0 ) {
+            _mint(prefundAddress, prefundAmount * 10**decimals);
         }
-        initialize(address(_orderbook));
+        initialize(orderbook);
     }
 
-    function setup(
-        address _orderbook
-    )
+    // deposit (MNTY <- NTY)
+    function deposit()
         external
-    {
-        // just an interface check
-        orderbook = IPairEx(_orderbook);
-    }
-
-    function buy()
-        public
         payable
         returns(bool)
     {
-        buyFor(msg.sender);
+        depositTo(msg.sender);
     }
 
-    // alias = cashout
-    function sell(uint256 _amount)
-        public
+    // withdraw (MNTY -> NTY)
+    function withdraw(uint _amount)
+        external
         returns(bool)
     {
-        sellTo(_amount, msg.sender);
+        withdrawTo(_amount, msg.sender);
     }
 
-    function sellTo(uint256 _amount, address payable _to)
+    // withdrawTo (MNTY -> NTY -> address)
+    function withdrawTo(uint _amount, address payable _to)
         public
         returns(bool)
     {
         address _sender = msg.sender;
         _burn(_sender, _amount);
 
-        // guarantee at consensus level, this contract always have enough NTY to cashout
+        /************************************************************************/
+        /* concensus garantures, this contract always got enough NTY to withdraw */
+        /************************************************************************/
+
         _to.transfer(_amount);
     }
 
-    function buyFor(
+    // depositTo (addresss <- MNTY <- NTY)
+    function depositTo(
         address _to
     )
         public
         payable
         returns(bool)
     {
-        uint256 _amount = msg.value;
+        uint _amount = msg.value;
         _mint(_to, _amount);
         return true;
     }
 
-    function buy(uint _value, bytes memory _data)
-        public
-        payable
-    {
-        buy();
-        transfer(owner(), _value, _data);
-    }
-
-    // TESTING
-    function simpleBuy(
-        uint256  _value,
-        uint256 _wantAmount,
+    // deposit and order (NTY -> MNTY -> USD)
+    function depositAndTrade(
+        uint _haveAmount,
+        uint _wantAmount,
         bytes32 _assistingID
     )
         public
         payable
     {
+        depositTo(msg.sender);
+        trade(_haveAmount, _wantAmount, _assistingID);
+    }
+
+    // create selling order (MNTY -> USD)
+    // with verbose data = (wantAmount, assistingID)
+    function trade(
+        uint _haveAmount,
+        uint _wantAmount,
+        bytes32 _assistingID
+    )
+        public
+    {
         bytes memory data = abi.encode(_wantAmount, _assistingID);
-        buy(_value, data);
+        transfer(dex(), _haveAmount, data);
+    }
+
+    // deposit and propose()
+    function depositAndPropose(
+        int absorption,  // absorption amount of StablizeToken
+        uint stake       // staked amount of VolatileToken
+    )
+        public
+        payable
+    {
+        depositTo(msg.sender);
+        propose(absorption, stake);
+    }
+
+    // propose a new pre-emptive absorption
+    // with verbose data = (absorption, stake);
+    function propose(
+        int absorption,  // absorption amount of StablizeToken
+        uint stake       // staked amount of VolatileToken
+    )
+        public
+    {
+        bytes memory data = abi.encode(absorption);
+        transfer(dex(), stake, data);
     }
 }

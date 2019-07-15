@@ -40,11 +40,10 @@ var (
 	BurnAddress        = common.HexToAddress("0x0000000000000000000000000000000000000000")
 	TokenAddress       = common.HexToAddress("0x2c783ad80ff980ec75468477e3dd9f86123ecbda") // NTF token contract address
 	// Endurio contract addresses
-	PairExAddress        = common.HexToAddress("0x0000000000000000000000000000000000123456") // PairEx contract address
+	ZeroAddress          = BurnAddress
+	SeigniorageAddress   = common.HexToAddress("0x0000000000000000000000000000000000123456") // Seigniorage contract address
 	VolatileTokenAddress = common.HexToAddress("0x0000000000000000000000000000000001234567") // MNTY token contract address
 	StableTokenAddress   = common.HexToAddress("0x0000000000000000000000000000000012345678") // NUSD token contract address
-	// Endurio consensus state addresses
-	AbsorptionAddress = BurnAddress
 )
 
 // TrustedCheckpoints associates each known checkpoint with the genesis hash of
@@ -90,7 +89,10 @@ var (
 			EndurioBlock:          big.NewInt(20000000),
 			PriceSamplingDuration: 7 * 24 * 60 * 60 / 2,
 			PriceSamplingInterval: 10*60/2 - 7,
-			AbsorptionLength:      7 * 24 * 60 * 60 / 2,
+			AbsorptionDuration:    7 * 24 * 60 * 60 / 2 / 2,
+			AbsorptionExpiration:  7 * 24 * 60 * 60 / 2,
+			SlashingDuration:      7 * 24 * 60 * 60 / 2 / 2,
+			LockdownExpiration:    7 * 24 * 60 * 60 / 2 * 2,
 		},
 	}
 
@@ -354,11 +356,10 @@ type DccsConfig struct {
 	EndurioBlock          *big.Int `json:"endurioBlock,omitempty"`
 	PriceSamplingDuration uint64   `json:"priceSamplingDuration"` // number of blocks to take price samples (a week)
 	PriceSamplingInterval uint64   `json:"priceSamplingInterval"` // the largest prime number of blocks in 10 minutes
-	AbsorptionLength      uint64   `json:"absorptionLength"`      // number of blocks that the absorption will be taken place (half a week)
-}
-
-func (c *DccsConfig) IsAbsorptionBlock(number uint64) bool {
-	return c.IsPriceBlock(number - CanonicalDepth)
+	AbsorptionDuration    uint64   `json:"absorptionDuration"`    // each block can absorb a maximum of targetAbsorption/absorptionDuration (half a week)
+	AbsorptionExpiration  uint64   `json:"absorptionExpiration"`  // number of blocks that the absorption will be expired (a week)
+	SlashingDuration      uint64   `json:"slashingDuration"`      // each block can slash a maximum value of d/D/slashingDuration (half a week)
+	LockdownExpiration    uint64   `json:"lockdownExpiration"`    // number of blocks that the lockdown will be expired (2 weeks)
 }
 
 // IsPriceBlock returns whether a block could include a price
@@ -402,14 +403,17 @@ func (c *DccsConfig) Snapshot(number uint64) uint64 {
 
 // String implements the stringer interface, returning the consensus engine details.
 func (c *DccsConfig) String() string {
-	return fmt.Sprintf("dccs {ThangLong: %v Epoch: %v Contract: %v Endurio: %v PriceDuration: %v PriceInterval: %v AbsorptionLength: %v}",
+	return fmt.Sprintf("dccs {ThangLong: %v Epoch: %v Contract: %v Endurio: %v PriceDuration: %v PriceInterval: %v AbsorptionDuration: %v AbsorptionExpiration: %v SlashingDuration: %v LockdownExpiration: %v}",
 		c.ThangLongBlock,
 		c.ThangLongEpoch,
 		c.Contract.String(),
 		c.EndurioBlock,
 		c.PriceSamplingDuration,
 		c.PriceSamplingInterval,
-		c.AbsorptionLength,
+		c.AbsorptionDuration,
+		c.AbsorptionExpiration,
+		c.SlashingDuration,
+		c.LockdownExpiration,
 	)
 }
 

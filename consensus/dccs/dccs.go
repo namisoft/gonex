@@ -20,7 +20,6 @@ package dccs
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"math"
 	"math/big"
@@ -36,7 +35,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/consensus/misc"
-	"github.com/ethereum/go-ethereum/contracts/nexty/endurio/pairex"
+	"github.com/ethereum/go-ethereum/contracts/nexty/endurio"
 	"github.com/ethereum/go-ethereum/contracts/nexty/endurio/stable"
 	"github.com/ethereum/go-ethereum/contracts/nexty/endurio/volatile"
 	"github.com/ethereum/go-ethereum/contracts/nexty/governance"
@@ -952,12 +951,17 @@ func deployConsensusContracts(state *state.StateDB, chainConfig *params.ChainCon
 	return nil
 }
 
-func deployEndurioContracts(state *state.StateDB) error {
-	// Deploy PairEx Contract
+func deployEndurioContracts(chain consensus.ChainReader, state *state.StateDB) error {
+	// Deploy Seigniorage Contract
 	{
 		// Generate contract code and data using a simulated backend
 		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
-			address, _, _, err := pairex.DeployPairEx(auth, sim, params.VolatileTokenAddress, params.StableTokenAddress)
+			address, _, _, err := endurio.DeploySeigniorage(auth, sim,
+				new(big.Int).SetUint64(chain.Config().Dccs.AbsorptionDuration),
+				new(big.Int).SetUint64(chain.Config().Dccs.AbsorptionExpiration),
+				new(big.Int).SetUint64(chain.Config().Dccs.SlashingDuration),
+				new(big.Int).SetUint64(chain.Config().Dccs.LockdownExpiration),
+			)
 			return address, err
 		})
 		if err != nil {
@@ -965,15 +969,15 @@ func deployEndurioContracts(state *state.StateDB) error {
 		}
 
 		// Deploy only, no upgrade
-		deployer.CopyContractToAddress(state, params.PairExAddress, code, storage, false)
-		log.Info("⚙ Contract deployed successful", "contract", "PairEx")
+		deployer.CopyContractToAddress(state, params.SeigniorageAddress, code, storage, false)
+		log.Info("⚙ Contract deployed successful", "contract", "Seigniorage")
 	}
 
 	// Deploy VolatileToken Contract
 	{
 		// Generate contract code and data using a simulated backend
 		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
-			address, _, _, err := volatile.DeployVolatileToken(auth, sim, params.PairExAddress, common.Address{}, common.Big0)
+			address, _, _, err := volatile.DeployVolatileToken(auth, sim, params.SeigniorageAddress, common.Address{}, common.Big0)
 			return address, err
 		})
 		if err != nil {
@@ -989,7 +993,7 @@ func deployEndurioContracts(state *state.StateDB) error {
 	{
 		// Generate contract code and data using a simulated backend
 		code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
-			address, _, _, err := stable.DeployStableToken(auth, sim, params.PairExAddress, common.Address{}, common.Big0)
+			address, _, _, err := stable.DeployStableToken(auth, sim, params.SeigniorageAddress, common.Address{}, common.Big0)
 			return address, err
 		})
 		if err != nil {
@@ -1001,6 +1005,31 @@ func deployEndurioContracts(state *state.StateDB) error {
 		log.Info("⚙ Contract deployed successful", "contract", "StableToken")
 	}
 
+	// Link them together
+	{
+		//state.IntermediateRoot(false)
+		backend := backends.NewRealBackend(state, chain, nil)
+		seign, err := endurio.NewSeigniorage(params.SeigniorageAddress, backend)
+		if err != nil {
+			log.Error("Failed to create new Seigniorage contract executor", "err", err)
+			return err
+		}
+
+		consensusTransactOpts := &bind.TransactOpts{
+			GasLimit: math.MaxUint64, // it's over 9000
+			Signer: func(_ types.Signer, _ common.Address, tx *types.Transaction) (*types.Transaction, error) {
+				return tx, nil
+			},
+		}
+
+		_, err = seign.RegisterTokens(consensusTransactOpts, params.VolatileTokenAddress, params.StableTokenAddress)
+		if err != nil {
+			log.Error("Failed to execute Seigniorage.OnBlockInitialized", "err", err)
+			return err
+		}
+		state.Commit(false)
+	}
+
 	return nil
 }
 
@@ -1010,7 +1039,7 @@ func (d *Dccs) Initialize(chain consensus.ChainReader, header *types.Header, sta
 		return nil, nil, nil
 	}
 	if header.Number.Cmp(d.config.EndurioBlock) == 0 {
-		if err := deployEndurioContracts(state); err != nil {
+		if err := deployEndurioContracts(chain, state); err != nil {
 			log.Error("Failed to deploy Endurio stablecoin contracts", "err", err)
 			return nil, nil, err
 		}
@@ -1018,134 +1047,15 @@ func (d *Dccs) Initialize(chain consensus.ChainReader, header *types.Header, sta
 		log.Info("⚙ Successfully deploy Endurio stablecoin contracts")
 		return nil, nil, nil
 	}
-	if d.config.IsAbsorptionBlock(header.Number.Uint64()) {
-		rate, err := d.PriceEngine().CalcNewAbsorptionRate(chain, state, header.Number.Uint64())
-		if err != nil {
-			log.Error("Failed to calculate new absorption rate", "err", err, "number", header.Number)
-		}
-		if rate != nil {
-			d.PriceEngine().RecordNewAbsorptionRate(state, rate, chain)
-			header.Root = state.IntermediateRoot(false)
-		}
-	}
-	// slashing the premtpive initiator if any
-	if d.config.IsPriceBlock(header.Number.Uint64()) {
-		if d.PriceEngine().HasActivePremptive(state, chain) {
-			medianPrice, _ := d.PriceEngine().CalcMedianPrice(chain, header.Number.Uint64())
-			priceDeviation := new(big.Rat).Sub(medianPrice.Rat(), common.Rat1)
 
-			_, amount, _, _, slashingRate, slashingDuration, err := d.PriceEngine().GetCurrentPremptive(state, chain)
-			if err != nil {
-				return nil, nil, err
-			}
-			if priceDeviation.Sign() != amount.Sign() {
-				if err = d.slash(state, chain, priceDeviation, amount, slashingRate, slashingDuration); err != nil {
-					return nil, nil, err
-				}
-			}
-		}
-	}
-	absorption, err := d.PriceEngine().CalcNextAbsorption(chain, header)
+	medianPrice, err := d.PriceEngine().CalcMedianPrice(chain, header.Number.Uint64()-params.CanonicalDepth)
 	if err != nil {
-		return nil, nil, err
-	}
-	if absorption != nil {
-		if err = absorb(state, absorption, chain); err != nil {
-			return nil, nil, err
-		}
-		header.Root = state.IntermediateRoot(false)
+		log.Trace("Failed to calculate canonical median price", "err", err, "number", header.Number)
 	}
 
+	OnBlockInitialized(chain, state, medianPrice)
+	header.Root = state.IntermediateRoot(false)
 	return nil, nil, nil
-}
-
-func absorb(state *state.StateDB, absorption *big.Int, chain consensus.ChainReader) error {
-	log.Info("dccs.absorb", "absorption", absorption)
-	inflate := absorption.Sign() > 0
-	if !inflate {
-		absorption.Neg(absorption)
-	}
-
-	backend := backends.NewRealBackend(state, chain, &params.PairExAddress)
-	emptyTransactOpts := &bind.TransactOpts{
-		From:     params.PairExAddress,
-		GasLimit: math.MaxUint64,
-		Signer: func(_ types.Signer, _ common.Address, tx *types.Transaction) (*types.Transaction, error) {
-			return tx, nil
-		},
-	}
-
-	volatileToken, err := volatile.NewVolatileToken(params.VolatileTokenAddress, backend)
-	if err != nil {
-		return err
-	}
-	supply, err := volatileToken.TotalSupply(&bind.CallOpts{})
-	if err != nil {
-		return err
-	}
-	balance := state.GetBalance(params.VolatileTokenAddress)
-	if supply.Cmp(balance) != 0 {
-		log.Error("Volatile token balance and supply do not match", "supply", supply, "balance", balance)
-		return fmt.Errorf("Volatile token balance and supply do not match: supply=%v, balance=%v", supply, balance)
-	}
-
-	pairEx, err := pairex.NewPairEx(params.PairExAddress, backend)
-	if err != nil {
-		return err
-	}
-
-	_, err = pairEx.Absorb(emptyTransactOpts, inflate, absorption)
-	if err != nil {
-		return err
-	}
-
-	isPremptive, err := pairEx.HasActivePremptive(nil)
-	if err != nil {
-		return err
-	}
-
-	if isPremptive {
-		// TODO: need to get data from `_, err = pairEx.Absorb(emptyTransactOpts, inflate, absorption)`
-		_, err = pairEx.PremptiveAbsorb(emptyTransactOpts, inflate, big.NewInt(100), big.NewInt(100))
-		if err != nil {
-			return err
-		}
-	}
-
-	supply, err = volatileToken.TotalSupply(&bind.CallOpts{})
-	if err != nil {
-		return err
-	}
-	// update the new balance after absorption
-	state.SetBalance(params.VolatileTokenAddress, supply)
-	return nil
-}
-
-func (d *Dccs) slash(state *state.StateDB, chain consensus.ChainReader, priceDeviation *big.Rat, amount, slashingRate, slashingDuration *big.Int) error {
-	backend := backends.NewRealBackend(state, chain, &params.PairExAddress)
-	emptyTransactOpts := &bind.TransactOpts{
-		From:     params.PairExAddress,
-		GasLimit: math.MaxUint64,
-		Signer: func(_ types.Signer, _ common.Address, tx *types.Transaction) (*types.Transaction, error) {
-			return tx, nil
-		},
-	}
-
-	totalSupply, _ := GetStableTokenSupply(state, chain)
-	absorbRate := new(big.Rat).SetFrac(totalSupply, amount)
-	slashingAmountRat := new(big.Rat).Mul(priceDeviation, absorbRate)
-	slashingAmountRat = new(big.Rat).Abs(slashingAmountRat)
-	slashingAmountRat.Mul(slashingAmountRat, new(big.Rat).SetFrac(slashingRate, slashingDuration))
-	slashingAmount := new(big.Int).Div(slashingAmountRat.Num(), slashingAmountRat.Denom())
-	pairEx, err := pairex.NewPairEx(params.PairExAddress, backend)
-	if err != nil {
-		return err
-	}
-
-	if _, err = pairEx.Slash(emptyTransactOpts, slashingAmount); err != nil {
-		return err
-	}
-	return nil
 }
 
 // Finalize implements consensus.Engine, ensuring no uncles are set, nor block
@@ -1177,7 +1087,8 @@ func (d *Dccs) finalize(chain consensus.ChainReader, header *types.Header, state
 		}
 		sigs := s.signers()
 		// Deploy the contract and ininitalize it with pre-fork signers
-		if deployConsensusContracts(state, chain.Config(), sigs) != nil {
+		if err = deployConsensusContracts(state, chain.Config(), sigs); err != nil {
+			log.Error("Unable to deploy Nexty governance smart contract", "err", err)
 			return
 		}
 		log.Info("Successfully deploy Nexty governance contract", "Number of sealers", len(sigs))
@@ -1199,8 +1110,9 @@ func (d *Dccs) finalizeAndAssemble(chain consensus.ChainReader, header *types.He
 		}
 		sigs := s.signers()
 		// Deploy the contract and ininitalize it with pre-fork signers
-		if deployConsensusContracts(state, chain.Config(), sigs) != nil {
-			return nil, errors.New("Unable to deploy Nexty governance smart contract")
+		if err = deployConsensusContracts(state, chain.Config(), sigs); err != nil {
+			log.Error("Unable to deploy Nexty governance smart contract", "err", err)
+			return nil, err
 		}
 		log.Info("Successfully deploy Nexty governance contract", "Number of sealers", len(sigs))
 	}
@@ -1624,118 +1536,4 @@ func (d *Dccs) GetRecentHeaders(snap *Snapshot, chain consensus.ChainReader, hea
 		num, hash = num-1, h.ParentHash
 	}
 	return headers, nil
-}
-
-// BlockPriceStat returns ethstats data for block price
-func (d *Dccs) BlockPriceStat(chain consensus.ChainReader, number uint64) string {
-	if !d.config.IsPriceBlock(number) {
-		return ""
-	}
-	price := d.PriceEngine().GetBlockPrice(chain, number)
-	if price == nil {
-		return "0"
-	}
-	return price.Rat().FloatString(4)
-}
-
-// MedianPriceStat returns ethstats data for median price
-func (d *Dccs) MedianPriceStat(chain consensus.ChainReader, number uint64) string {
-	if !d.config.IsPriceBlock(number) {
-		return ""
-	}
-	price, _ := d.PriceEngine().CalcMedianPrice(chain, number)
-	if price == nil {
-		return "0"
-	}
-	return price.Rat().FloatString(4)
-}
-
-// AbsorbedStat returns ethstats data for stablecoin supply absorbed by the block
-func (d *Dccs) AbsorbedStat(chain consensus.ChainReader, number uint64) string {
-	if number <= 0 {
-		return ""
-	}
-	state, err := chain.StateAt(chain.GetHeaderByNumber(number - 1).Root)
-	if err != nil {
-		return err.Error()
-	}
-	if state == nil {
-		return "No state at " + string(number-1)
-	}
-	oldSupply, err := GetStableTokenSupply(state, chain)
-	if err != nil {
-		return err.Error()
-	}
-	if oldSupply == nil {
-		return "No Old Supply"
-	}
-	state, err = chain.StateAt(chain.GetHeaderByNumber(number).Root)
-	if err != nil {
-		return err.Error()
-	}
-	if state == nil {
-		return "No state at " + string(number)
-	}
-	supply, err := GetStableTokenSupply(state, chain)
-	if err != nil {
-		return err.Error()
-	}
-	if supply == nil {
-		return "No New Supply"
-	}
-	return supply.Sub(supply, oldSupply).String()
-}
-
-// RemainToAbsorbStat returns ethstats data for stablecoin supply remain to absorb
-func (d *Dccs) RemainToAbsorbStat(chain consensus.ChainReader, number uint64) string {
-	header := chain.GetHeaderByNumber(number)
-	if header == nil {
-		return "No Header"
-	}
-	state, err := chain.StateAt(chain.GetHeaderByNumber(number).Root)
-	if err != nil {
-		return err.Error()
-	}
-	if state == nil {
-		return "No state at " + string(number)
-	}
-	supply, err := GetStableTokenSupply(state, chain)
-	if err != nil {
-		return err.Error()
-	}
-	if supply == nil {
-		return "No Supply"
-	}
-	remain, err := d.PriceEngine().CalcRemainToAbsorption(chain, number)
-	if err != nil {
-		return err.Error()
-	}
-	if remain == nil {
-		return "0"
-	}
-	ratio := new(big.Rat).SetFrac(remain, supply)
-	return ratio.FloatString(4)
-}
-
-// StableSupplyStat returns ethstats data for stablecoin supply
-func (d *Dccs) StableSupplyStat(chain consensus.ChainReader, number uint64) string {
-	header := chain.GetHeaderByNumber(number)
-	if header == nil {
-		return "No Header"
-	}
-	state, err := chain.StateAt(chain.GetHeaderByNumber(number).Root)
-	if err != nil {
-		return err.Error()
-	}
-	if state == nil {
-		return "No state at " + string(number)
-	}
-	supply, err := GetStableTokenSupply(state, chain)
-	if err != nil {
-		return err.Error()
-	}
-	if supply == nil {
-		return "No Supply"
-	}
-	return supply.String()
 }

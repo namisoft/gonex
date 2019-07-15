@@ -556,11 +556,11 @@ func (s *Service) assembleBlockStats(block *types.Block) *blockStats {
 		if s.eth.BlockChain().Config().IsEndurio(header.Number) {
 			d, _ := s.engine.(*dccs.Dccs)
 			number := header.Number.Uint64()
-			price = d.BlockPriceStat(s.eth.BlockChain(), number)
-			priceMedian = d.MedianPriceStat(s.eth.BlockChain(), number)
-			toAbsorb = d.RemainToAbsorbStat(s.eth.BlockChain(), number)
-			absorbed = d.AbsorbedStat(s.eth.BlockChain(), number)
-			supplySTB = d.StableSupplyStat(s.eth.BlockChain(), number)
+			price = d.PriceEngine().BlockPriceStat(s.eth.BlockChain(), number)
+			priceMedian = d.PriceEngine().MedianPriceStat(s.eth.BlockChain(), number)
+			toAbsorb = dccs.RemainToAbsorbStat(s.eth.BlockChain(), number)
+			absorbed = dccs.AbsorbedStat(s.eth.BlockChain(), number)
+			supplySTB = dccs.StableSupplyStat(s.eth.BlockChain(), number)
 		}
 	} else {
 		// Light nodes would need on-demand lookups for transactions/uncles, skip

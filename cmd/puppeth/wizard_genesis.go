@@ -128,7 +128,10 @@ func (w *wizard) makeGenesis() {
 			EndurioBlock:          common.Big0,
 			PriceSamplingDuration: 7 * 24 * 60 * 60 / 2,
 			PriceSamplingInterval: 10*60/2 - 7,
-			AbsorptionLength:      7 * 24 * 60 * 60 / 2,
+			AbsorptionDuration:    7 * 24 * 60 * 60 / 2 / 2,
+			AbsorptionExpiration:  7 * 24 * 60 * 60 / 2,
+			SlashingDuration:      7 * 24 * 60 * 60 / 2 / 2,
+			LockdownExpiration:    7 * 24 * 60 * 60 / 2 * 2,
 		}
 		fmt.Println()
 		fmt.Println("How many seconds should blocks take? (default = 2)")
@@ -226,8 +229,20 @@ func (w *wizard) makeGenesis() {
 			genesis.Config.Dccs.PriceSamplingInterval = uint64(w.readDefaultInt(int(genesis.Config.Dccs.PriceSamplingInterval)))
 
 			fmt.Println()
-			fmt.Printf("How long should an absorption take? (default = %v)\n", genesis.Config.Dccs.AbsorptionLength)
-			genesis.Config.Dccs.AbsorptionLength = uint64(w.readDefaultInt(int(genesis.Config.Dccs.AbsorptionLength)))
+			fmt.Printf("How quick should an absorption take? (default = %v)\n", genesis.Config.Dccs.AbsorptionDuration)
+			genesis.Config.Dccs.AbsorptionDuration = uint64(w.readDefaultInt(int(genesis.Config.Dccs.AbsorptionDuration)))
+
+			fmt.Println()
+			fmt.Printf("How long should an absorption expire? (default = %v)\n", genesis.Config.Dccs.AbsorptionExpiration)
+			genesis.Config.Dccs.AbsorptionExpiration = uint64(w.readDefaultInt(int(genesis.Config.Dccs.AbsorptionExpiration)))
+
+			fmt.Println()
+			fmt.Printf("How quick should a violated initiator is slashed? (default = %v)\n", genesis.Config.Dccs.SlashingDuration)
+			genesis.Config.Dccs.SlashingDuration = uint64(w.readDefaultInt(int(genesis.Config.Dccs.SlashingDuration)))
+
+			fmt.Println()
+			fmt.Printf("How long should a lockdown expire? (default = %v)\n", genesis.Config.Dccs.LockdownExpiration)
+			genesis.Config.Dccs.LockdownExpiration = uint64(w.readDefaultInt(int(genesis.Config.Dccs.LockdownExpiration)))
 		}
 
 	default:

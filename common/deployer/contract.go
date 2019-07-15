@@ -62,5 +62,5 @@ func CopyContractToAddress(state *state.StateDB, address common.Address, code []
 	for key, value := range storage {
 		state.SetState(address, key, value)
 	}
-	state.Commit(true)
+	state.Commit(false)
 }
