@@ -32,7 +32,7 @@ import (
 
 const (
 	priceServiceURL       = "http://localhost:3000/price/NUSD_USD"
-	nonCanonicalCacheSize = params.CanonicalDepth
+	nonCanonicalCacheSize = params.CanonicalDepth // unrelated, but relevant
 	medianPriceCacheSize  = 6
 )
 
