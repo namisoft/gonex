@@ -37,7 +37,7 @@ var (
 	TestnetGenesisHash = common.HexToHash("0xe53f0441b5f887499e49cb628262c4acc897492a4fe3236bb3c68023ea725f0d")
 	RinkebyGenesisHash = common.HexToHash("0x6341fd3daf94b748c72ced5a5b26028f2474f5f00d824504e4fa37a75767e177")
 	GoerliGenesisHash  = common.HexToHash("0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a")
-	BurnAddress        = common.HexToAddress("0x0000000000000000000000000000000000000000")
+	ZeroAddress        = common.HexToAddress("0x0000000000000000000000000000000000000000")
 	TokenAddress       = common.HexToAddress("0x2c783ad80ff980ec75468477e3dd9f86123ecbda") // NTF token contract address
 )
 
