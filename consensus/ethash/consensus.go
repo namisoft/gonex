@@ -562,6 +562,10 @@ func (ethash *Ethash) Prepare(chain consensus.ChainReader, header *types.Header)
 
 // Initialize implements the consensus.Engine
 func (ethash *Ethash) Initialize(chain consensus.ChainReader, header *types.Header, state *state.StateDB) (types.Transactions, types.Receipts, error) {
+	// Mutate the block and state according to any hard-fork specs
+	if chain.Config().DAOForkSupport && chain.Config().DAOForkBlock != nil && chain.Config().DAOForkBlock.Cmp(header.Number) == 0 {
+		misc.ApplyDAOHardFork(state)
+	}
 	return nil, nil, nil
 }
 
