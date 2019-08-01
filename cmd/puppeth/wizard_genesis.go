@@ -62,7 +62,7 @@ func (w *wizard) makeGenesis() {
 	fmt.Println("Which consensus engine to use? (default = clique)")
 	fmt.Println(" 1. Ethash - proof-of-work")
 	fmt.Println(" 2. Clique - proof-of-authority")
-	fmt.Println(" 3. Dccs   - proof-of-foundation")
+	fmt.Println(" 3. DCCS   - dual-crypto-consensus")
 
 	choice := w.read()
 	switch {
@@ -71,7 +71,7 @@ func (w *wizard) makeGenesis() {
 		genesis.Config.Ethash = new(params.EthashConfig)
 		genesis.ExtraData = make([]byte, 32)
 
-	case choice == "" || choice == "2":
+	case choice == "2":
 		// In the case of clique, configure the consensus parameters
 		genesis.Difficulty = big.NewInt(1)
 		genesis.Config.Clique = &params.CliqueConfig{
@@ -109,7 +109,7 @@ func (w *wizard) makeGenesis() {
 			copy(genesis.ExtraData[32+i*common.AddressLength:], signer[:])
 		}
 
-	case choice == "3":
+	case choice == "" || choice == "3":
 		// In the case of dccs, configure the consensus parameters
 		genesis.GasLimit = 42000000
 		genesis.Difficulty = big.NewInt(1)
@@ -123,6 +123,8 @@ func (w *wizard) makeGenesis() {
 			// ThangLong hardfork
 			ThangLongBlock: common.Big0,
 			ThangLongEpoch: 3000,
+			// CoLoa hardfork
+			CoLoaBlock: common.Big0,
 		}
 		fmt.Println()
 		fmt.Println("How many seconds should blocks take? (default = 2)")
@@ -204,6 +206,11 @@ func (w *wizard) makeGenesis() {
 				Storage: storage,
 			}
 		}
+
+		// CoLoa hardfork enabled
+		fmt.Println()
+		fmt.Printf("Which block should CoLoa come into effect? (default = %v)\n", genesis.Config.Dccs.CoLoaBlock)
+		genesis.Config.Dccs.CoLoaBlock = w.readDefaultBigInt(genesis.Config.Dccs.CoLoaBlock)
 
 	default:
 		log.Crit("Invalid consensus engine choice", "choice", choice)

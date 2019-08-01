@@ -26,6 +26,9 @@ import (
 )
 
 const (
+	// BlockSeconds is the average block time
+	BlockSeconds = 2
+
 	// CanonicalDepth is the confirmation required for a block to be considered canonical.
 	// Also the distant from the ThangLong checkpoint block to it's snapshot.
 	CanonicalDepth = 7
@@ -74,7 +77,7 @@ var (
 		ConstantinopleBlock: big.NewInt(15360000),
 		PetersburgBlock:     big.NewInt(15360000),
 		Dccs: &DccsConfig{
-			Period: 2,
+			Period: BlockSeconds,
 			Epoch:  30000,
 			// Governance contract
 			Contract: common.HexToAddress("0x0000000000000000000000000000000000012345"),
@@ -381,6 +384,8 @@ type DccsConfig struct {
 	// ThangLong hardfork
 	ThangLongBlock *big.Int `json:"thangLongBlock,omitempty"` // ThangLong switch block (nil = no fork, 0 = already activated)
 	ThangLongEpoch uint64   `json:"thangLongEpoch"`           // Epoch length to reset votes and checkpoint
+	// CoLoa hardfork
+	CoLoaBlock *big.Int `json:"coLoaBlock,omitempty"`
 }
 
 // PositionInEpoch returns the offset of a block from the start of an epoch
@@ -416,13 +421,16 @@ func (c *DccsConfig) Snapshot(number uint64) uint64 {
 
 // String implements the stringer interface, returning the consensus engine details.
 func (c *DccsConfig) String() string {
-	return "dccs"
+	return fmt.Sprintf("dccs {ThangLong: %v Epoch: %v Contract: %v CoLoa: %v PriceDuration: %v PriceInterval: %v AbsorptionDuration: %v AbsorptionExpiration: %v SlashingDuration: %v LockdownExpiration: %v}",
+		c.ThangLongBlock,
+		c.ThangLongEpoch,
+		c.Contract.String(),
+		c.CoLoaBlock,
+	)
 }
 
 // String implements the fmt.Stringer interface.
 func (c *ChainConfig) String() string {
-	var thangLongBlock *big.Int
-	var contract string
 	var engine interface{}
 	switch {
 	case c.Ethash != nil:
@@ -431,12 +439,10 @@ func (c *ChainConfig) String() string {
 		engine = c.Clique
 	case c.Dccs != nil:
 		engine = c.Dccs
-		thangLongBlock = c.Dccs.ThangLongBlock
-		contract = c.Dccs.Contract.Hex()
 	default:
 		engine = "unknown"
 	}
-	return fmt.Sprintf("{ChainID: %v Homestead: %v DAO: %v DAOSupport: %v EIP150: %v EIP155: %v EIP158: %v Byzantium: %v Constantinople: %v  Petersburg: %v Thang Long: %v Contract: %v Engine: %v}",
+	return fmt.Sprintf("{ChainID: %v Homestead: %v DAO: %v DAOSupport: %v EIP150: %v EIP155: %v EIP158: %v Byzantium: %v Constantinople: %v Petersburg: %v Engine: %v}",
 		c.ChainID,
 		c.HomesteadBlock,
 		c.DAOForkBlock,
@@ -447,8 +453,6 @@ func (c *ChainConfig) String() string {
 		c.ByzantiumBlock,
 		c.ConstantinopleBlock,
 		c.PetersburgBlock,
-		thangLongBlock,
-		contract,
 		engine,
 	)
 }
@@ -536,6 +540,16 @@ func (c *ChainConfig) IsThangLong(num *big.Int) bool {
 // IsThangLong returns whether num represents a block number after the ThangLong fork
 func (c *DccsConfig) IsThangLong(num *big.Int) bool {
 	return isForked(c.ThangLongBlock, num)
+}
+
+// IsCoLoa returns whether num represents a block number after the CoLoa fork
+func (c *ChainConfig) IsCoLoa(num *big.Int) bool {
+	return c.Dccs != nil && c.Dccs.IsCoLoa(num)
+}
+
+// IsCoLoa returns whether num represents a block number after the CoLoa fork
+func (c *DccsConfig) IsCoLoa(num *big.Int) bool {
+	return isForked(c.CoLoaBlock, num)
 }
 
 // GasTable returns the gas table corresponding to the current phase (homestead or homestead reprice).
