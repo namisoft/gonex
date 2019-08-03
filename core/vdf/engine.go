@@ -65,7 +65,7 @@ func (e *Engine) Verify(seed, output []byte, iteration uint64, bitSize uint64) (
 }
 
 // Generate generates the vdf output = (y, proof)
-func (e *Engine) Generate(seed []byte, iteration uint64, bitSize uint64) (output []byte, err error) {
+func (e *Engine) Generate(seed []byte, iteration uint64, bitSize uint64, stop <-chan struct{}) (output []byte, err error) {
 	if len(e.cli) == 0 {
 		defer func() {
 			if x := recover(); x != nil {
@@ -73,7 +73,10 @@ func (e *Engine) Generate(seed []byte, iteration uint64, bitSize uint64) (output
 				err = fmt.Errorf("%v", x)
 			}
 		}()
-		y, proof := vdf_go.GenerateVDF(seed, int(iteration), int(bitSize))
+		y, proof := vdf_go.GenerateVDFWithStopChan(seed, int(iteration), int(bitSize), stop)
+		if y == nil || proof == nil {
+			return nil, nil
+		}
 		return append(y, proof...), nil
 	}
 
@@ -81,6 +84,23 @@ func (e *Engine) Generate(seed []byte, iteration uint64, bitSize uint64) (output
 		"-l"+string(bitSize),
 		common.Bytes2Hex(seed),
 		string(iteration))
+
+	var done chan struct{}
+	if stop != nil {
+		go func() {
+			select {
+			case <-stop:
+				log.Trace("vdf.Generate: vdf-cli interrupted")
+				if err := cmd.Process.Kill(); err != nil {
+					log.Error("vdf.Generate: failed to kill vdf-cli process", "err", err)
+				}
+				return
+			case <-done:
+				return
+			}
+		}()
+	}
+
 	log.Trace("vdf.Generate", "seed", seed, "iteration", iteration, "output", output)
 	output, err = cmd.Output()
 	if err, ok := err.(*exec.ExitError); ok {
@@ -93,6 +113,12 @@ func (e *Engine) Generate(seed []byte, iteration uint64, bitSize uint64) (output
 		log.Error("vdf.Generate", "error", err)
 		return nil, err
 	}
+
+	if stop != nil && done != nil {
+		// prevent goroutine leakage
+		done <- struct{}{}
+	}
+
 	log.Trace("vdf.Generate", "output", output)
 	return common.Hex2Bytes(string(output)), nil
 }
