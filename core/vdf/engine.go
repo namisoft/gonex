@@ -90,6 +90,9 @@ func (e *Engine) Generate(seed []byte, iteration uint64, bitSize uint64, stop <-
 		go func() {
 			select {
 			case <-stop:
+				if cmd == nil || cmd.Process == nil {
+					return
+				}
 				log.Trace("vdf.Generate: vdf-cli interrupted")
 				if err := cmd.Process.Kill(); err != nil {
 					log.Error("vdf.Generate: failed to kill vdf-cli process", "err", err)
