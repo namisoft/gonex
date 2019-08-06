@@ -237,6 +237,7 @@ func (d *Dccs) Initialize(chain consensus.ChainReader, header *types.Header, sta
 func (d *Dccs) Finalize(chain consensus.ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header) {
 	if chain.Config().IsThangLong(header.Number) {
 		d.finalize1(chain, header, state, txs, uncles)
+		return
 	}
 	if chain.Config().IsThangLongPreparationBlock(header.Number) {
 		// Retrieve the pre-fork signers list
