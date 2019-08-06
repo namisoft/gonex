@@ -23,8 +23,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
+	"github.com/ethereum/go-ethereum/core/vdf"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/bn256"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
 	"golang.org/x/crypto/ripemd160"
 )
@@ -57,6 +59,20 @@ var PrecompiledContractsByzantium = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{6}): &bn256Add{},
 	common.BytesToAddress([]byte{7}): &bn256ScalarMul{},
 	common.BytesToAddress([]byte{8}): &bn256Pairing{},
+}
+
+// PrecompiledContractsCoLoa contains the default set of pre-compiled Ethereum
+// contracts used in the CoLoa release.
+var PrecompiledContractsCoLoa = map[common.Address]PrecompiledContract{
+	common.BytesToAddress([]byte{0x01}): &ecrecover{},
+	common.BytesToAddress([]byte{0x02}): &sha256hash{},
+	common.BytesToAddress([]byte{0x03}): &ripemd160hash{},
+	common.BytesToAddress([]byte{0x04}): &dataCopy{},
+	common.BytesToAddress([]byte{0x05}): &bigModExp{},
+	common.BytesToAddress([]byte{0x06}): &bn256Add{},
+	common.BytesToAddress([]byte{0x07}): &bn256ScalarMul{},
+	common.BytesToAddress([]byte{0x08}): &bn256Pairing{},
+	common.BytesToAddress([]byte{0xFF}): &vdfVerify{},
 }
 
 // RunPrecompiledContract runs and evaluates the output of a precompiled contract.
@@ -320,6 +336,15 @@ var (
 
 	// errBadPairingInput is returned if the bn256 pairing input is invalid.
 	errBadPairingInput = errors.New("bad elliptic curve pairing size")
+
+	// errBadVDFInputLen is returned if the vdf verification input length is invalid.
+	errBadVDFInputLen = errors.New("bad VDF verification input length")
+
+	// errBadVDFInput is returned if the vdf verification input is invalid.
+	errBadVDFInput = errors.New("bad VDF verification input")
+
+	// errVDFVerificationFailed is returned if there is something wrong with vdf verification process.
+	errVDFVerificationFailed = errors.New("VDF verification internal error")
 )
 
 // bn256Pairing implements a pairing pre-compile for the bn256 curve
@@ -354,6 +379,44 @@ func (c *bn256Pairing) Run(input []byte) ([]byte, error) {
 	}
 	// Execute the pairing checks and return the results
 	if bn256.PairingCheck(cs, ts) {
+		return true32Byte, nil
+	}
+	return false32Byte, nil
+}
+
+// vdfVerify implements a VDF verification using either wesolowski or pietrzak construction
+type vdfVerify struct{}
+
+// RequiredGas returns the gas required to execute the pre-compiled contract.
+func (c *vdfVerify) RequiredGas(input []byte) uint64 {
+	return params.VDFVerifyBaseGas // TODO +++
+}
+
+func (c *vdfVerify) Run(input []byte) (valid []byte, err error) {
+	log.Trace("VDFVerify", "input", common.ToHex(input))
+
+	// Convert the input into a vdf params
+	bitSize := new(big.Int).SetBytes(getData(input, 0, 32)).Uint64()
+	outputLen := (bitSize + 16) >> 2
+	// Handle some corner cases cheaply
+	if uint64(len(input)) != 32*3+outputLen {
+		log.Error("VDFVerify", "error", errBadVDFInputLen, "input len", len(input), "expected", 32*3+outputLen)
+		return nil, errBadVDFInputLen
+	}
+
+	iteration := new(big.Int).SetBytes(getData(input, 32, 32)).Uint64()
+	seed := getData(input, 64, 32)
+	output := getData(input, 96, outputLen)
+
+	log.Trace("VDFVerify",
+		"bitSize", bitSize,
+		"iteration", iteration,
+		"seed", common.ToHex(seed),
+		"output", common.ToHex(output))
+
+	ok := vdf.Instance().Verify(seed, output, iteration, bitSize)
+	log.Trace("VDFVerify", "valid", ok)
+	if ok {
 		return true32Byte, nil
 	}
 	return false32Byte, nil
