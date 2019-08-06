@@ -19,6 +19,8 @@ package vdf
 import (
 	"fmt"
 	"os/exec"
+	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -80,10 +82,12 @@ func (e *Engine) Generate(seed []byte, iteration uint64, bitSize uint64, stop <-
 		return append(y, proof...), nil
 	}
 
-	cmd := exec.Command("vdf-cli",
-		"-l"+string(bitSize),
+	cmd := exec.Command(e.cli,
+		"-l"+strconv.Itoa(int(bitSize)),
 		common.Bytes2Hex(seed),
-		string(iteration))
+		strconv.Itoa(int(iteration)))
+
+	log.Trace(e.cli + " -l" + strconv.Itoa(int(bitSize)) + " " + common.Bytes2Hex(seed) + " " + strconv.Itoa(int(iteration)))
 
 	var done chan struct{}
 	if stop != nil {
@@ -104,11 +108,11 @@ func (e *Engine) Generate(seed []byte, iteration uint64, bitSize uint64, stop <-
 		}()
 	}
 
-	log.Trace("vdf.Generate", "seed", seed, "iteration", iteration, "output", output)
+	log.Trace("vdf.Generate", "seed", common.Bytes2Hex(seed), "iteration", iteration, "output", common.Bytes2Hex(output))
 	output, err = cmd.Output()
 	if err, ok := err.(*exec.ExitError); ok {
 		// verification failed
-		log.Trace("vdf.Generate", "error", err.Error())
+		log.Trace("vdf.Generate", "error code", err.Error())
 		return nil, err
 	}
 	if err != nil {
@@ -122,6 +126,8 @@ func (e *Engine) Generate(seed []byte, iteration uint64, bitSize uint64, stop <-
 		done <- struct{}{}
 	}
 
-	log.Trace("vdf.Generate", "output", output)
-	return common.Hex2Bytes(string(output)), nil
+	strOutput := strings.TrimSpace(string(output))
+
+	log.Trace("vdf.Generate", "output", strOutput)
+	return common.Hex2Bytes(strOutput), nil
 }
