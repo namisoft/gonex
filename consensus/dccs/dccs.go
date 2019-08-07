@@ -21,15 +21,20 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"math"
 	"math/big"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/consensus"
+	"github.com/ethereum/go-ethereum/contracts/nexty/governance"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/log"
@@ -168,6 +173,10 @@ func New(config *params.DccsConfig, db ethdb.Database) *Dccs {
 
 // VerifyHeader checks whether a header conforms to the consensus rules.
 func (d *Dccs) VerifyHeader(chain consensus.ChainReader, header *types.Header, seal bool) error {
+	log.Debug("VerifyHeader", "number", header.Number)
+	if chain.Config().IsCoLoa(header.Number) && header.Number.Cmp(d.config.CoLoaBlock) != 0 {
+		return d.verifyHeader2(chain, header, nil)
+	}
 	if chain.Config().IsThangLong(header.Number) {
 		return d.verifyHeader1(chain, header, nil)
 	}
@@ -184,7 +193,9 @@ func (d *Dccs) VerifyHeaders(chain consensus.ChainReader, headers []*types.Heade
 	go func() {
 		for i, header := range headers {
 			var err error
-			if chain.Config().IsThangLong(header.Number) {
+			if chain.Config().IsCoLoa(header.Number) && header.Number.Cmp(d.config.CoLoaBlock) != 0 {
+				err = d.verifyHeader2(chain, header, headers[:i])
+			} else if chain.Config().IsThangLong(header.Number) {
 				err = d.verifyHeader1(chain, header, headers[:i])
 			} else {
 				err = d.verifyHeader(chain, header, headers[:i])
@@ -212,6 +223,10 @@ func (d *Dccs) VerifyUncles(chain consensus.ChainReader, block *types.Block) err
 // VerifySeal implements consensus.Engine, checking whether the signature contained
 // in the header satisfies the consensus protocol requirements.
 func (d *Dccs) VerifySeal(chain consensus.ChainReader, header *types.Header) error {
+	log.Debug("VerifySeal", "number", header.Number)
+	if chain.Config().IsCoLoa(header.Number) && header.Number.Cmp(d.config.CoLoaBlock) != 0 {
+		return d.verifySeal2(chain, header, nil)
+	}
 	if chain.Config().IsThangLong(header.Number) {
 		return d.verifySeal1(chain, header, nil)
 	}
@@ -221,7 +236,10 @@ func (d *Dccs) VerifySeal(chain consensus.ChainReader, header *types.Header) err
 // Prepare implements consensus.Engine, preparing all the consensus fields of the
 // header for running the transactions on top.
 func (d *Dccs) Prepare(chain consensus.ChainReader, header *types.Header) error {
-	if chain.Config().IsThangLong(header.Number) {
+	log.Debug("Prepare", "number", header.Number)
+	if chain.Config().IsCoLoa(header.Number) && header.Number.Cmp(d.config.CoLoaBlock) != 0 {
+		return d.prepare2(chain, header)
+	} else if chain.Config().IsThangLong(header.Number) {
 		return d.prepare1(chain, header)
 	}
 	return d.prepare(chain, header)
@@ -229,6 +247,82 @@ func (d *Dccs) Prepare(chain consensus.ChainReader, header *types.Header) error 
 
 // Initialize implements the consensus.Engine
 func (d *Dccs) Initialize(chain consensus.ChainReader, header *types.Header, state *state.StateDB) (types.Transactions, types.Receipts, error) {
+	log.Debug("Initialize", "number", header.Number)
+	if !chain.Config().IsCoLoa(header.Number) {
+		return nil, nil, nil
+	}
+
+	if header.Number.Cmp(d.config.CoLoaBlock) == 0 {
+		// upgrade governance smart contract preparing for CoLoa hardfork
+		if err := upgradeGovernanceContract(state, chain.Config()); err != nil {
+			return nil, nil, err
+		}
+		log.Info("⚙ Successfully upgrade governance smart contract")
+	}
+
+	backend := backends.NewRealBackend(state, chain, &params.ZeroAddress)
+	emptyTransactOpts := &bind.TransactOpts{
+		From:     params.ZeroAddress,
+		GasLimit: math.MaxUint64,
+		Signer: func(_ types.Signer, _ common.Address, tx *types.Transaction) (*types.Transaction, error) {
+			return tx, nil
+		},
+	}
+
+	govern, err := governance.NewNextyGovernance(d.config.Contract, backend)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// it's regarding as genesis block for chain from CoLoa hardfork
+	if header.Number.Cmp(d.config.CoLoaBlock) == 0 {
+		// Ensure the extra data has all it's components
+		if len(header.Extra) < extraVanity {
+			header.Extra = append(header.Extra, bytes.Repeat([]byte{0x00}, extraVanity-len(header.Extra))...)
+		}
+		header.Extra = header.Extra[:extraVanity]
+
+		signers, beneficiaries, _ := govern.GetSealers(&bind.CallOpts{})
+
+		for i := 0; i < len(signers); i++ {
+			header.Extra = append(header.Extra, signers[i][:]...)
+			header.Extra = append(header.Extra, beneficiaries[i][:]...)
+		}
+
+		header.Extra = append(header.Extra, make([]byte, extraSeal)...)
+	}
+
+	// If the block isn't a checkpoint, cast the first proposal to block header
+	if !d.config.IsCheckpoint(header.Number.Uint64()) {
+		proposalType, signer, beneficiary, err := govern.GetFirstProposal(&bind.CallOpts{})
+		if err != nil {
+			return nil, nil, err
+		}
+		if proposalType.Cmp(big.NewInt(-1)) > 0 {
+			log.Trace("Apply the first proposal to current block header", "number", header.Number, "signer", signer, "beneficiary", beneficiary)
+			_, err = govern.PopProposal(emptyTransactOpts)
+			if err != nil {
+				return nil, nil, err
+			}
+			if common.Big0.Cmp(proposalType) == 0 {
+				copy(header.Nonce[:], nonceSealerJoin)
+			} else if common.Big1.Cmp(proposalType) == 0 {
+				copy(header.Nonce[:], nonceSealerLeave)
+			} else {
+				copy(header.Nonce[:], nonceSealerSlash)
+			}
+			// Ensure the extra data has all it's components
+			if len(header.Extra) < extraVanity {
+				header.Extra = append(header.Extra, bytes.Repeat([]byte{0x00}, extraVanity-len(header.Extra))...)
+			}
+			header.Extra = header.Extra[:extraVanity]
+			header.Extra = append(header.Extra, signer[:]...)
+			header.Extra = append(header.Extra, beneficiary[:]...)
+			header.Extra = append(header.Extra, make([]byte, extraSeal)...)
+		}
+	}
+	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
+
 	return nil, nil, nil
 }
 
@@ -309,6 +403,10 @@ func (d *Dccs) Authorize(signer common.Address, signFn SignerFn, state *state.St
 // the local signing credentials.
 func (d *Dccs) Seal(chain consensus.ChainReader, block *types.Block, results chan<- *types.Block, stop <-chan struct{}) error {
 	header := block.Header()
+	log.Debug("Seal", "number", header.Number)
+	if chain.Config().IsCoLoa(header.Number) && header.Number.Cmp(d.config.CoLoaBlock) != 0 {
+		return d.seal2(chain, block, results, stop)
+	}
 	if chain.Config().IsThangLong(header.Number) {
 		return d.seal1(chain, block, results, stop)
 	}
@@ -319,6 +417,13 @@ func (d *Dccs) Seal(chain consensus.ChainReader, block *types.Block, results cha
 // that a new block should have based on the previous blocks in the chain and the
 // current signer.
 func (d *Dccs) CalcDifficulty(chain consensus.ChainReader, time uint64, parent *types.Header) *big.Int {
+	if chain.Config().IsCoLoa(parent.Number) {
+		snap, err := d.snapshot2(chain, parent.Number.Uint64(), parent.Hash(), nil)
+		if err != nil {
+			return nil
+		}
+		return CalcDifficulty2(snap, d.signer, parent)
+	}
 	if chain.Config().IsThangLong(parent.Number) {
 		snap, err := d.snapshot1(chain, parent.Number.Uint64(), parent.Hash(), nil)
 		if err != nil {
@@ -421,4 +526,30 @@ func ecrecover(header *types.Header, sigcache *lru.ARCCache) (common.Address, er
 
 	sigcache.Add(hash, signer)
 	return signer, nil
+}
+
+func deployContract(state *state.StateDB, address common.Address, code []byte, storage map[common.Hash]common.Hash, overwrite bool, codeOnly bool) {
+	// Ensure there's no existing contract already at the designated address
+	contractHash := state.GetCodeHash(address)
+	// this is an consensus upgrade
+	exist := state.GetNonce(address) != 0 || (contractHash != (common.Hash{}) && contractHash != vm.EmptyCodeHash)
+	if !exist {
+		// Create a new account on the state
+		state.CreateAccount(address)
+		// Assuming chainConfig.IsEIP158(BlockNumber)
+		state.SetNonce(address, 1)
+	} else if !overwrite {
+		// disable overwrite flag to prevent unintentional contract upgrade
+		return
+	}
+
+	// Transfer the code and state from simulated backend to the real state db
+	state.SetCode(address, code)
+	if !codeOnly {
+		for key, value := range storage {
+			state.SetState(address, key, value)
+		}
+	}
+
+	state.Commit(true)
 }

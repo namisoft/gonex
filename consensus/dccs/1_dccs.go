@@ -36,7 +36,6 @@ import (
 	"github.com/ethereum/go-ethereum/contracts/nexty/token"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
@@ -556,29 +555,6 @@ func (d *Dccs) calcDelayTimeForOffset(pos int) time.Duration {
 	return delay
 }
 
-func deployContract(state *state.StateDB, address common.Address, code []byte, storage map[common.Hash]common.Hash, overwrite bool) {
-	// Ensure there's no existing contract already at the designated address
-	contractHash := state.GetCodeHash(address)
-	// this is an consensus upgrade
-	exist := state.GetNonce(address) != 0 || (contractHash != (common.Hash{}) && contractHash != vm.EmptyCodeHash)
-	if !exist {
-		// Create a new account on the state
-		state.CreateAccount(address)
-		// Assuming chainConfig.IsEIP158(BlockNumber)
-		state.SetNonce(address, 1)
-	} else if !overwrite {
-		// disable overwrite flag to prevent unintentional contract upgrade
-		return
-	}
-
-	// Transfer the code and state from simulated backend to the real state db
-	state.SetCode(address, code)
-	for key, value := range storage {
-		state.SetState(address, key, value)
-	}
-	state.Commit(true)
-}
-
 // deployConsensusContracts deploys the consensus contract without any owner
 func deployConsensusContracts(state *state.StateDB, chainConfig *params.ChainConfig, signers []common.Address) error {
 	// Deploy NTF ERC20 Token Contract
@@ -597,7 +573,7 @@ func deployConsensusContracts(state *state.StateDB, chainConfig *params.ChainCon
 		storage[common.BigToHash(common.Big0)] = owner.Hash()
 
 		// Deploy only, no upgrade
-		deployContract(state, params.TokenAddress, code, storage, false)
+		deployContract(state, params.TokenAddress, code, storage, false, false)
 	}
 
 	// Deploy Nexty Governance Contract
@@ -613,7 +589,7 @@ func deployConsensusContracts(state *state.StateDB, chainConfig *params.ChainCon
 			return err
 		}
 		// Deploy or update
-		deployContract(state, chainConfig.Dccs.Contract, code, storage, true)
+		deployContract(state, chainConfig.Dccs.Contract, code, storage, true, false)
 	}
 
 	return nil
