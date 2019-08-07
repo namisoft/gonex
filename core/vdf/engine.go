@@ -91,6 +91,7 @@ func (e *Engine) Generate(seed []byte, iteration uint64, bitSize uint64, stop <-
 
 	var done chan struct{}
 	if stop != nil {
+		done = make(chan struct{})
 		go func() {
 			select {
 			case <-stop:
@@ -103,6 +104,7 @@ func (e *Engine) Generate(seed []byte, iteration uint64, bitSize uint64, stop <-
 				}
 				return
 			case <-done:
+				log.Trace("vdf.Generate: vdf-cli done")
 				return
 			}
 		}()
@@ -110,6 +112,15 @@ func (e *Engine) Generate(seed []byte, iteration uint64, bitSize uint64, stop <-
 
 	log.Trace("vdf.Generate", "seed", common.Bytes2Hex(seed), "iteration", iteration, "output", common.Bytes2Hex(output))
 	output, err = cmd.Output()
+
+	if stop != nil && done != nil {
+		// release the stopping goroutine above
+		select {
+		case done <- struct{}{}:
+		default:
+		}
+	}
+
 	if err, ok := err.(*exec.ExitError); ok {
 		// verification failed
 		log.Trace("vdf.Generate", "error code", err.Error())
@@ -119,11 +130,6 @@ func (e *Engine) Generate(seed []byte, iteration uint64, bitSize uint64, stop <-
 		// sum ting wong
 		log.Error("vdf.Generate", "error", err)
 		return nil, err
-	}
-
-	if stop != nil && done != nil {
-		// prevent goroutine leakage
-		done <- struct{}{}
 	}
 
 	strOutput := strings.TrimSpace(string(output))
