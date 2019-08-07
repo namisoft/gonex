@@ -40,11 +40,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
-	lru "github.com/hashicorp/golang-lru"
-)
-
-const (
-	wiggleTime = 500 * time.Millisecond // Random delay (per signer) to allow concurrent signers
 )
 
 var (
@@ -559,31 +554,6 @@ func (d *Dccs) calcDelayTimeForOffset(pos int) time.Duration {
 	wiggle = wiggle * float64(time.Millisecond)
 	delay += time.Duration(int64(wiggle))
 	return delay
-}
-
-// ecrecover extracts the Ethereum account address from a signed header.
-func ecrecover(header *types.Header, sigcache *lru.ARCCache) (common.Address, error) {
-	// If the signature's already cached, return that
-	hash := header.Hash()
-	if address, known := sigcache.Get(hash); known {
-		return address.(common.Address), nil
-	}
-	// Retrieve the signature from the header extra-data
-	if len(header.Extra) < extraSeal {
-		return common.Address{}, errMissingSignature
-	}
-	signature := header.Extra[len(header.Extra)-extraSeal:]
-
-	// Recover the public key and the Ethereum address
-	pubkey, err := crypto.Ecrecover(SealHash(header).Bytes(), signature)
-	if err != nil {
-		return common.Address{}, err
-	}
-	var signer common.Address
-	copy(signer[:], crypto.Keccak256(pubkey[1:])[12:])
-
-	sigcache.Add(hash, signer)
-	return signer, nil
 }
 
 func deployContract(state *state.StateDB, address common.Address, code []byte, storage map[common.Hash]common.Hash, overwrite bool) {

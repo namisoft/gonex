@@ -395,3 +395,28 @@ func encodeSigHeader(w io.Writer, header *types.Header) {
 		panic("can't encode: " + err.Error())
 	}
 }
+
+// ecrecover extracts the Ethereum account address from a signed header.
+func ecrecover(header *types.Header, sigcache *lru.ARCCache) (common.Address, error) {
+	// If the signature's already cached, return that
+	hash := header.Hash()
+	if address, known := sigcache.Get(hash); known {
+		return address.(common.Address), nil
+	}
+	// Retrieve the signature from the header extra-data
+	if len(header.Extra) < extraSeal {
+		return common.Address{}, errMissingSignature
+	}
+	signature := header.Extra[len(header.Extra)-extraSeal:]
+
+	// Recover the public key and the Ethereum address
+	pubkey, err := crypto.Ecrecover(SealHash(header).Bytes(), signature)
+	if err != nil {
+		return common.Address{}, err
+	}
+	var signer common.Address
+	copy(signer[:], crypto.Keccak256(pubkey[1:])[12:])
+
+	sigcache.Add(hash, signer)
+	return signer, nil
+}

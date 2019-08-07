@@ -34,7 +34,8 @@ import (
 )
 
 const (
-	checkpointInterval = 1024 // Number of blocks after which to save the vote snapshot to the database
+	checkpointInterval = 1024                   // Number of blocks after which to save the vote snapshot to the database
+	wiggleTime         = 500 * time.Millisecond // Random delay (per signer) to allow concurrent signers
 )
 
 var (
