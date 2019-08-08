@@ -23,6 +23,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
+	"github.com/ethereum/go-ethereum/consensus/ethash"
 	"github.com/ethereum/go-ethereum/core/vdf"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/bn256"
@@ -72,6 +73,7 @@ var PrecompiledContractsCoLoa = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{0x06}): &bn256Add{},
 	common.BytesToAddress([]byte{0x07}): &bn256ScalarMul{},
 	common.BytesToAddress([]byte{0x08}): &bn256Pairing{},
+	common.BytesToAddress([]byte{0xFE}): &ethashVerify{},
 	common.BytesToAddress([]byte{0xFF}): &vdfVerify{},
 }
 
@@ -345,6 +347,9 @@ var (
 
 	// errVDFVerificationFailed is returned if there is something wrong with vdf verification process.
 	errVDFVerificationFailed = errors.New("VDF verification internal error")
+
+	// errBadEthashInputLen is returned if the ethash verification input length is invalid.
+	errBadEthashInputLen = errors.New("bad ethash verification input length")
 )
 
 // bn256Pairing implements a pairing pre-compile for the bn256 curve
@@ -426,4 +431,29 @@ func (c *vdfVerify) Run(input []byte) (valid []byte, err error) {
 		return true32Byte, nil
 	}
 	return false32Byte, nil
+}
+
+// ethashVerify implements the Ethash verification for ETH and ETC consensus
+type ethashVerify struct{}
+
+// RequiredGas returns the gas required to execute the pre-compiled contract.
+func (c *ethashVerify) RequiredGas(input []byte) uint64 {
+	return params.EthashVerifyGas
+}
+
+func (c *ethashVerify) Run(input []byte) (valid []byte, err error) {
+	if uint64(len(input)) != 32*5 {
+		log.Error("EthashVerify", "error", errBadVDFInputLen, "input len", len(input), "expected", 32*5)
+		return nil, errBadEthashInputLen
+	}
+	number := new(big.Int).SetBytes(getData(input, 0, 32))
+	diffculty := new(big.Int).SetBytes(getData(input, 32, 32))
+	nonce := new(big.Int).SetBytes(getData(input, 32*2, 32))
+	mixDigest := common.BytesToHash(getData(input, 32*3, 32))
+	sealHash := common.BytesToHash(getData(input, 32*4, 32))
+	err = ethash.Instance().Verify(number, diffculty, nonce, mixDigest, sealHash)
+	if err != nil {
+		return false32Byte, nil
+	}
+	return true32Byte, nil
 }

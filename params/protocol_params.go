@@ -89,6 +89,7 @@ const (
 	Bn256PairingPerPointGas uint64 = 80000  // Per-point price for an elliptic curve pairing check
 	VDFVerifyBaseGas        uint64 = 130000 // Base price for a VDF verification
 	VDFVerifyPerBitGas      uint64 = 15000  // Per-bit integer size for a VDF verification
+	EthashVerifyGas         uint64 = 60000  // Gas needed for an Ethash verification
 )
 
 var (
