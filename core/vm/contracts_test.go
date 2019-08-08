@@ -21,7 +21,10 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/consensus/ethash"
+
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 // precompiledTest defines the input/output pairs for precompiled contract tests.
@@ -337,7 +340,7 @@ var bn256PairingTests = []precompiledTest{
 }
 
 func testPrecompiled(addr string, test precompiledTest, t *testing.T) {
-	p := PrecompiledContractsByzantium[common.HexToAddress(addr)]
+	p := PrecompiledContractsCoLoa[common.HexToAddress(addr)]
 	in := common.Hex2Bytes(test.input)
 	contract := NewContract(AccountRef(common.HexToAddress("1337")),
 		nil, new(big.Int), p.RequiredGas(in))
@@ -479,5 +482,88 @@ func TestPrecompiledBn256Pairing(t *testing.T) {
 func BenchmarkPrecompiledBn256Pairing(bench *testing.B) {
 	for _, test := range bn256PairingTests {
 		benchmarkPrecompiled("08", test, bench)
+	}
+}
+
+func TestPrecompiledEthashVerify(t *testing.T) {
+	var headers = []types.Header{
+		{
+			ParentHash:  common.HexToHash("d4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3"),
+			UncleHash:   common.HexToHash("1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"),
+			Coinbase:    common.HexToAddress("05a56E2D52c817161883f50c441c3228CFe54d9f"),
+			Root:        common.HexToHash("d67e4d450343046425ae4271474353857ab860dbc0a1dde64b41b5cd3a532bf3"),
+			TxHash:      common.HexToHash("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"),
+			ReceiptHash: common.HexToHash("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"),
+			Bloom:       types.BytesToBloom(common.FromHex("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")),
+			Difficulty:  big.NewInt(17171480576),
+			Number:      big.NewInt(1),
+			GasLimit:    5000,
+			GasUsed:     0,
+			Time:        1438269988,
+			Extra:       common.Hex2Bytes("476574682f76312e302e302f6c696e75782f676f312e342e32"),
+			MixDigest:   common.HexToHash("969b900de27b6ac6a67742365dd65f55a0526c41fd18e1b16f1a1215c2e66f59"),
+			Nonce:       types.BlockNonce{0x53, 0x9b, 0xd4, 0x97, 0x9f, 0xef, 0x1e, 0xc4},
+		},
+		{
+			ParentHash:  common.HexToHash("9459ab3822bf13e242d1f9b937ffd5369b9920b47ac53633cc2459eb6dada231"),
+			UncleHash:   common.HexToHash("1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"),
+			Coinbase:    common.HexToAddress("5A0b54D5dc17e0AadC383d2db43B0a0D3E029c4c"),
+			Root:        common.HexToHash("112baf2ccc862b36b0cb3ba66e5fbbe70241ea14c90fce64906072f76ba5df09"),
+			TxHash:      common.HexToHash("5b1debbec02221af406651ed4aa0cf98f7bc3e0c130ba4163d53359d56530513"),
+			ReceiptHash: common.HexToHash("2b1413382ec89f7fdf099d4ce7813d67ffddb1656ca7bfed1eac6f37015bc3a9"),
+			Bloom:       types.BytesToBloom(common.FromHex("0402134512e8946680530e23c290110411083452409831766780f1a05a0008680409010904d620012248541314c2c504835b26200e0b1180013a6948017c109006000062cd330030e944124800122000e6802a008b66500000008c2418c091500001040a2e002304385009080049280b081488530a28441808c1093346811029d001d2a189418000c38c845c400448550540c94405590012814400a1c57821a10a2d98000310200290c435e5031100c08004589120908811602012879405411644035043002c770227b171780b804e5418a9882502000014101661da30e9e8632010208083202010a0690050c00322027ac004000cf000028510c78808808527")),
+			Difficulty:  big.NewInt(2293182548256191),
+			Number:      big.NewInt(8304294),
+			GasLimit:    8003889,
+			GasUsed:     7988204,
+			Time:        1565191526,
+			Extra:       common.Hex2Bytes("5050594520737061726b706f6f6c2d6574682d636e2d687a34"),
+			MixDigest:   common.HexToHash("c70a18bea7e6d2f5b8485277b3a43525980bb33b8917788b83f3536be13e3a98"),
+			Nonce:       types.BlockNonce{0xbb, 0x15, 0x8e, 0xf0, 0x1c, 0x53, 0x30, 0x7c},
+		},
+		{
+			ParentHash:  common.HexToHash("83e13821e9bc6c7dc74eccdca612b556135dfcd1674d404e225899aecec7f31f"),
+			UncleHash:   common.HexToHash("1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"),
+			Coinbase:    common.HexToAddress("5a0b54d5dc17e0aadc383d2db43b0a0d3e029c4c"),
+			Root:        common.HexToHash("2e9fe1672d59f4ca352fb75ef8fd10049afd3dbb090b0e61092a4243d4e2ca1f"),
+			TxHash:      common.HexToHash("d8a891058830e90716645aae40bb4b6996b9e78aa26fcdce7a8dca2af55c13df"),
+			ReceiptHash: common.HexToHash("69cc15f1e524cfffa6a71dd30a6f7d92ec534feb35a837f4aee002026af51932"),
+			Bloom:       types.BytesToBloom(common.FromHex("000e01052c10805c61011e0168102a9a00606410500a4308d1918300000319480c090238a450020089d94042100241228ac802802c244c8901004302a0906511082800c4580784011804d60c0080c200020c0800080c584054014084446030214080a8221a406228e802044b0050184801401202262a4502000201305290809421094700e280208480010082d225081888560ce9a5828144014e90b068f209a310048200c20025800884809075008006705113808005e83421320000183050420c1812521060399b20a080051783474d20004004282a1146252800c01010a2ad2011249014624020239802448081f021560018b0101f09101640005cc01400c4")),
+			Difficulty:  big.NewInt(2337148138724878),
+			Number:      big.NewInt(8308554),
+			GasLimit:    8003902,
+			GasUsed:     7988524,
+			Time:        1565248261,
+			Extra:       common.Hex2Bytes("5050594520737061726b706f6f6c2d6574682d636e2d687a32"),
+			MixDigest:   common.HexToHash("2266f0c6e0451fa681f0fdf9887fb261ef12e1ff2932d4d0f140a6710163904e"),
+			Nonce:       types.BlockNonce{0xef, 0x3f, 0x3e, 0xd0, 0x02, 0x72, 0x02, 0x4e},
+		},
+	}
+
+	for _, header := range headers {
+		test := func(header *types.Header, valid bool) {
+			sealHash := ethash.SealHash(header).Hex()[2:]
+			test := precompiledTest{
+				input: common.BigToHash(header.Number).Hex()[2:] +
+					common.BigToHash(header.Difficulty).Hex()[2:] +
+					common.BigToHash(new(big.Int).SetUint64(header.Nonce.Uint64())).Hex()[2:] +
+					header.MixDigest.Hex()[2:] +
+					sealHash, // seal hash
+				expected: "0000000000000000000000000000000000000000000000000000000000000000",
+				name:     header.Hash().Hex(),
+			}
+			if valid {
+				test.expected = "0000000000000000000000000000000000000000000000000000000000000001"
+			}
+			testPrecompiled("FE", test, t)
+		}
+
+		test(&header, true)
+		header1 := header
+		header1.Nonce = types.EncodeNonce(header1.Nonce.Uint64() + 1)
+		test(&header1, false)
+		header2 := header
+		header2.MixDigest = header2.MixDigest.Plus()
+		test(&header2, false)
 	}
 }
