@@ -143,6 +143,10 @@ type Dccs struct {
 	signer common.Address // Ethereum address of the signing key
 	signFn SignerFn       // Signer function to authorize hashes with
 	lock   sync.RWMutex   // Protects the signer fields
+
+	// CoLoa hard-fork
+	priceEngine     *PriceEngine
+	priceEngineOnce sync.Once
 }
 
 // New creates a Dccs proof-of-foundation consensus engine with the initial
@@ -242,7 +246,7 @@ func (d *Dccs) Prepare(chain consensus.ChainReader, header *types.Header) error 
 // Initialize implements the consensus.Engine
 func (d *Dccs) Initialize(chain consensus.ChainReader, header *types.Header, state *state.StateDB) (types.Transactions, types.Receipts, error) {
 	if chain.Config().IsCoLoa(header.Number) {
-		return nil, nil, nil
+		return d.initialize2(chain, header, state)
 	}
 	return nil, nil, nil
 }

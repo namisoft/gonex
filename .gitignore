@@ -51,3 +51,5 @@ profile.cov
 *.json
 *.key
 passwd
+!package.json
+node_modules

@@ -42,6 +42,10 @@ var (
 	GoerliGenesisHash  = common.HexToHash("0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a")
 	ZeroAddress        = common.HexToAddress("0x0000000000000000000000000000000000000000")
 	TokenAddress       = common.HexToAddress("0x2c783ad80ff980ec75468477e3dd9f86123ecbda") // NTF token contract address
+	// CoLoa contract addresses
+	SeigniorageAddress   = common.HexToAddress("0x0000000000000000000000000000000000123456") // Seigniorage contract address
+	VolatileTokenAddress = common.HexToAddress("0x0000000000000000000000000000000001234567") // MNTY token contract address
+	StableTokenAddress   = common.HexToAddress("0x0000000000000000000000000000000012345678") // NUSD token contract address
 )
 
 // TrustedCheckpoints associates each known checkpoint with the genesis hash of
@@ -87,6 +91,14 @@ var (
 			StakeLockHeight: 30000,
 			ThangLongBlock:  big.NewInt(15360000),
 			ThangLongEpoch:  3000,
+			// CoLoa hard-fork
+			CoLoaBlock:            big.NewInt(30000000),
+			PriceSamplingDuration: 7 * 24 * 60 * 60 / BlockSeconds,
+			PriceSamplingInterval: 10*60/BlockSeconds - 7,
+			AbsorptionDuration:    7 * 24 * 60 * 60 / BlockSeconds / 2,
+			AbsorptionExpiration:  7 * 24 * 60 * 60 / BlockSeconds,
+			SlashingDuration:      7 * 24 * 60 * 60 / BlockSeconds / 2,
+			LockdownExpiration:    7 * 24 * 60 * 60 / BlockSeconds * 2,
 		},
 	}
 
@@ -390,7 +402,21 @@ type DccsConfig struct {
 	ThangLongBlock *big.Int `json:"thangLongBlock,omitempty"` // ThangLong switch block (nil = no fork, 0 = already activated)
 	ThangLongEpoch uint64   `json:"thangLongEpoch"`           // Epoch length to reset votes and checkpoint
 	// CoLoa hardfork
-	CoLoaBlock *big.Int `json:"coLoaBlock,omitempty"`
+	CoLoaBlock            *big.Int `json:"coLoaBlock,omitempty"`
+	PriceSamplingDuration uint64   `json:"priceSamplingDuration"` // number of blocks to take price samples (a week)
+	PriceSamplingInterval uint64   `json:"priceSamplingInterval"` // the largest prime number of blocks in 10 minutes
+	AbsorptionDuration    uint64   `json:"absorptionDuration"`    // each block can absorb a maximum of targetAbsorption/absorptionDuration (half a week)
+	AbsorptionExpiration  uint64   `json:"absorptionExpiration"`  // number of blocks that the absorption will be expired (a week)
+	SlashingDuration      uint64   `json:"slashingDuration"`      // each block can slash a maximum value of d/D/slashingDuration (half a week)
+	LockdownExpiration    uint64   `json:"lockdownExpiration"`    // number of blocks that the lockdown will be expired (2 weeks)
+}
+
+// IsPriceBlock returns whether a block could include a price
+func (c *DccsConfig) IsPriceBlock(number uint64) bool {
+	if c.IsCoLoa(new(big.Int).SetUint64(number)) {
+		return number%c.PriceSamplingInterval == 0
+	}
+	return false
 }
 
 // PositionInEpoch returns the offset of a block from the start of an epoch
@@ -431,6 +457,12 @@ func (c *DccsConfig) String() string {
 		c.ThangLongEpoch,
 		c.Contract.String(),
 		c.CoLoaBlock,
+		c.PriceSamplingDuration,
+		c.PriceSamplingInterval,
+		c.AbsorptionDuration,
+		c.AbsorptionExpiration,
+		c.SlashingDuration,
+		c.LockdownExpiration,
 	)
 }
 

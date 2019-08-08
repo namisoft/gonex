@@ -33,7 +33,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/deployer"
-	"github.com/ethereum/go-ethereum/contracts/nexty/token"
+	"github.com/ethereum/go-ethereum/contracts/nexty/ntf"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
@@ -124,7 +124,13 @@ func (w *wizard) makeGenesis() {
 			ThangLongBlock: common.Big0,
 			ThangLongEpoch: 3000,
 			// CoLoa hardfork
-			CoLoaBlock: common.Big0,
+			CoLoaBlock:            common.Big0,
+			PriceSamplingDuration: 7 * 24 * 60 * 60 / 2,
+			PriceSamplingInterval: 10*60/2 - 7,
+			AbsorptionDuration:    7 * 24 * 60 * 60 / 2 / 2,
+			AbsorptionExpiration:  7 * 24 * 60 * 60 / 2,
+			SlashingDuration:      7 * 24 * 60 * 60 / 2 / 2,
+			LockdownExpiration:    7 * 24 * 60 * 60 / 2 * 2,
 		}
 		fmt.Println()
 		fmt.Println("How many seconds should blocks take? (default = 2)")
@@ -192,7 +198,7 @@ func (w *wizard) makeGenesis() {
 		}
 		if onwer != nil {
 			code, storage, err := deployer.DeployContract(func(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (common.Address, error) {
-				address, _, _, err := token.DeployNtfToken(auth, sim, *onwer)
+				address, _, _, err := ntf.DeployNtfToken(auth, sim, *onwer)
 				return address, err
 			})
 			if err != nil {
@@ -211,6 +217,30 @@ func (w *wizard) makeGenesis() {
 		fmt.Println()
 		fmt.Printf("Which block should CoLoa come into effect? (default = %v)\n", genesis.Config.Dccs.CoLoaBlock)
 		genesis.Config.Dccs.CoLoaBlock = w.readDefaultBigInt(genesis.Config.Dccs.CoLoaBlock)
+
+		fmt.Println()
+		fmt.Printf("How long should the price be sampled for supply absorption? (default = %v)\n", genesis.Config.Dccs.PriceSamplingDuration)
+		genesis.Config.Dccs.PriceSamplingDuration = uint64(w.readDefaultInt(int(genesis.Config.Dccs.PriceSamplingDuration)))
+
+		fmt.Println()
+		fmt.Printf("How often should the price be sampled for supply absorption? (default = %v)\n", genesis.Config.Dccs.PriceSamplingInterval)
+		genesis.Config.Dccs.PriceSamplingInterval = uint64(w.readDefaultInt(int(genesis.Config.Dccs.PriceSamplingInterval)))
+
+		fmt.Println()
+		fmt.Printf("How quick should an absorption take? (default = %v)\n", genesis.Config.Dccs.AbsorptionDuration)
+		genesis.Config.Dccs.AbsorptionDuration = uint64(w.readDefaultInt(int(genesis.Config.Dccs.AbsorptionDuration)))
+
+		fmt.Println()
+		fmt.Printf("How long should an absorption expire? (default = %v)\n", genesis.Config.Dccs.AbsorptionExpiration)
+		genesis.Config.Dccs.AbsorptionExpiration = uint64(w.readDefaultInt(int(genesis.Config.Dccs.AbsorptionExpiration)))
+
+		fmt.Println()
+		fmt.Printf("How quick should a violated initiator is slashed? (default = %v)\n", genesis.Config.Dccs.SlashingDuration)
+		genesis.Config.Dccs.SlashingDuration = uint64(w.readDefaultInt(int(genesis.Config.Dccs.SlashingDuration)))
+
+		fmt.Println()
+		fmt.Printf("How long should a lockdown expire? (default = %v)\n", genesis.Config.Dccs.LockdownExpiration)
+		genesis.Config.Dccs.LockdownExpiration = uint64(w.readDefaultInt(int(genesis.Config.Dccs.LockdownExpiration)))
 
 	default:
 		log.Crit("Invalid consensus engine choice", "choice", choice)

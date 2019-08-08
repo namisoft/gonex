@@ -33,6 +33,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/mclock"
 	"github.com/ethereum/go-ethereum/consensus"
+	"github.com/ethereum/go-ethereum/consensus/dccs"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/eth"
@@ -481,6 +482,11 @@ type blockStats struct {
 	TxHash     common.Hash    `json:"transactionsRoot"`
 	Root       common.Hash    `json:"stateRoot"`
 	Uncles     uncleStats     `json:"uncles"`
+	Price      string         `json:"price"`
+	PriceMed   string         `json:"priceMedian"`
+	ToAbsorb   string         `json:"toAbsorb"`
+	Absorbed   string         `json:"absorbed"`
+	SupplySTB  string         `json:"supplySTB"`
 }
 
 // txStats is the information to report about individual transactions.
@@ -526,6 +532,12 @@ func (s *Service) assembleBlockStats(block *types.Block) *blockStats {
 		td     *big.Int
 		txs    []txStats
 		uncles []*types.Header
+
+		price       string
+		priceMedian string
+		toAbsorb    string
+		absorbed    string
+		supplySTB   string
 	)
 	if s.eth != nil {
 		// Full nodes have all needed information available
@@ -540,6 +552,16 @@ func (s *Service) assembleBlockStats(block *types.Block) *blockStats {
 			txs[i].Hash = tx.Hash()
 		}
 		uncles = block.Uncles()
+
+		if s.eth.BlockChain().Config().IsCoLoa(header.Number) {
+			d, _ := s.engine.(*dccs.Dccs)
+			number := header.Number.Uint64()
+			price = d.PriceEngine().BlockPriceStat(s.eth.BlockChain(), number)
+			priceMedian = d.PriceEngine().MedianPriceStat(s.eth.BlockChain(), number)
+			toAbsorb = dccs.RemainToAbsorbStat(s.eth.BlockChain(), number)
+			absorbed = dccs.AbsorbedStat(s.eth.BlockChain(), number)
+			supplySTB = dccs.StableSupplyStat(s.eth.BlockChain(), number)
+		}
 	} else {
 		// Light nodes would need on-demand lookups for transactions/uncles, skip
 		if block != nil {
@@ -550,6 +572,15 @@ func (s *Service) assembleBlockStats(block *types.Block) *blockStats {
 		td = s.les.BlockChain().GetTd(header.Hash(), header.Number.Uint64())
 		txs = []txStats{}
 	}
+
+	if len(price) == 0 {
+		log.Debug("Not a price block")
+	} else if price == "0" {
+		log.Debug("Report missing price to ethstats")
+	} else {
+		log.Debug("Report block price to ethstats", "price", price)
+	}
+
 	// Assemble and return the block stats
 	author, _ := s.engine.Author(header)
 
@@ -567,6 +598,11 @@ func (s *Service) assembleBlockStats(block *types.Block) *blockStats {
 		TxHash:     header.TxHash,
 		Root:       header.Root,
 		Uncles:     uncles,
+		Price:      price,
+		PriceMed:   priceMedian,
+		ToAbsorb:   toAbsorb,
+		Absorbed:   absorbed,
+		SupplySTB:  supplySTB,
 	}
 }
 

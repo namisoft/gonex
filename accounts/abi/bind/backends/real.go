@@ -1,18 +1,18 @@
-// Copyright 2015 The go-ethereum Authors
-// This file is part of the go-ethereum library.
+// Copyright 2019 The gonex Authors
+// This file is part of the gonex library.
 //
-// The go-ethereum library is free software: you can redistribute it and/or modify
+// The gonex library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-ethereum library is distributed in the hope that it will be useful,
+// The gonex library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
+// along with the gonex library. If not, see <http://www.gnu.org/licenses/>.
 
 package backends
 
@@ -38,15 +38,15 @@ import (
 // This nil assignment ensures compile time that RealBackend implements bind.ContractBackend.
 var _ bind.ContractBackend = (*RealBackend)(nil)
 
-// RealBackend implements bind.ContractBackend, simulating a blockchain in
-// the background. Its main purpose is to allow easily testing contract bindings.
+// RealBackend implements bind.ContractBackend, directly modifying the blockchain state.
+// Its main purpose is to allow easily inter-operating between consensus and contract code.
 type RealBackend struct {
 	blockchain consensus.ChainReader
 	header     *types.Header
 	caller     *common.Address
 
 	mu    sync.Mutex
-	state *state.StateDB // Currently pending state that will be the active on on request
+	state *state.StateDB // The current mutating state.
 
 	events *filters.EventSystem // Event system for filtering log events live
 
@@ -56,6 +56,7 @@ type RealBackend struct {
 // NewRealBackend creates a new binding backend for modifying the real blockchain state.
 func NewRealBackend(chain consensus.ChainReader, header *types.Header, state *state.StateDB, caller *common.Address) *RealBackend {
 	if caller == nil {
+		// zero sender to make sure no one has any special permission
 		caller = &params.ZeroAddress
 	}
 	backend := &RealBackend{
@@ -176,8 +177,7 @@ func (b *RealBackend) PendingNonceAt(ctx context.Context, account common.Address
 	return b.state.GetOrNewStateObject(account).Nonce(), nil
 }
 
-// SuggestGasPrice implements ContractTransactor.SuggestGasPrice. Since the simulated
-// chain doesn't have miners, we just return a gas price of 1 for any call.
+// SuggestGasPrice implements ContractTransactor.SuggestGasPrice.
 func (b *RealBackend) SuggestGasPrice(ctx context.Context) (*big.Int, error) {
 	return common.Big0, nil
 }

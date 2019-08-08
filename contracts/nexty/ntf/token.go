@@ -1,7 +1,7 @@
 // Code generated - DO NOT EDIT.
 // This file is a generated binding and any manual changes will be lost.
 
-package token
+package ntf
 
 import (
 	"math/big"
@@ -190,7 +190,7 @@ func (_IERC20 *IERC20TransactorRaw) Transact(opts *bind.TransactOpts, method str
 
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
-// Solidity: function allowance(owner address, spender address) constant returns(uint256)
+// Solidity: function allowance(address owner, address spender) constant returns(uint256)
 func (_IERC20 *IERC20Caller) Allowance(opts *bind.CallOpts, owner common.Address, spender common.Address) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -202,21 +202,21 @@ func (_IERC20 *IERC20Caller) Allowance(opts *bind.CallOpts, owner common.Address
 
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
-// Solidity: function allowance(owner address, spender address) constant returns(uint256)
+// Solidity: function allowance(address owner, address spender) constant returns(uint256)
 func (_IERC20 *IERC20Session) Allowance(owner common.Address, spender common.Address) (*big.Int, error) {
 	return _IERC20.Contract.Allowance(&_IERC20.CallOpts, owner, spender)
 }
 
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
-// Solidity: function allowance(owner address, spender address) constant returns(uint256)
+// Solidity: function allowance(address owner, address spender) constant returns(uint256)
 func (_IERC20 *IERC20CallerSession) Allowance(owner common.Address, spender common.Address) (*big.Int, error) {
 	return _IERC20.Contract.Allowance(&_IERC20.CallOpts, owner, spender)
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(who address) constant returns(uint256)
+// Solidity: function balanceOf(address who) constant returns(uint256)
 func (_IERC20 *IERC20Caller) BalanceOf(opts *bind.CallOpts, who common.Address) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -228,14 +228,14 @@ func (_IERC20 *IERC20Caller) BalanceOf(opts *bind.CallOpts, who common.Address) 
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(who address) constant returns(uint256)
+// Solidity: function balanceOf(address who) constant returns(uint256)
 func (_IERC20 *IERC20Session) BalanceOf(who common.Address) (*big.Int, error) {
 	return _IERC20.Contract.BalanceOf(&_IERC20.CallOpts, who)
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(who address) constant returns(uint256)
+// Solidity: function balanceOf(address who) constant returns(uint256)
 func (_IERC20 *IERC20CallerSession) BalanceOf(who common.Address) (*big.Int, error) {
 	return _IERC20.Contract.BalanceOf(&_IERC20.CallOpts, who)
 }
@@ -268,63 +268,63 @@ func (_IERC20 *IERC20CallerSession) TotalSupply() (*big.Int, error) {
 
 // Approve is a paid mutator transaction binding the contract method 0x095ea7b3.
 //
-// Solidity: function approve(spender address, value uint256) returns(bool)
+// Solidity: function approve(address spender, uint256 value) returns(bool)
 func (_IERC20 *IERC20Transactor) Approve(opts *bind.TransactOpts, spender common.Address, value *big.Int) (*types.Transaction, error) {
 	return _IERC20.contract.Transact(opts, "approve", spender, value)
 }
 
 // Approve is a paid mutator transaction binding the contract method 0x095ea7b3.
 //
-// Solidity: function approve(spender address, value uint256) returns(bool)
+// Solidity: function approve(address spender, uint256 value) returns(bool)
 func (_IERC20 *IERC20Session) Approve(spender common.Address, value *big.Int) (*types.Transaction, error) {
 	return _IERC20.Contract.Approve(&_IERC20.TransactOpts, spender, value)
 }
 
 // Approve is a paid mutator transaction binding the contract method 0x095ea7b3.
 //
-// Solidity: function approve(spender address, value uint256) returns(bool)
+// Solidity: function approve(address spender, uint256 value) returns(bool)
 func (_IERC20 *IERC20TransactorSession) Approve(spender common.Address, value *big.Int) (*types.Transaction, error) {
 	return _IERC20.Contract.Approve(&_IERC20.TransactOpts, spender, value)
 }
 
 // Transfer is a paid mutator transaction binding the contract method 0xa9059cbb.
 //
-// Solidity: function transfer(to address, value uint256) returns(bool)
+// Solidity: function transfer(address to, uint256 value) returns(bool)
 func (_IERC20 *IERC20Transactor) Transfer(opts *bind.TransactOpts, to common.Address, value *big.Int) (*types.Transaction, error) {
 	return _IERC20.contract.Transact(opts, "transfer", to, value)
 }
 
 // Transfer is a paid mutator transaction binding the contract method 0xa9059cbb.
 //
-// Solidity: function transfer(to address, value uint256) returns(bool)
+// Solidity: function transfer(address to, uint256 value) returns(bool)
 func (_IERC20 *IERC20Session) Transfer(to common.Address, value *big.Int) (*types.Transaction, error) {
 	return _IERC20.Contract.Transfer(&_IERC20.TransactOpts, to, value)
 }
 
 // Transfer is a paid mutator transaction binding the contract method 0xa9059cbb.
 //
-// Solidity: function transfer(to address, value uint256) returns(bool)
+// Solidity: function transfer(address to, uint256 value) returns(bool)
 func (_IERC20 *IERC20TransactorSession) Transfer(to common.Address, value *big.Int) (*types.Transaction, error) {
 	return _IERC20.Contract.Transfer(&_IERC20.TransactOpts, to, value)
 }
 
 // TransferFrom is a paid mutator transaction binding the contract method 0x23b872dd.
 //
-// Solidity: function transferFrom(from address, to address, value uint256) returns(bool)
+// Solidity: function transferFrom(address from, address to, uint256 value) returns(bool)
 func (_IERC20 *IERC20Transactor) TransferFrom(opts *bind.TransactOpts, from common.Address, to common.Address, value *big.Int) (*types.Transaction, error) {
 	return _IERC20.contract.Transact(opts, "transferFrom", from, to, value)
 }
 
 // TransferFrom is a paid mutator transaction binding the contract method 0x23b872dd.
 //
-// Solidity: function transferFrom(from address, to address, value uint256) returns(bool)
+// Solidity: function transferFrom(address from, address to, uint256 value) returns(bool)
 func (_IERC20 *IERC20Session) TransferFrom(from common.Address, to common.Address, value *big.Int) (*types.Transaction, error) {
 	return _IERC20.Contract.TransferFrom(&_IERC20.TransactOpts, from, to, value)
 }
 
 // TransferFrom is a paid mutator transaction binding the contract method 0x23b872dd.
 //
-// Solidity: function transferFrom(from address, to address, value uint256) returns(bool)
+// Solidity: function transferFrom(address from, address to, uint256 value) returns(bool)
 func (_IERC20 *IERC20TransactorSession) TransferFrom(from common.Address, to common.Address, value *big.Int) (*types.Transaction, error) {
 	return _IERC20.Contract.TransferFrom(&_IERC20.TransactOpts, from, to, value)
 }
@@ -406,7 +406,7 @@ type IERC20Approval struct {
 
 // FilterApproval is a free log retrieval operation binding the contract event 0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925.
 //
-// Solidity: e Approval(owner indexed address, spender indexed address, value uint256)
+// Solidity: event Approval(address indexed owner, address indexed spender, uint256 value)
 func (_IERC20 *IERC20Filterer) FilterApproval(opts *bind.FilterOpts, owner []common.Address, spender []common.Address) (*IERC20ApprovalIterator, error) {
 
 	var ownerRule []interface{}
@@ -427,7 +427,7 @@ func (_IERC20 *IERC20Filterer) FilterApproval(opts *bind.FilterOpts, owner []com
 
 // WatchApproval is a free log subscription operation binding the contract event 0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925.
 //
-// Solidity: e Approval(owner indexed address, spender indexed address, value uint256)
+// Solidity: event Approval(address indexed owner, address indexed spender, uint256 value)
 func (_IERC20 *IERC20Filterer) WatchApproval(opts *bind.WatchOpts, sink chan<- *IERC20Approval, owner []common.Address, spender []common.Address) (event.Subscription, error) {
 
 	var ownerRule []interface{}
@@ -548,7 +548,7 @@ type IERC20Transfer struct {
 
 // FilterTransfer is a free log retrieval operation binding the contract event 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef.
 //
-// Solidity: e Transfer(from indexed address, to indexed address, value uint256)
+// Solidity: event Transfer(address indexed from, address indexed to, uint256 value)
 func (_IERC20 *IERC20Filterer) FilterTransfer(opts *bind.FilterOpts, from []common.Address, to []common.Address) (*IERC20TransferIterator, error) {
 
 	var fromRule []interface{}
@@ -569,7 +569,7 @@ func (_IERC20 *IERC20Filterer) FilterTransfer(opts *bind.FilterOpts, from []comm
 
 // WatchTransfer is a free log subscription operation binding the contract event 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef.
 //
-// Solidity: e Transfer(from indexed address, to indexed address, value uint256)
+// Solidity: event Transfer(address indexed from, address indexed to, uint256 value)
 func (_IERC20 *IERC20Filterer) WatchTransfer(opts *bind.WatchOpts, sink chan<- *IERC20Transfer, from []common.Address, to []common.Address) (event.Subscription, error) {
 
 	var fromRule []interface{}
@@ -828,7 +828,7 @@ func (_MultiOwnable *MultiOwnableCallerSession) Manager() (common.Address, error
 
 // OwnerByAddress is a free data retrieval call binding the contract method 0xeb6b192f.
 //
-// Solidity: function ownerByAddress( address) constant returns(bool)
+// Solidity: function ownerByAddress(address ) constant returns(bool)
 func (_MultiOwnable *MultiOwnableCaller) OwnerByAddress(opts *bind.CallOpts, arg0 common.Address) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -840,21 +840,21 @@ func (_MultiOwnable *MultiOwnableCaller) OwnerByAddress(opts *bind.CallOpts, arg
 
 // OwnerByAddress is a free data retrieval call binding the contract method 0xeb6b192f.
 //
-// Solidity: function ownerByAddress( address) constant returns(bool)
+// Solidity: function ownerByAddress(address ) constant returns(bool)
 func (_MultiOwnable *MultiOwnableSession) OwnerByAddress(arg0 common.Address) (bool, error) {
 	return _MultiOwnable.Contract.OwnerByAddress(&_MultiOwnable.CallOpts, arg0)
 }
 
 // OwnerByAddress is a free data retrieval call binding the contract method 0xeb6b192f.
 //
-// Solidity: function ownerByAddress( address) constant returns(bool)
+// Solidity: function ownerByAddress(address ) constant returns(bool)
 func (_MultiOwnable *MultiOwnableCallerSession) OwnerByAddress(arg0 common.Address) (bool, error) {
 	return _MultiOwnable.Contract.OwnerByAddress(&_MultiOwnable.CallOpts, arg0)
 }
 
 // Owners is a free data retrieval call binding the contract method 0x025e7c27.
 //
-// Solidity: function owners( uint256) constant returns(address)
+// Solidity: function owners(uint256 ) constant returns(address)
 func (_MultiOwnable *MultiOwnableCaller) Owners(opts *bind.CallOpts, arg0 *big.Int) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -866,35 +866,35 @@ func (_MultiOwnable *MultiOwnableCaller) Owners(opts *bind.CallOpts, arg0 *big.I
 
 // Owners is a free data retrieval call binding the contract method 0x025e7c27.
 //
-// Solidity: function owners( uint256) constant returns(address)
+// Solidity: function owners(uint256 ) constant returns(address)
 func (_MultiOwnable *MultiOwnableSession) Owners(arg0 *big.Int) (common.Address, error) {
 	return _MultiOwnable.Contract.Owners(&_MultiOwnable.CallOpts, arg0)
 }
 
 // Owners is a free data retrieval call binding the contract method 0x025e7c27.
 //
-// Solidity: function owners( uint256) constant returns(address)
+// Solidity: function owners(uint256 ) constant returns(address)
 func (_MultiOwnable *MultiOwnableCallerSession) Owners(arg0 *big.Int) (common.Address, error) {
 	return _MultiOwnable.Contract.Owners(&_MultiOwnable.CallOpts, arg0)
 }
 
 // SetOwners is a paid mutator transaction binding the contract method 0xfa4d3698.
 //
-// Solidity: function setOwners(_owners address[]) returns()
+// Solidity: function setOwners(address[] _owners) returns()
 func (_MultiOwnable *MultiOwnableTransactor) SetOwners(opts *bind.TransactOpts, _owners []common.Address) (*types.Transaction, error) {
 	return _MultiOwnable.contract.Transact(opts, "setOwners", _owners)
 }
 
 // SetOwners is a paid mutator transaction binding the contract method 0xfa4d3698.
 //
-// Solidity: function setOwners(_owners address[]) returns()
+// Solidity: function setOwners(address[] _owners) returns()
 func (_MultiOwnable *MultiOwnableSession) SetOwners(_owners []common.Address) (*types.Transaction, error) {
 	return _MultiOwnable.Contract.SetOwners(&_MultiOwnable.TransactOpts, _owners)
 }
 
 // SetOwners is a paid mutator transaction binding the contract method 0xfa4d3698.
 //
-// Solidity: function setOwners(_owners address[]) returns()
+// Solidity: function setOwners(address[] _owners) returns()
 func (_MultiOwnable *MultiOwnableTransactorSession) SetOwners(_owners []common.Address) (*types.Transaction, error) {
 	return _MultiOwnable.Contract.SetOwners(&_MultiOwnable.TransactOpts, _owners)
 }
@@ -974,7 +974,7 @@ type MultiOwnableSetOwners struct {
 
 // FilterSetOwners is a free log retrieval operation binding the contract event 0x9465cd279c2de393c5568ae444599e3644e3d1864ca2c05ced8a654df2aea3cb.
 //
-// Solidity: e SetOwners(owners address[])
+// Solidity: event SetOwners(address[] owners)
 func (_MultiOwnable *MultiOwnableFilterer) FilterSetOwners(opts *bind.FilterOpts) (*MultiOwnableSetOwnersIterator, error) {
 
 	logs, sub, err := _MultiOwnable.contract.FilterLogs(opts, "SetOwners")
@@ -986,7 +986,7 @@ func (_MultiOwnable *MultiOwnableFilterer) FilterSetOwners(opts *bind.FilterOpts
 
 // WatchSetOwners is a free log subscription operation binding the contract event 0x9465cd279c2de393c5568ae444599e3644e3d1864ca2c05ced8a654df2aea3cb.
 //
-// Solidity: e SetOwners(owners address[])
+// Solidity: event SetOwners(address[] owners)
 func (_MultiOwnable *MultiOwnableFilterer) WatchSetOwners(opts *bind.WatchOpts, sink chan<- *MultiOwnableSetOwners) (event.Subscription, error) {
 
 	logs, sub, err := _MultiOwnable.contract.WatchLogs(opts, "SetOwners")
@@ -1210,7 +1210,7 @@ func (_NtfToken *NtfTokenCallerSession) INITIALSUPPLY() (*big.Int, error) {
 
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
-// Solidity: function allowance(_owner address, _spender address) constant returns(remaining uint256)
+// Solidity: function allowance(address _owner, address _spender) constant returns(uint256 remaining)
 func (_NtfToken *NtfTokenCaller) Allowance(opts *bind.CallOpts, _owner common.Address, _spender common.Address) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -1222,21 +1222,21 @@ func (_NtfToken *NtfTokenCaller) Allowance(opts *bind.CallOpts, _owner common.Ad
 
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
-// Solidity: function allowance(_owner address, _spender address) constant returns(remaining uint256)
+// Solidity: function allowance(address _owner, address _spender) constant returns(uint256 remaining)
 func (_NtfToken *NtfTokenSession) Allowance(_owner common.Address, _spender common.Address) (*big.Int, error) {
 	return _NtfToken.Contract.Allowance(&_NtfToken.CallOpts, _owner, _spender)
 }
 
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
-// Solidity: function allowance(_owner address, _spender address) constant returns(remaining uint256)
+// Solidity: function allowance(address _owner, address _spender) constant returns(uint256 remaining)
 func (_NtfToken *NtfTokenCallerSession) Allowance(_owner common.Address, _spender common.Address) (*big.Int, error) {
 	return _NtfToken.Contract.Allowance(&_NtfToken.CallOpts, _owner, _spender)
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(_owner address) constant returns(balance uint256)
+// Solidity: function balanceOf(address _owner) constant returns(uint256 balance)
 func (_NtfToken *NtfTokenCaller) BalanceOf(opts *bind.CallOpts, _owner common.Address) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -1248,14 +1248,14 @@ func (_NtfToken *NtfTokenCaller) BalanceOf(opts *bind.CallOpts, _owner common.Ad
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(_owner address) constant returns(balance uint256)
+// Solidity: function balanceOf(address _owner) constant returns(uint256 balance)
 func (_NtfToken *NtfTokenSession) BalanceOf(_owner common.Address) (*big.Int, error) {
 	return _NtfToken.Contract.BalanceOf(&_NtfToken.CallOpts, _owner)
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(_owner address) constant returns(balance uint256)
+// Solidity: function balanceOf(address _owner) constant returns(uint256 balance)
 func (_NtfToken *NtfTokenCallerSession) BalanceOf(_owner common.Address) (*big.Int, error) {
 	return _NtfToken.Contract.BalanceOf(&_NtfToken.CallOpts, _owner)
 }
@@ -1366,7 +1366,7 @@ func (_NtfToken *NtfTokenCallerSession) Name() (string, error) {
 
 // OwnerByAddress is a free data retrieval call binding the contract method 0xeb6b192f.
 //
-// Solidity: function ownerByAddress( address) constant returns(bool)
+// Solidity: function ownerByAddress(address ) constant returns(bool)
 func (_NtfToken *NtfTokenCaller) OwnerByAddress(opts *bind.CallOpts, arg0 common.Address) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -1378,21 +1378,21 @@ func (_NtfToken *NtfTokenCaller) OwnerByAddress(opts *bind.CallOpts, arg0 common
 
 // OwnerByAddress is a free data retrieval call binding the contract method 0xeb6b192f.
 //
-// Solidity: function ownerByAddress( address) constant returns(bool)
+// Solidity: function ownerByAddress(address ) constant returns(bool)
 func (_NtfToken *NtfTokenSession) OwnerByAddress(arg0 common.Address) (bool, error) {
 	return _NtfToken.Contract.OwnerByAddress(&_NtfToken.CallOpts, arg0)
 }
 
 // OwnerByAddress is a free data retrieval call binding the contract method 0xeb6b192f.
 //
-// Solidity: function ownerByAddress( address) constant returns(bool)
+// Solidity: function ownerByAddress(address ) constant returns(bool)
 func (_NtfToken *NtfTokenCallerSession) OwnerByAddress(arg0 common.Address) (bool, error) {
 	return _NtfToken.Contract.OwnerByAddress(&_NtfToken.CallOpts, arg0)
 }
 
 // Owners is a free data retrieval call binding the contract method 0x025e7c27.
 //
-// Solidity: function owners( uint256) constant returns(address)
+// Solidity: function owners(uint256 ) constant returns(address)
 func (_NtfToken *NtfTokenCaller) Owners(opts *bind.CallOpts, arg0 *big.Int) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -1404,14 +1404,14 @@ func (_NtfToken *NtfTokenCaller) Owners(opts *bind.CallOpts, arg0 *big.Int) (com
 
 // Owners is a free data retrieval call binding the contract method 0x025e7c27.
 //
-// Solidity: function owners( uint256) constant returns(address)
+// Solidity: function owners(uint256 ) constant returns(address)
 func (_NtfToken *NtfTokenSession) Owners(arg0 *big.Int) (common.Address, error) {
 	return _NtfToken.Contract.Owners(&_NtfToken.CallOpts, arg0)
 }
 
 // Owners is a free data retrieval call binding the contract method 0x025e7c27.
 //
-// Solidity: function owners( uint256) constant returns(address)
+// Solidity: function owners(uint256 ) constant returns(address)
 func (_NtfToken *NtfTokenCallerSession) Owners(arg0 *big.Int) (common.Address, error) {
 	return _NtfToken.Contract.Owners(&_NtfToken.CallOpts, arg0)
 }
@@ -1522,63 +1522,63 @@ func (_NtfToken *NtfTokenCallerSession) TotalSupply() (*big.Int, error) {
 
 // Approve is a paid mutator transaction binding the contract method 0x095ea7b3.
 //
-// Solidity: function approve(_spender address, _value uint256) returns(bool)
+// Solidity: function approve(address _spender, uint256 _value) returns(bool)
 func (_NtfToken *NtfTokenTransactor) Approve(opts *bind.TransactOpts, _spender common.Address, _value *big.Int) (*types.Transaction, error) {
 	return _NtfToken.contract.Transact(opts, "approve", _spender, _value)
 }
 
 // Approve is a paid mutator transaction binding the contract method 0x095ea7b3.
 //
-// Solidity: function approve(_spender address, _value uint256) returns(bool)
+// Solidity: function approve(address _spender, uint256 _value) returns(bool)
 func (_NtfToken *NtfTokenSession) Approve(_spender common.Address, _value *big.Int) (*types.Transaction, error) {
 	return _NtfToken.Contract.Approve(&_NtfToken.TransactOpts, _spender, _value)
 }
 
 // Approve is a paid mutator transaction binding the contract method 0x095ea7b3.
 //
-// Solidity: function approve(_spender address, _value uint256) returns(bool)
+// Solidity: function approve(address _spender, uint256 _value) returns(bool)
 func (_NtfToken *NtfTokenTransactorSession) Approve(_spender common.Address, _value *big.Int) (*types.Transaction, error) {
 	return _NtfToken.Contract.Approve(&_NtfToken.TransactOpts, _spender, _value)
 }
 
 // DecreaseApproval is a paid mutator transaction binding the contract method 0x66188463.
 //
-// Solidity: function decreaseApproval(_spender address, _subtractedValue uint256) returns(success bool)
+// Solidity: function decreaseApproval(address _spender, uint256 _subtractedValue) returns(bool success)
 func (_NtfToken *NtfTokenTransactor) DecreaseApproval(opts *bind.TransactOpts, _spender common.Address, _subtractedValue *big.Int) (*types.Transaction, error) {
 	return _NtfToken.contract.Transact(opts, "decreaseApproval", _spender, _subtractedValue)
 }
 
 // DecreaseApproval is a paid mutator transaction binding the contract method 0x66188463.
 //
-// Solidity: function decreaseApproval(_spender address, _subtractedValue uint256) returns(success bool)
+// Solidity: function decreaseApproval(address _spender, uint256 _subtractedValue) returns(bool success)
 func (_NtfToken *NtfTokenSession) DecreaseApproval(_spender common.Address, _subtractedValue *big.Int) (*types.Transaction, error) {
 	return _NtfToken.Contract.DecreaseApproval(&_NtfToken.TransactOpts, _spender, _subtractedValue)
 }
 
 // DecreaseApproval is a paid mutator transaction binding the contract method 0x66188463.
 //
-// Solidity: function decreaseApproval(_spender address, _subtractedValue uint256) returns(success bool)
+// Solidity: function decreaseApproval(address _spender, uint256 _subtractedValue) returns(bool success)
 func (_NtfToken *NtfTokenTransactorSession) DecreaseApproval(_spender common.Address, _subtractedValue *big.Int) (*types.Transaction, error) {
 	return _NtfToken.Contract.DecreaseApproval(&_NtfToken.TransactOpts, _spender, _subtractedValue)
 }
 
 // IncreaseApproval is a paid mutator transaction binding the contract method 0xd73dd623.
 //
-// Solidity: function increaseApproval(_spender address, _addedValue uint256) returns(success bool)
+// Solidity: function increaseApproval(address _spender, uint256 _addedValue) returns(bool success)
 func (_NtfToken *NtfTokenTransactor) IncreaseApproval(opts *bind.TransactOpts, _spender common.Address, _addedValue *big.Int) (*types.Transaction, error) {
 	return _NtfToken.contract.Transact(opts, "increaseApproval", _spender, _addedValue)
 }
 
 // IncreaseApproval is a paid mutator transaction binding the contract method 0xd73dd623.
 //
-// Solidity: function increaseApproval(_spender address, _addedValue uint256) returns(success bool)
+// Solidity: function increaseApproval(address _spender, uint256 _addedValue) returns(bool success)
 func (_NtfToken *NtfTokenSession) IncreaseApproval(_spender common.Address, _addedValue *big.Int) (*types.Transaction, error) {
 	return _NtfToken.Contract.IncreaseApproval(&_NtfToken.TransactOpts, _spender, _addedValue)
 }
 
 // IncreaseApproval is a paid mutator transaction binding the contract method 0xd73dd623.
 //
-// Solidity: function increaseApproval(_spender address, _addedValue uint256) returns(success bool)
+// Solidity: function increaseApproval(address _spender, uint256 _addedValue) returns(bool success)
 func (_NtfToken *NtfTokenTransactorSession) IncreaseApproval(_spender common.Address, _addedValue *big.Int) (*types.Transaction, error) {
 	return _NtfToken.Contract.IncreaseApproval(&_NtfToken.TransactOpts, _spender, _addedValue)
 }
@@ -1606,84 +1606,84 @@ func (_NtfToken *NtfTokenTransactorSession) Pause() (*types.Transaction, error) 
 
 // SendTokens is a paid mutator transaction binding the contract method 0x05ab421d.
 //
-// Solidity: function sendTokens(_to address, _amount uint256) returns()
+// Solidity: function sendTokens(address _to, uint256 _amount) returns()
 func (_NtfToken *NtfTokenTransactor) SendTokens(opts *bind.TransactOpts, _to common.Address, _amount *big.Int) (*types.Transaction, error) {
 	return _NtfToken.contract.Transact(opts, "sendTokens", _to, _amount)
 }
 
 // SendTokens is a paid mutator transaction binding the contract method 0x05ab421d.
 //
-// Solidity: function sendTokens(_to address, _amount uint256) returns()
+// Solidity: function sendTokens(address _to, uint256 _amount) returns()
 func (_NtfToken *NtfTokenSession) SendTokens(_to common.Address, _amount *big.Int) (*types.Transaction, error) {
 	return _NtfToken.Contract.SendTokens(&_NtfToken.TransactOpts, _to, _amount)
 }
 
 // SendTokens is a paid mutator transaction binding the contract method 0x05ab421d.
 //
-// Solidity: function sendTokens(_to address, _amount uint256) returns()
+// Solidity: function sendTokens(address _to, uint256 _amount) returns()
 func (_NtfToken *NtfTokenTransactorSession) SendTokens(_to common.Address, _amount *big.Int) (*types.Transaction, error) {
 	return _NtfToken.Contract.SendTokens(&_NtfToken.TransactOpts, _to, _amount)
 }
 
 // SetOwners is a paid mutator transaction binding the contract method 0xfa4d3698.
 //
-// Solidity: function setOwners(_owners address[]) returns()
+// Solidity: function setOwners(address[] _owners) returns()
 func (_NtfToken *NtfTokenTransactor) SetOwners(opts *bind.TransactOpts, _owners []common.Address) (*types.Transaction, error) {
 	return _NtfToken.contract.Transact(opts, "setOwners", _owners)
 }
 
 // SetOwners is a paid mutator transaction binding the contract method 0xfa4d3698.
 //
-// Solidity: function setOwners(_owners address[]) returns()
+// Solidity: function setOwners(address[] _owners) returns()
 func (_NtfToken *NtfTokenSession) SetOwners(_owners []common.Address) (*types.Transaction, error) {
 	return _NtfToken.Contract.SetOwners(&_NtfToken.TransactOpts, _owners)
 }
 
 // SetOwners is a paid mutator transaction binding the contract method 0xfa4d3698.
 //
-// Solidity: function setOwners(_owners address[]) returns()
+// Solidity: function setOwners(address[] _owners) returns()
 func (_NtfToken *NtfTokenTransactorSession) SetOwners(_owners []common.Address) (*types.Transaction, error) {
 	return _NtfToken.Contract.SetOwners(&_NtfToken.TransactOpts, _owners)
 }
 
 // Transfer is a paid mutator transaction binding the contract method 0xa9059cbb.
 //
-// Solidity: function transfer(_to address, _value uint256) returns(bool)
+// Solidity: function transfer(address _to, uint256 _value) returns(bool)
 func (_NtfToken *NtfTokenTransactor) Transfer(opts *bind.TransactOpts, _to common.Address, _value *big.Int) (*types.Transaction, error) {
 	return _NtfToken.contract.Transact(opts, "transfer", _to, _value)
 }
 
 // Transfer is a paid mutator transaction binding the contract method 0xa9059cbb.
 //
-// Solidity: function transfer(_to address, _value uint256) returns(bool)
+// Solidity: function transfer(address _to, uint256 _value) returns(bool)
 func (_NtfToken *NtfTokenSession) Transfer(_to common.Address, _value *big.Int) (*types.Transaction, error) {
 	return _NtfToken.Contract.Transfer(&_NtfToken.TransactOpts, _to, _value)
 }
 
 // Transfer is a paid mutator transaction binding the contract method 0xa9059cbb.
 //
-// Solidity: function transfer(_to address, _value uint256) returns(bool)
+// Solidity: function transfer(address _to, uint256 _value) returns(bool)
 func (_NtfToken *NtfTokenTransactorSession) Transfer(_to common.Address, _value *big.Int) (*types.Transaction, error) {
 	return _NtfToken.Contract.Transfer(&_NtfToken.TransactOpts, _to, _value)
 }
 
 // TransferFrom is a paid mutator transaction binding the contract method 0x23b872dd.
 //
-// Solidity: function transferFrom(_from address, _to address, _value uint256) returns(bool)
+// Solidity: function transferFrom(address _from, address _to, uint256 _value) returns(bool)
 func (_NtfToken *NtfTokenTransactor) TransferFrom(opts *bind.TransactOpts, _from common.Address, _to common.Address, _value *big.Int) (*types.Transaction, error) {
 	return _NtfToken.contract.Transact(opts, "transferFrom", _from, _to, _value)
 }
 
 // TransferFrom is a paid mutator transaction binding the contract method 0x23b872dd.
 //
-// Solidity: function transferFrom(_from address, _to address, _value uint256) returns(bool)
+// Solidity: function transferFrom(address _from, address _to, uint256 _value) returns(bool)
 func (_NtfToken *NtfTokenSession) TransferFrom(_from common.Address, _to common.Address, _value *big.Int) (*types.Transaction, error) {
 	return _NtfToken.Contract.TransferFrom(&_NtfToken.TransactOpts, _from, _to, _value)
 }
 
 // TransferFrom is a paid mutator transaction binding the contract method 0x23b872dd.
 //
-// Solidity: function transferFrom(_from address, _to address, _value uint256) returns(bool)
+// Solidity: function transferFrom(address _from, address _to, uint256 _value) returns(bool)
 func (_NtfToken *NtfTokenTransactorSession) TransferFrom(_from common.Address, _to common.Address, _value *big.Int) (*types.Transaction, error) {
 	return _NtfToken.Contract.TransferFrom(&_NtfToken.TransactOpts, _from, _to, _value)
 }
@@ -1786,7 +1786,7 @@ type NtfTokenApproval struct {
 
 // FilterApproval is a free log retrieval operation binding the contract event 0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925.
 //
-// Solidity: e Approval(owner indexed address, spender indexed address, value uint256)
+// Solidity: event Approval(address indexed owner, address indexed spender, uint256 value)
 func (_NtfToken *NtfTokenFilterer) FilterApproval(opts *bind.FilterOpts, owner []common.Address, spender []common.Address) (*NtfTokenApprovalIterator, error) {
 
 	var ownerRule []interface{}
@@ -1807,7 +1807,7 @@ func (_NtfToken *NtfTokenFilterer) FilterApproval(opts *bind.FilterOpts, owner [
 
 // WatchApproval is a free log subscription operation binding the contract event 0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925.
 //
-// Solidity: e Approval(owner indexed address, spender indexed address, value uint256)
+// Solidity: event Approval(address indexed owner, address indexed spender, uint256 value)
 func (_NtfToken *NtfTokenFilterer) WatchApproval(opts *bind.WatchOpts, sink chan<- *NtfTokenApproval, owner []common.Address, spender []common.Address) (event.Subscription, error) {
 
 	var ownerRule []interface{}
@@ -1925,7 +1925,7 @@ type NtfTokenPause struct {
 
 // FilterPause is a free log retrieval operation binding the contract event 0x6985a02210a168e66602d3235cb6db0e70f92b3ba4d376a33c0f3d9434bff625.
 //
-// Solidity: e Pause()
+// Solidity: event Pause()
 func (_NtfToken *NtfTokenFilterer) FilterPause(opts *bind.FilterOpts) (*NtfTokenPauseIterator, error) {
 
 	logs, sub, err := _NtfToken.contract.FilterLogs(opts, "Pause")
@@ -1937,7 +1937,7 @@ func (_NtfToken *NtfTokenFilterer) FilterPause(opts *bind.FilterOpts) (*NtfToken
 
 // WatchPause is a free log subscription operation binding the contract event 0x6985a02210a168e66602d3235cb6db0e70f92b3ba4d376a33c0f3d9434bff625.
 //
-// Solidity: e Pause()
+// Solidity: event Pause()
 func (_NtfToken *NtfTokenFilterer) WatchPause(opts *bind.WatchOpts, sink chan<- *NtfTokenPause) (event.Subscription, error) {
 
 	logs, sub, err := _NtfToken.contract.WatchLogs(opts, "Pause")
@@ -2047,7 +2047,7 @@ type NtfTokenSetOwners struct {
 
 // FilterSetOwners is a free log retrieval operation binding the contract event 0x9465cd279c2de393c5568ae444599e3644e3d1864ca2c05ced8a654df2aea3cb.
 //
-// Solidity: e SetOwners(owners address[])
+// Solidity: event SetOwners(address[] owners)
 func (_NtfToken *NtfTokenFilterer) FilterSetOwners(opts *bind.FilterOpts) (*NtfTokenSetOwnersIterator, error) {
 
 	logs, sub, err := _NtfToken.contract.FilterLogs(opts, "SetOwners")
@@ -2059,7 +2059,7 @@ func (_NtfToken *NtfTokenFilterer) FilterSetOwners(opts *bind.FilterOpts) (*NtfT
 
 // WatchSetOwners is a free log subscription operation binding the contract event 0x9465cd279c2de393c5568ae444599e3644e3d1864ca2c05ced8a654df2aea3cb.
 //
-// Solidity: e SetOwners(owners address[])
+// Solidity: event SetOwners(address[] owners)
 func (_NtfToken *NtfTokenFilterer) WatchSetOwners(opts *bind.WatchOpts, sink chan<- *NtfTokenSetOwners) (event.Subscription, error) {
 
 	logs, sub, err := _NtfToken.contract.WatchLogs(opts, "SetOwners")
@@ -2171,7 +2171,7 @@ type NtfTokenTransfer struct {
 
 // FilterTransfer is a free log retrieval operation binding the contract event 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef.
 //
-// Solidity: e Transfer(from indexed address, to indexed address, value uint256)
+// Solidity: event Transfer(address indexed from, address indexed to, uint256 value)
 func (_NtfToken *NtfTokenFilterer) FilterTransfer(opts *bind.FilterOpts, from []common.Address, to []common.Address) (*NtfTokenTransferIterator, error) {
 
 	var fromRule []interface{}
@@ -2192,7 +2192,7 @@ func (_NtfToken *NtfTokenFilterer) FilterTransfer(opts *bind.FilterOpts, from []
 
 // WatchTransfer is a free log subscription operation binding the contract event 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef.
 //
-// Solidity: e Transfer(from indexed address, to indexed address, value uint256)
+// Solidity: event Transfer(address indexed from, address indexed to, uint256 value)
 func (_NtfToken *NtfTokenFilterer) WatchTransfer(opts *bind.WatchOpts, sink chan<- *NtfTokenTransfer, from []common.Address, to []common.Address) (event.Subscription, error) {
 
 	var fromRule []interface{}
@@ -2310,7 +2310,7 @@ type NtfTokenUnpause struct {
 
 // FilterUnpause is a free log retrieval operation binding the contract event 0x7805862f689e2f13df9f062ff482ad3ad112aca9e0847911ed832e158c525b33.
 //
-// Solidity: e Unpause()
+// Solidity: event Unpause()
 func (_NtfToken *NtfTokenFilterer) FilterUnpause(opts *bind.FilterOpts) (*NtfTokenUnpauseIterator, error) {
 
 	logs, sub, err := _NtfToken.contract.FilterLogs(opts, "Unpause")
@@ -2322,7 +2322,7 @@ func (_NtfToken *NtfTokenFilterer) FilterUnpause(opts *bind.FilterOpts) (*NtfTok
 
 // WatchUnpause is a free log subscription operation binding the contract event 0x7805862f689e2f13df9f062ff482ad3ad112aca9e0847911ed832e158c525b33.
 //
-// Solidity: e Unpause()
+// Solidity: event Unpause()
 func (_NtfToken *NtfTokenFilterer) WatchUnpause(opts *bind.WatchOpts, sink chan<- *NtfTokenUnpause) (event.Subscription, error) {
 
 	logs, sub, err := _NtfToken.contract.WatchLogs(opts, "Unpause")
@@ -2572,7 +2572,7 @@ func (_Pausable *PausableCallerSession) Manager() (common.Address, error) {
 
 // OwnerByAddress is a free data retrieval call binding the contract method 0xeb6b192f.
 //
-// Solidity: function ownerByAddress( address) constant returns(bool)
+// Solidity: function ownerByAddress(address ) constant returns(bool)
 func (_Pausable *PausableCaller) OwnerByAddress(opts *bind.CallOpts, arg0 common.Address) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -2584,21 +2584,21 @@ func (_Pausable *PausableCaller) OwnerByAddress(opts *bind.CallOpts, arg0 common
 
 // OwnerByAddress is a free data retrieval call binding the contract method 0xeb6b192f.
 //
-// Solidity: function ownerByAddress( address) constant returns(bool)
+// Solidity: function ownerByAddress(address ) constant returns(bool)
 func (_Pausable *PausableSession) OwnerByAddress(arg0 common.Address) (bool, error) {
 	return _Pausable.Contract.OwnerByAddress(&_Pausable.CallOpts, arg0)
 }
 
 // OwnerByAddress is a free data retrieval call binding the contract method 0xeb6b192f.
 //
-// Solidity: function ownerByAddress( address) constant returns(bool)
+// Solidity: function ownerByAddress(address ) constant returns(bool)
 func (_Pausable *PausableCallerSession) OwnerByAddress(arg0 common.Address) (bool, error) {
 	return _Pausable.Contract.OwnerByAddress(&_Pausable.CallOpts, arg0)
 }
 
 // Owners is a free data retrieval call binding the contract method 0x025e7c27.
 //
-// Solidity: function owners( uint256) constant returns(address)
+// Solidity: function owners(uint256 ) constant returns(address)
 func (_Pausable *PausableCaller) Owners(opts *bind.CallOpts, arg0 *big.Int) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -2610,14 +2610,14 @@ func (_Pausable *PausableCaller) Owners(opts *bind.CallOpts, arg0 *big.Int) (com
 
 // Owners is a free data retrieval call binding the contract method 0x025e7c27.
 //
-// Solidity: function owners( uint256) constant returns(address)
+// Solidity: function owners(uint256 ) constant returns(address)
 func (_Pausable *PausableSession) Owners(arg0 *big.Int) (common.Address, error) {
 	return _Pausable.Contract.Owners(&_Pausable.CallOpts, arg0)
 }
 
 // Owners is a free data retrieval call binding the contract method 0x025e7c27.
 //
-// Solidity: function owners( uint256) constant returns(address)
+// Solidity: function owners(uint256 ) constant returns(address)
 func (_Pausable *PausableCallerSession) Owners(arg0 *big.Int) (common.Address, error) {
 	return _Pausable.Contract.Owners(&_Pausable.CallOpts, arg0)
 }
@@ -2671,21 +2671,21 @@ func (_Pausable *PausableTransactorSession) Pause() (*types.Transaction, error) 
 
 // SetOwners is a paid mutator transaction binding the contract method 0xfa4d3698.
 //
-// Solidity: function setOwners(_owners address[]) returns()
+// Solidity: function setOwners(address[] _owners) returns()
 func (_Pausable *PausableTransactor) SetOwners(opts *bind.TransactOpts, _owners []common.Address) (*types.Transaction, error) {
 	return _Pausable.contract.Transact(opts, "setOwners", _owners)
 }
 
 // SetOwners is a paid mutator transaction binding the contract method 0xfa4d3698.
 //
-// Solidity: function setOwners(_owners address[]) returns()
+// Solidity: function setOwners(address[] _owners) returns()
 func (_Pausable *PausableSession) SetOwners(_owners []common.Address) (*types.Transaction, error) {
 	return _Pausable.Contract.SetOwners(&_Pausable.TransactOpts, _owners)
 }
 
 // SetOwners is a paid mutator transaction binding the contract method 0xfa4d3698.
 //
-// Solidity: function setOwners(_owners address[]) returns()
+// Solidity: function setOwners(address[] _owners) returns()
 func (_Pausable *PausableTransactorSession) SetOwners(_owners []common.Address) (*types.Transaction, error) {
 	return _Pausable.Contract.SetOwners(&_Pausable.TransactOpts, _owners)
 }
@@ -2785,7 +2785,7 @@ type PausablePause struct {
 
 // FilterPause is a free log retrieval operation binding the contract event 0x6985a02210a168e66602d3235cb6db0e70f92b3ba4d376a33c0f3d9434bff625.
 //
-// Solidity: e Pause()
+// Solidity: event Pause()
 func (_Pausable *PausableFilterer) FilterPause(opts *bind.FilterOpts) (*PausablePauseIterator, error) {
 
 	logs, sub, err := _Pausable.contract.FilterLogs(opts, "Pause")
@@ -2797,7 +2797,7 @@ func (_Pausable *PausableFilterer) FilterPause(opts *bind.FilterOpts) (*Pausable
 
 // WatchPause is a free log subscription operation binding the contract event 0x6985a02210a168e66602d3235cb6db0e70f92b3ba4d376a33c0f3d9434bff625.
 //
-// Solidity: e Pause()
+// Solidity: event Pause()
 func (_Pausable *PausableFilterer) WatchPause(opts *bind.WatchOpts, sink chan<- *PausablePause) (event.Subscription, error) {
 
 	logs, sub, err := _Pausable.contract.WatchLogs(opts, "Pause")
@@ -2907,7 +2907,7 @@ type PausableSetOwners struct {
 
 // FilterSetOwners is a free log retrieval operation binding the contract event 0x9465cd279c2de393c5568ae444599e3644e3d1864ca2c05ced8a654df2aea3cb.
 //
-// Solidity: e SetOwners(owners address[])
+// Solidity: event SetOwners(address[] owners)
 func (_Pausable *PausableFilterer) FilterSetOwners(opts *bind.FilterOpts) (*PausableSetOwnersIterator, error) {
 
 	logs, sub, err := _Pausable.contract.FilterLogs(opts, "SetOwners")
@@ -2919,7 +2919,7 @@ func (_Pausable *PausableFilterer) FilterSetOwners(opts *bind.FilterOpts) (*Paus
 
 // WatchSetOwners is a free log subscription operation binding the contract event 0x9465cd279c2de393c5568ae444599e3644e3d1864ca2c05ced8a654df2aea3cb.
 //
-// Solidity: e SetOwners(owners address[])
+// Solidity: event SetOwners(address[] owners)
 func (_Pausable *PausableFilterer) WatchSetOwners(opts *bind.WatchOpts, sink chan<- *PausableSetOwners) (event.Subscription, error) {
 
 	logs, sub, err := _Pausable.contract.WatchLogs(opts, "SetOwners")
@@ -3028,7 +3028,7 @@ type PausableUnpause struct {
 
 // FilterUnpause is a free log retrieval operation binding the contract event 0x7805862f689e2f13df9f062ff482ad3ad112aca9e0847911ed832e158c525b33.
 //
-// Solidity: e Unpause()
+// Solidity: event Unpause()
 func (_Pausable *PausableFilterer) FilterUnpause(opts *bind.FilterOpts) (*PausableUnpauseIterator, error) {
 
 	logs, sub, err := _Pausable.contract.FilterLogs(opts, "Unpause")
@@ -3040,7 +3040,7 @@ func (_Pausable *PausableFilterer) FilterUnpause(opts *bind.FilterOpts) (*Pausab
 
 // WatchUnpause is a free log subscription operation binding the contract event 0x7805862f689e2f13df9f062ff482ad3ad112aca9e0847911ed832e158c525b33.
 //
-// Solidity: e Unpause()
+// Solidity: event Unpause()
 func (_Pausable *PausableFilterer) WatchUnpause(opts *bind.WatchOpts, sink chan<- *PausableUnpause) (event.Subscription, error) {
 
 	logs, sub, err := _Pausable.contract.WatchLogs(opts, "Unpause")
@@ -3399,7 +3399,7 @@ func (_StandardToken *StandardTokenTransactorRaw) Transact(opts *bind.TransactOp
 
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
-// Solidity: function allowance(_owner address, _spender address) constant returns(remaining uint256)
+// Solidity: function allowance(address _owner, address _spender) constant returns(uint256 remaining)
 func (_StandardToken *StandardTokenCaller) Allowance(opts *bind.CallOpts, _owner common.Address, _spender common.Address) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -3411,21 +3411,21 @@ func (_StandardToken *StandardTokenCaller) Allowance(opts *bind.CallOpts, _owner
 
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
-// Solidity: function allowance(_owner address, _spender address) constant returns(remaining uint256)
+// Solidity: function allowance(address _owner, address _spender) constant returns(uint256 remaining)
 func (_StandardToken *StandardTokenSession) Allowance(_owner common.Address, _spender common.Address) (*big.Int, error) {
 	return _StandardToken.Contract.Allowance(&_StandardToken.CallOpts, _owner, _spender)
 }
 
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
-// Solidity: function allowance(_owner address, _spender address) constant returns(remaining uint256)
+// Solidity: function allowance(address _owner, address _spender) constant returns(uint256 remaining)
 func (_StandardToken *StandardTokenCallerSession) Allowance(_owner common.Address, _spender common.Address) (*big.Int, error) {
 	return _StandardToken.Contract.Allowance(&_StandardToken.CallOpts, _owner, _spender)
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(_owner address) constant returns(balance uint256)
+// Solidity: function balanceOf(address _owner) constant returns(uint256 balance)
 func (_StandardToken *StandardTokenCaller) BalanceOf(opts *bind.CallOpts, _owner common.Address) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -3437,14 +3437,14 @@ func (_StandardToken *StandardTokenCaller) BalanceOf(opts *bind.CallOpts, _owner
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(_owner address) constant returns(balance uint256)
+// Solidity: function balanceOf(address _owner) constant returns(uint256 balance)
 func (_StandardToken *StandardTokenSession) BalanceOf(_owner common.Address) (*big.Int, error) {
 	return _StandardToken.Contract.BalanceOf(&_StandardToken.CallOpts, _owner)
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(_owner address) constant returns(balance uint256)
+// Solidity: function balanceOf(address _owner) constant returns(uint256 balance)
 func (_StandardToken *StandardTokenCallerSession) BalanceOf(_owner common.Address) (*big.Int, error) {
 	return _StandardToken.Contract.BalanceOf(&_StandardToken.CallOpts, _owner)
 }
@@ -3503,7 +3503,7 @@ func (_StandardToken *StandardTokenCallerSession) Manager() (common.Address, err
 
 // OwnerByAddress is a free data retrieval call binding the contract method 0xeb6b192f.
 //
-// Solidity: function ownerByAddress( address) constant returns(bool)
+// Solidity: function ownerByAddress(address ) constant returns(bool)
 func (_StandardToken *StandardTokenCaller) OwnerByAddress(opts *bind.CallOpts, arg0 common.Address) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -3515,21 +3515,21 @@ func (_StandardToken *StandardTokenCaller) OwnerByAddress(opts *bind.CallOpts, a
 
 // OwnerByAddress is a free data retrieval call binding the contract method 0xeb6b192f.
 //
-// Solidity: function ownerByAddress( address) constant returns(bool)
+// Solidity: function ownerByAddress(address ) constant returns(bool)
 func (_StandardToken *StandardTokenSession) OwnerByAddress(arg0 common.Address) (bool, error) {
 	return _StandardToken.Contract.OwnerByAddress(&_StandardToken.CallOpts, arg0)
 }
 
 // OwnerByAddress is a free data retrieval call binding the contract method 0xeb6b192f.
 //
-// Solidity: function ownerByAddress( address) constant returns(bool)
+// Solidity: function ownerByAddress(address ) constant returns(bool)
 func (_StandardToken *StandardTokenCallerSession) OwnerByAddress(arg0 common.Address) (bool, error) {
 	return _StandardToken.Contract.OwnerByAddress(&_StandardToken.CallOpts, arg0)
 }
 
 // Owners is a free data retrieval call binding the contract method 0x025e7c27.
 //
-// Solidity: function owners( uint256) constant returns(address)
+// Solidity: function owners(uint256 ) constant returns(address)
 func (_StandardToken *StandardTokenCaller) Owners(opts *bind.CallOpts, arg0 *big.Int) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -3541,14 +3541,14 @@ func (_StandardToken *StandardTokenCaller) Owners(opts *bind.CallOpts, arg0 *big
 
 // Owners is a free data retrieval call binding the contract method 0x025e7c27.
 //
-// Solidity: function owners( uint256) constant returns(address)
+// Solidity: function owners(uint256 ) constant returns(address)
 func (_StandardToken *StandardTokenSession) Owners(arg0 *big.Int) (common.Address, error) {
 	return _StandardToken.Contract.Owners(&_StandardToken.CallOpts, arg0)
 }
 
 // Owners is a free data retrieval call binding the contract method 0x025e7c27.
 //
-// Solidity: function owners( uint256) constant returns(address)
+// Solidity: function owners(uint256 ) constant returns(address)
 func (_StandardToken *StandardTokenCallerSession) Owners(arg0 *big.Int) (common.Address, error) {
 	return _StandardToken.Contract.Owners(&_StandardToken.CallOpts, arg0)
 }
@@ -3607,63 +3607,63 @@ func (_StandardToken *StandardTokenCallerSession) TotalSupply() (*big.Int, error
 
 // Approve is a paid mutator transaction binding the contract method 0x095ea7b3.
 //
-// Solidity: function approve(_spender address, _value uint256) returns(bool)
+// Solidity: function approve(address _spender, uint256 _value) returns(bool)
 func (_StandardToken *StandardTokenTransactor) Approve(opts *bind.TransactOpts, _spender common.Address, _value *big.Int) (*types.Transaction, error) {
 	return _StandardToken.contract.Transact(opts, "approve", _spender, _value)
 }
 
 // Approve is a paid mutator transaction binding the contract method 0x095ea7b3.
 //
-// Solidity: function approve(_spender address, _value uint256) returns(bool)
+// Solidity: function approve(address _spender, uint256 _value) returns(bool)
 func (_StandardToken *StandardTokenSession) Approve(_spender common.Address, _value *big.Int) (*types.Transaction, error) {
 	return _StandardToken.Contract.Approve(&_StandardToken.TransactOpts, _spender, _value)
 }
 
 // Approve is a paid mutator transaction binding the contract method 0x095ea7b3.
 //
-// Solidity: function approve(_spender address, _value uint256) returns(bool)
+// Solidity: function approve(address _spender, uint256 _value) returns(bool)
 func (_StandardToken *StandardTokenTransactorSession) Approve(_spender common.Address, _value *big.Int) (*types.Transaction, error) {
 	return _StandardToken.Contract.Approve(&_StandardToken.TransactOpts, _spender, _value)
 }
 
 // DecreaseApproval is a paid mutator transaction binding the contract method 0x66188463.
 //
-// Solidity: function decreaseApproval(_spender address, _subtractedValue uint256) returns(success bool)
+// Solidity: function decreaseApproval(address _spender, uint256 _subtractedValue) returns(bool success)
 func (_StandardToken *StandardTokenTransactor) DecreaseApproval(opts *bind.TransactOpts, _spender common.Address, _subtractedValue *big.Int) (*types.Transaction, error) {
 	return _StandardToken.contract.Transact(opts, "decreaseApproval", _spender, _subtractedValue)
 }
 
 // DecreaseApproval is a paid mutator transaction binding the contract method 0x66188463.
 //
-// Solidity: function decreaseApproval(_spender address, _subtractedValue uint256) returns(success bool)
+// Solidity: function decreaseApproval(address _spender, uint256 _subtractedValue) returns(bool success)
 func (_StandardToken *StandardTokenSession) DecreaseApproval(_spender common.Address, _subtractedValue *big.Int) (*types.Transaction, error) {
 	return _StandardToken.Contract.DecreaseApproval(&_StandardToken.TransactOpts, _spender, _subtractedValue)
 }
 
 // DecreaseApproval is a paid mutator transaction binding the contract method 0x66188463.
 //
-// Solidity: function decreaseApproval(_spender address, _subtractedValue uint256) returns(success bool)
+// Solidity: function decreaseApproval(address _spender, uint256 _subtractedValue) returns(bool success)
 func (_StandardToken *StandardTokenTransactorSession) DecreaseApproval(_spender common.Address, _subtractedValue *big.Int) (*types.Transaction, error) {
 	return _StandardToken.Contract.DecreaseApproval(&_StandardToken.TransactOpts, _spender, _subtractedValue)
 }
 
 // IncreaseApproval is a paid mutator transaction binding the contract method 0xd73dd623.
 //
-// Solidity: function increaseApproval(_spender address, _addedValue uint256) returns(success bool)
+// Solidity: function increaseApproval(address _spender, uint256 _addedValue) returns(bool success)
 func (_StandardToken *StandardTokenTransactor) IncreaseApproval(opts *bind.TransactOpts, _spender common.Address, _addedValue *big.Int) (*types.Transaction, error) {
 	return _StandardToken.contract.Transact(opts, "increaseApproval", _spender, _addedValue)
 }
 
 // IncreaseApproval is a paid mutator transaction binding the contract method 0xd73dd623.
 //
-// Solidity: function increaseApproval(_spender address, _addedValue uint256) returns(success bool)
+// Solidity: function increaseApproval(address _spender, uint256 _addedValue) returns(bool success)
 func (_StandardToken *StandardTokenSession) IncreaseApproval(_spender common.Address, _addedValue *big.Int) (*types.Transaction, error) {
 	return _StandardToken.Contract.IncreaseApproval(&_StandardToken.TransactOpts, _spender, _addedValue)
 }
 
 // IncreaseApproval is a paid mutator transaction binding the contract method 0xd73dd623.
 //
-// Solidity: function increaseApproval(_spender address, _addedValue uint256) returns(success bool)
+// Solidity: function increaseApproval(address _spender, uint256 _addedValue) returns(bool success)
 func (_StandardToken *StandardTokenTransactorSession) IncreaseApproval(_spender common.Address, _addedValue *big.Int) (*types.Transaction, error) {
 	return _StandardToken.Contract.IncreaseApproval(&_StandardToken.TransactOpts, _spender, _addedValue)
 }
@@ -3691,63 +3691,63 @@ func (_StandardToken *StandardTokenTransactorSession) Pause() (*types.Transactio
 
 // SetOwners is a paid mutator transaction binding the contract method 0xfa4d3698.
 //
-// Solidity: function setOwners(_owners address[]) returns()
+// Solidity: function setOwners(address[] _owners) returns()
 func (_StandardToken *StandardTokenTransactor) SetOwners(opts *bind.TransactOpts, _owners []common.Address) (*types.Transaction, error) {
 	return _StandardToken.contract.Transact(opts, "setOwners", _owners)
 }
 
 // SetOwners is a paid mutator transaction binding the contract method 0xfa4d3698.
 //
-// Solidity: function setOwners(_owners address[]) returns()
+// Solidity: function setOwners(address[] _owners) returns()
 func (_StandardToken *StandardTokenSession) SetOwners(_owners []common.Address) (*types.Transaction, error) {
 	return _StandardToken.Contract.SetOwners(&_StandardToken.TransactOpts, _owners)
 }
 
 // SetOwners is a paid mutator transaction binding the contract method 0xfa4d3698.
 //
-// Solidity: function setOwners(_owners address[]) returns()
+// Solidity: function setOwners(address[] _owners) returns()
 func (_StandardToken *StandardTokenTransactorSession) SetOwners(_owners []common.Address) (*types.Transaction, error) {
 	return _StandardToken.Contract.SetOwners(&_StandardToken.TransactOpts, _owners)
 }
 
 // Transfer is a paid mutator transaction binding the contract method 0xa9059cbb.
 //
-// Solidity: function transfer(_to address, _value uint256) returns(bool)
+// Solidity: function transfer(address _to, uint256 _value) returns(bool)
 func (_StandardToken *StandardTokenTransactor) Transfer(opts *bind.TransactOpts, _to common.Address, _value *big.Int) (*types.Transaction, error) {
 	return _StandardToken.contract.Transact(opts, "transfer", _to, _value)
 }
 
 // Transfer is a paid mutator transaction binding the contract method 0xa9059cbb.
 //
-// Solidity: function transfer(_to address, _value uint256) returns(bool)
+// Solidity: function transfer(address _to, uint256 _value) returns(bool)
 func (_StandardToken *StandardTokenSession) Transfer(_to common.Address, _value *big.Int) (*types.Transaction, error) {
 	return _StandardToken.Contract.Transfer(&_StandardToken.TransactOpts, _to, _value)
 }
 
 // Transfer is a paid mutator transaction binding the contract method 0xa9059cbb.
 //
-// Solidity: function transfer(_to address, _value uint256) returns(bool)
+// Solidity: function transfer(address _to, uint256 _value) returns(bool)
 func (_StandardToken *StandardTokenTransactorSession) Transfer(_to common.Address, _value *big.Int) (*types.Transaction, error) {
 	return _StandardToken.Contract.Transfer(&_StandardToken.TransactOpts, _to, _value)
 }
 
 // TransferFrom is a paid mutator transaction binding the contract method 0x23b872dd.
 //
-// Solidity: function transferFrom(_from address, _to address, _value uint256) returns(bool)
+// Solidity: function transferFrom(address _from, address _to, uint256 _value) returns(bool)
 func (_StandardToken *StandardTokenTransactor) TransferFrom(opts *bind.TransactOpts, _from common.Address, _to common.Address, _value *big.Int) (*types.Transaction, error) {
 	return _StandardToken.contract.Transact(opts, "transferFrom", _from, _to, _value)
 }
 
 // TransferFrom is a paid mutator transaction binding the contract method 0x23b872dd.
 //
-// Solidity: function transferFrom(_from address, _to address, _value uint256) returns(bool)
+// Solidity: function transferFrom(address _from, address _to, uint256 _value) returns(bool)
 func (_StandardToken *StandardTokenSession) TransferFrom(_from common.Address, _to common.Address, _value *big.Int) (*types.Transaction, error) {
 	return _StandardToken.Contract.TransferFrom(&_StandardToken.TransactOpts, _from, _to, _value)
 }
 
 // TransferFrom is a paid mutator transaction binding the contract method 0x23b872dd.
 //
-// Solidity: function transferFrom(_from address, _to address, _value uint256) returns(bool)
+// Solidity: function transferFrom(address _from, address _to, uint256 _value) returns(bool)
 func (_StandardToken *StandardTokenTransactorSession) TransferFrom(_from common.Address, _to common.Address, _value *big.Int) (*types.Transaction, error) {
 	return _StandardToken.Contract.TransferFrom(&_StandardToken.TransactOpts, _from, _to, _value)
 }
@@ -3850,7 +3850,7 @@ type StandardTokenApproval struct {
 
 // FilterApproval is a free log retrieval operation binding the contract event 0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925.
 //
-// Solidity: e Approval(owner indexed address, spender indexed address, value uint256)
+// Solidity: event Approval(address indexed owner, address indexed spender, uint256 value)
 func (_StandardToken *StandardTokenFilterer) FilterApproval(opts *bind.FilterOpts, owner []common.Address, spender []common.Address) (*StandardTokenApprovalIterator, error) {
 
 	var ownerRule []interface{}
@@ -3871,7 +3871,7 @@ func (_StandardToken *StandardTokenFilterer) FilterApproval(opts *bind.FilterOpt
 
 // WatchApproval is a free log subscription operation binding the contract event 0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925.
 //
-// Solidity: e Approval(owner indexed address, spender indexed address, value uint256)
+// Solidity: event Approval(address indexed owner, address indexed spender, uint256 value)
 func (_StandardToken *StandardTokenFilterer) WatchApproval(opts *bind.WatchOpts, sink chan<- *StandardTokenApproval, owner []common.Address, spender []common.Address) (event.Subscription, error) {
 
 	var ownerRule []interface{}
@@ -3989,7 +3989,7 @@ type StandardTokenPause struct {
 
 // FilterPause is a free log retrieval operation binding the contract event 0x6985a02210a168e66602d3235cb6db0e70f92b3ba4d376a33c0f3d9434bff625.
 //
-// Solidity: e Pause()
+// Solidity: event Pause()
 func (_StandardToken *StandardTokenFilterer) FilterPause(opts *bind.FilterOpts) (*StandardTokenPauseIterator, error) {
 
 	logs, sub, err := _StandardToken.contract.FilterLogs(opts, "Pause")
@@ -4001,7 +4001,7 @@ func (_StandardToken *StandardTokenFilterer) FilterPause(opts *bind.FilterOpts) 
 
 // WatchPause is a free log subscription operation binding the contract event 0x6985a02210a168e66602d3235cb6db0e70f92b3ba4d376a33c0f3d9434bff625.
 //
-// Solidity: e Pause()
+// Solidity: event Pause()
 func (_StandardToken *StandardTokenFilterer) WatchPause(opts *bind.WatchOpts, sink chan<- *StandardTokenPause) (event.Subscription, error) {
 
 	logs, sub, err := _StandardToken.contract.WatchLogs(opts, "Pause")
@@ -4111,7 +4111,7 @@ type StandardTokenSetOwners struct {
 
 // FilterSetOwners is a free log retrieval operation binding the contract event 0x9465cd279c2de393c5568ae444599e3644e3d1864ca2c05ced8a654df2aea3cb.
 //
-// Solidity: e SetOwners(owners address[])
+// Solidity: event SetOwners(address[] owners)
 func (_StandardToken *StandardTokenFilterer) FilterSetOwners(opts *bind.FilterOpts) (*StandardTokenSetOwnersIterator, error) {
 
 	logs, sub, err := _StandardToken.contract.FilterLogs(opts, "SetOwners")
@@ -4123,7 +4123,7 @@ func (_StandardToken *StandardTokenFilterer) FilterSetOwners(opts *bind.FilterOp
 
 // WatchSetOwners is a free log subscription operation binding the contract event 0x9465cd279c2de393c5568ae444599e3644e3d1864ca2c05ced8a654df2aea3cb.
 //
-// Solidity: e SetOwners(owners address[])
+// Solidity: event SetOwners(address[] owners)
 func (_StandardToken *StandardTokenFilterer) WatchSetOwners(opts *bind.WatchOpts, sink chan<- *StandardTokenSetOwners) (event.Subscription, error) {
 
 	logs, sub, err := _StandardToken.contract.WatchLogs(opts, "SetOwners")
@@ -4235,7 +4235,7 @@ type StandardTokenTransfer struct {
 
 // FilterTransfer is a free log retrieval operation binding the contract event 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef.
 //
-// Solidity: e Transfer(from indexed address, to indexed address, value uint256)
+// Solidity: event Transfer(address indexed from, address indexed to, uint256 value)
 func (_StandardToken *StandardTokenFilterer) FilterTransfer(opts *bind.FilterOpts, from []common.Address, to []common.Address) (*StandardTokenTransferIterator, error) {
 
 	var fromRule []interface{}
@@ -4256,7 +4256,7 @@ func (_StandardToken *StandardTokenFilterer) FilterTransfer(opts *bind.FilterOpt
 
 // WatchTransfer is a free log subscription operation binding the contract event 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef.
 //
-// Solidity: e Transfer(from indexed address, to indexed address, value uint256)
+// Solidity: event Transfer(address indexed from, address indexed to, uint256 value)
 func (_StandardToken *StandardTokenFilterer) WatchTransfer(opts *bind.WatchOpts, sink chan<- *StandardTokenTransfer, from []common.Address, to []common.Address) (event.Subscription, error) {
 
 	var fromRule []interface{}
@@ -4374,7 +4374,7 @@ type StandardTokenUnpause struct {
 
 // FilterUnpause is a free log retrieval operation binding the contract event 0x7805862f689e2f13df9f062ff482ad3ad112aca9e0847911ed832e158c525b33.
 //
-// Solidity: e Unpause()
+// Solidity: event Unpause()
 func (_StandardToken *StandardTokenFilterer) FilterUnpause(opts *bind.FilterOpts) (*StandardTokenUnpauseIterator, error) {
 
 	logs, sub, err := _StandardToken.contract.FilterLogs(opts, "Unpause")
@@ -4386,7 +4386,7 @@ func (_StandardToken *StandardTokenFilterer) FilterUnpause(opts *bind.FilterOpts
 
 // WatchUnpause is a free log subscription operation binding the contract event 0x7805862f689e2f13df9f062ff482ad3ad112aca9e0847911ed832e158c525b33.
 //
-// Solidity: e Unpause()
+// Solidity: event Unpause()
 func (_StandardToken *StandardTokenFilterer) WatchUnpause(opts *bind.WatchOpts, sink chan<- *StandardTokenUnpause) (event.Subscription, error) {
 
 	logs, sub, err := _StandardToken.contract.WatchLogs(opts, "Unpause")
