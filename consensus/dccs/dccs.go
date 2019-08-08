@@ -265,7 +265,8 @@ func (d *Dccs) Finalize(chain consensus.ChainReader, header *types.Header, state
 		}
 		sigs := s.signers()
 		// Deploy the contract and ininitalize it with pre-fork signers
-		if deployConsensusContracts(state, chain.Config(), sigs) != nil {
+		if err = deployConsensusContracts(state, chain.Config(), sigs); err != nil {
+			log.Error("Unable to deploy Nexty governance smart contract", "err", err)
 			return
 		}
 		log.Info("Successfully deploy Nexty governance contract", "Number of sealers", len(sigs))
@@ -290,8 +291,9 @@ func (d *Dccs) FinalizeAndAssemble(chain consensus.ChainReader, header *types.He
 		}
 		sigs := s.signers()
 		// Deploy the contract and ininitalize it with pre-fork signers
-		if deployConsensusContracts(state, chain.Config(), sigs) != nil {
-			return nil, errors.New("Unable to deploy Nexty governance smart contract")
+		if err = deployConsensusContracts(state, chain.Config(), sigs); err != nil {
+			log.Error("Unable to deploy Nexty governance smart contract", "err", err)
+			return nil, err
 		}
 		log.Info("Successfully deploy Nexty governance contract", "Number of sealers", len(sigs))
 	}
