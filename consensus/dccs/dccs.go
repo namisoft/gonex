@@ -163,11 +163,14 @@ func New(config *params.DccsConfig, db ethdb.Database) *Dccs {
 		signatures: signatures,
 	}
 
-	return dccs.init().init1()
+	return dccs.init2()
 }
 
 // VerifyHeader checks whether a header conforms to the consensus rules.
 func (d *Dccs) VerifyHeader(chain consensus.ChainReader, header *types.Header, seal bool) error {
+	if chain.Config().IsCoLoa(header.Number) {
+		return d.verifyHeader2(chain, header, nil)
+	}
 	if chain.Config().IsThangLong(header.Number) {
 		return d.verifyHeader1(chain, header, nil)
 	}
@@ -184,7 +187,9 @@ func (d *Dccs) VerifyHeaders(chain consensus.ChainReader, headers []*types.Heade
 	go func() {
 		for i, header := range headers {
 			var err error
-			if chain.Config().IsThangLong(header.Number) {
+			if chain.Config().IsCoLoa(header.Number) {
+				err = d.verifyHeader2(chain, header, headers[:i])
+			} else if chain.Config().IsThangLong(header.Number) {
 				err = d.verifyHeader1(chain, header, headers[:i])
 			} else {
 				err = d.verifyHeader(chain, header, headers[:i])
@@ -212,6 +217,9 @@ func (d *Dccs) VerifyUncles(chain consensus.ChainReader, block *types.Block) err
 // VerifySeal implements consensus.Engine, checking whether the signature contained
 // in the header satisfies the consensus protocol requirements.
 func (d *Dccs) VerifySeal(chain consensus.ChainReader, header *types.Header) error {
+	if chain.Config().IsCoLoa(header.Number) {
+		return d.verifySeal2(chain, header, nil)
+	}
 	if chain.Config().IsThangLong(header.Number) {
 		return d.verifySeal1(chain, header, nil)
 	}
@@ -221,6 +229,9 @@ func (d *Dccs) VerifySeal(chain consensus.ChainReader, header *types.Header) err
 // Prepare implements consensus.Engine, preparing all the consensus fields of the
 // header for running the transactions on top.
 func (d *Dccs) Prepare(chain consensus.ChainReader, header *types.Header) error {
+	if chain.Config().IsCoLoa(header.Number) {
+		return d.prepare2(chain, header)
+	}
 	if chain.Config().IsThangLong(header.Number) {
 		return d.prepare1(chain, header)
 	}
@@ -229,12 +240,19 @@ func (d *Dccs) Prepare(chain consensus.ChainReader, header *types.Header) error 
 
 // Initialize implements the consensus.Engine
 func (d *Dccs) Initialize(chain consensus.ChainReader, header *types.Header, state *state.StateDB) (types.Transactions, types.Receipts, error) {
+	if chain.Config().IsCoLoa(header.Number) {
+		return nil, nil, nil
+	}
 	return nil, nil, nil
 }
 
 // Finalize implements consensus.Engine, ensuring no uncles are set, nor block
 // rewards given, and returns the final block.
 func (d *Dccs) Finalize(chain consensus.ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header) {
+	if chain.Config().IsCoLoa(header.Number) {
+		d.finalize2(chain, header, state, txs, uncles)
+		return
+	}
 	if chain.Config().IsThangLong(header.Number) {
 		d.finalize1(chain, header, state, txs, uncles)
 		return
@@ -258,6 +276,9 @@ func (d *Dccs) Finalize(chain consensus.ChainReader, header *types.Header, state
 // FinalizeAndAssemble implements consensus.Engine, ensuring no uncles are set, nor block
 // rewards given, and returns the final block.
 func (d *Dccs) FinalizeAndAssemble(chain consensus.ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
+	if chain.Config().IsCoLoa(header.Number) {
+		return d.finalizeAndAssemble2(chain, header, state, txs, uncles, receipts)
+	}
 	if chain.Config().IsThangLong(header.Number) {
 		return d.finalizeAndAssemble1(chain, header, state, txs, uncles, receipts)
 	}
@@ -307,6 +328,9 @@ func (d *Dccs) Authorize(signer common.Address, signFn SignerFn, state *state.St
 // the local signing credentials.
 func (d *Dccs) Seal(chain consensus.ChainReader, block *types.Block, results chan<- *types.Block, stop <-chan struct{}) error {
 	header := block.Header()
+	if chain.Config().IsCoLoa(header.Number) {
+		return d.seal2(chain, block, results, stop)
+	}
 	if chain.Config().IsThangLong(header.Number) {
 		return d.seal1(chain, block, results, stop)
 	}

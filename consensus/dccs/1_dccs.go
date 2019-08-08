@@ -57,6 +57,7 @@ var (
 
 // Init the first hardfork of DCCS consensus
 func (d *Dccs) init1() *Dccs {
+	d.init()
 	// ensure that the hard-fork block must be divisible by both the old and new epoch value
 	tlBlock := d.config.ThangLongBlock.Uint64()
 	if tlBlock%d.config.Epoch != 0 {
