@@ -1,7 +1,6 @@
 pragma solidity ^0.5.2;
 
 import "./lib/util.sol";
-import "./lib/set.sol";
 import "./lib/map.sol";
 import "./lib/absn.sol";
 import "./Absorbable.sol";
@@ -10,8 +9,8 @@ import "./Absorbable.sol";
  * Pre-emptive absorption propsosal and voting logic.
  */
 contract Preemptivable is Absorbable {
-    using set for set.AddressSet;
     using map for map.ProposalMap;
+    using map for map.AddressBool;
     using absn for absn.Proposal;
     using absn for absn.Preemptive;
 
@@ -20,6 +19,9 @@ contract Preemptivable is Absorbable {
     // adapting global default parameters, only used if proposal maker doesn't specify them
     uint internal globalLockdownExpiration = 2 weeks / 1 seconds;
     uint internal globalSlashingDuration = globalLockdownExpiration / 2;
+
+    // adapting global requirement
+    uint internal globalSuccessRank = 0;
 
     // proposal params must not lower than 1/3 of global params
     uint constant PARAM_TOLERANCE = 3;
@@ -30,6 +32,10 @@ contract Preemptivable is Absorbable {
 
     // map (maker => Proposal)
     map.ProposalMap internal proposals;
+
+    // revoked proposals' votes to clear by consensus
+    // since the clearing job is too expensive for transaction to perform.
+    map.AddressBool[] votesToClear;
 
     constructor (
         uint absorptionDuration,
@@ -62,29 +68,44 @@ contract Preemptivable is Absorbable {
         bytes calldata data)
         external
     {
-        // if MNTY is received and data contains 3 params
-        if (data.length == 32*3 && msg.sender == address(VolatileToken)) {
+        // if MNTY is received and data contains 4 params
+        if (data.length == 32*4 && msg.sender == address(VolatileToken)) {
             // pre-emptive absorption proposal
             require(!proposals.has(maker), "already has a proposal");
 
             (   int amount,
+                uint slashingDuration,
                 uint lockdownExpiration,
-                uint slashingDuration
-            ) = abi.decode(data, (int, uint, uint));
+                bytes32 reserve // reserve params to distinguish proposal and trading request
+            ) = abi.decode(data, (int, uint, uint, bytes32));
 
-            propose(maker, value, amount, lockdownExpiration, slashingDuration);
+            // unused
+            reserve = bytes32(0);
+
+            propose(maker, value, amount, slashingDuration, lockdownExpiration);
             return;
         }
 
         // not a pre-emptive proposal, fallback to Orderbook trader order
-        (uint wantAmount, bytes32 assistingID) = (data.length == 32) ?
-            (abi.decode(data, (uint         )), bytes32(0)) :
-            (abi.decode(data, (uint, bytes32))            );
+        bytes32 index;
+        uint wantAmount;
+        bytes32 assistingID;
+        if (data.length == 32*3) {
+            (index, wantAmount, assistingID) = abi.decode(data, (bytes32, uint, bytes32));
+        } else {
+            (index, wantAmount) = abi.decode(data, (bytes32, uint));
+        }
 
-        super.trade(maker, value, wantAmount, assistingID);
+        super.trade(maker, index, value, wantAmount, assistingID);
     }
 
     function onBlockInitialized(uint target) public consensus {
+        // cleaning up
+        for (uint i = 0; i < votesToClear.length; i++) {
+            votesToClear[i].clear();
+        }
+        delete votesToClear;
+
         checkAndTriggerPreemptive();
         super.onBlockInitialized(target);
     }
@@ -97,8 +118,8 @@ contract Preemptivable is Absorbable {
         address maker,
         uint stake,
         int amount,
-        uint lockdownExpiration,
-        uint slashingDuration
+        uint slashingDuration,
+        uint lockdownExpiration
     )
         internal
     {
@@ -107,15 +128,6 @@ contract Preemptivable is Absorbable {
         proposal.stake = stake;
         proposal.amount = amount;
         proposal.number = block.number;
-
-        if (lockdownExpiration > 0) {
-            require(
-                lockdownExpiration <
-                globalLockdownExpiration - globalLockdownExpiration / PARAM_TOLERANCE,
-                "lockdown duration param too short");
-        } else {
-            proposal.lockdownExpiration = globalLockdownExpiration;
-        }
 
         if (slashingDuration > 0) {
             require(
@@ -126,17 +138,30 @@ contract Preemptivable is Absorbable {
             proposal.slashingDuration = globalSlashingDuration;
         }
 
+        if (lockdownExpiration > 0) {
+            require(
+                lockdownExpiration <
+                globalLockdownExpiration - globalLockdownExpiration / PARAM_TOLERANCE,
+                "lockdown duration param too short");
+        } else {
+            proposal.lockdownExpiration = globalLockdownExpiration;
+        }
+
         proposals.push(proposal);
+    }
+
+    function revoke(address maker) external {
+        absn.Proposal storage p = proposals.get(maker);
+        require(maker == p.maker, "only maker can revoke proposal");
+        votesToClear.push(p.votes); // leave the job for consensus
+        VolatileToken.transfer(p.maker, p.stake);
+        proposals.remove(maker);
     }
 
     function vote(address maker, bool up) external {
         require(proposals.has(maker), "no such proposal");
         absn.Proposal storage proposal = proposals.get(maker);
-        if (up) {
-            proposal.voteUp();
-        } else {
-            proposal.voteDown();
-        }
+        proposal.vote(up);
     }
 
     // check and trigger a new Preemptive when one is eligible
@@ -158,6 +183,7 @@ contract Preemptivable is Absorbable {
     // trigger an absorption from a maker's proposal
     function triggerPreemptive(address maker) internal {
         absn.Proposal storage proposal = proposals.get(maker);
+        proposal.votes.clear(); // clear the votes (consensus only)
         lockdown = absn.Preemptive(
             proposal.maker,
             proposal.amount,
@@ -170,25 +196,32 @@ contract Preemptivable is Absorbable {
     }
 
     // expensive calculation, only consensus can affort this
-    function calcRank(absn.Proposal storage proposal) internal view returns (uint) {
-        uint voteCount = 0;
-        for (uint i = 0; i < proposal.upVoters.count(); ++i) {
-            address voter = proposal.upVoters.get(i);
-            voteCount += voter.balance + VolatileToken.balanceOf(voter);
-        }
-        for (uint i = 0; i < proposal.downVoters.count(); ++i) {
-            address voter = proposal.downVoters.get(i);
-            voteCount -= voter.balance + VolatileToken.balanceOf(voter);
-        }
+    function calcRank(absn.Proposal storage proposal) internal view returns (int) {
+        int voteCount = countVote(proposal);
         if (voteCount <= 0) {
             return 0;
         }
-        return proposal.stake * voteCount;
+        return int(proposal.stake) * countVote(proposal);
     }
 
     // expensive calculation, only consensus can affort this
-    function calcBestProposal() internal view returns (address) {
-        uint bestRank = 0;
+    function countVote(absn.Proposal storage proposal) internal view returns(int) {
+        int voteCount = 0;
+        for (uint i = 0; i < proposal.votes.count(); ++i) {
+            (address voter, bool up) = proposal.votes.get(i);
+            int weight = int(voter.balance + VolatileToken.balanceOf(voter));
+            if (up) {
+                voteCount += weight;
+            } else {
+                voteCount -= weight;
+            }
+        }
+        return voteCount;
+    }
+
+    // expensive calculation, only consensus can affort this
+    function calcBestProposal() internal view returns(address) {
+        int bestRank = 0;
         address bestMaker = ZERO_ADDRESS;
         for (uint i = 0; i < proposals.count(); ++i) {
             absn.Proposal storage proposal = proposals.get(i);
@@ -196,12 +229,35 @@ contract Preemptivable is Absorbable {
                 // not enough time for voting
                 continue;
             }
-            uint rank = calcRank(proposal);
+            int rank = calcRank(proposal);
             if (rank > bestRank) {
                 bestRank = rank;
                 bestMaker = proposal.maker;
             }
         }
         return bestMaker;
+    }
+
+    function totalVote(address maker) public view returns(int) {
+        absn.Proposal storage p = proposals.get(maker);
+        return countVote(p);
+    }
+
+    function getProposalCount() public view returns(uint) {
+        return proposals.count();
+    }
+
+    function getProposal(uint idx) public view
+        returns (
+            address maker,
+            uint stake,
+            int amount,
+            uint slashingDuration,
+            uint lockdownExpiration,
+            uint number
+        )
+    {
+        absn.Proposal storage p = proposals.get(idx);
+        return (p.maker, p.stake, p.amount, p.slashingDuration, p.lockdownExpiration, p.number);
     }
 }

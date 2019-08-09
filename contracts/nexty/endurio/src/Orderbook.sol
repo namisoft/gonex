@@ -2,7 +2,6 @@ pragma solidity ^0.5.2;
 
 import "openzeppelin-solidity/contracts/math/Math.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "./lib/set.sol";
 import "./lib/map.sol";
 import "./lib/dex.sol";
 import "./lib/absn.sol";
@@ -33,6 +32,7 @@ contract Orderbook {
 
     function trade(
         address maker,
+        bytes32 index,
         uint haveAmount,
         uint wantAmount,
         bytes32 assistingID
@@ -42,11 +42,7 @@ contract Orderbook {
         // TODO: get order type from ripem160(haveToken)[:16] + ripem160(wantToken)[:16]
         dex.Book storage book = bookHave(msg.sender);
 
-        bytes32 newID = book.createOrder(maker, haveAmount, wantAmount);
-        if (newID == bytes32(0)) {
-            // no new order
-            return;
-        }
+        bytes32 newID = book.createOrder(maker, index, haveAmount, wantAmount);
         book.place(newID, assistingID);
         book.fill(newID, bookWant(msg.sender));
     }
@@ -87,6 +83,17 @@ contract Orderbook {
     {
         dex.Book storage book = books[orderType];
         return book.orders[id].prev;
+    }
+
+    function calcOrderID(
+        address maker,
+        bytes32 index
+    )
+        external
+        pure
+        returns (bytes32)
+    {
+        return dex._calcID(maker, index);
     }
 
     function getOrder(
@@ -163,10 +170,10 @@ contract Orderbook {
     }
 
     // Cancel and refund the remaining order.haveAmount
-    function cancel(bool _orderType, bytes32 _id) public {
-        dex.Book storage book = books[_orderType];
-        dex.Order storage order = book.orders[_id];
+    function cancel(bool orderType, bytes32 id) public {
+        dex.Book storage book = books[orderType];
+        dex.Order storage order = book.orders[id];
         require(msg.sender == order.maker, "only order maker");
-        book.refund(_id);
+        book.refund(id);
     }
 }

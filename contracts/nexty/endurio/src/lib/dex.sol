@@ -17,16 +17,17 @@ library dex {
     address constant ZERO_ADDRESS = address(0x0);
     uint constant INPUTS_MAX = 2 ** 128;
 
-    function calcID(
+    // order id works much like HDKey addresses, allows client to recover and identify
+    // historical orders using a deterministic chain of reusable indexes.
+    function _calcID(
         address maker,
-        uint haveAmount,
-        uint wantAmount
+        bytes32 index
     )
         internal
         pure
         returns (bytes32)
     {
-        return sha256(abi.encodePacked(maker, haveAmount, wantAmount));
+        return sha256(abi.encodePacked(maker, index));
     }
 
     struct Order {
@@ -122,30 +123,23 @@ library dex {
 
     function createOrder(
         Book storage book,
-        address _maker,
-        uint _haveAmount,
-        uint _wantAmount
+        address maker,
+        bytes32 index,
+        uint haveAmount,
+        uint wantAmount
     )
         internal
         returns (bytes32)
     {
         // TODO move require check to API
-        require(_haveAmount > 0 && _wantAmount > 0, "zero input");
-        require(_haveAmount < INPUTS_MAX && _wantAmount < INPUTS_MAX, "input over limit");
-        bytes32 id = calcID(_maker, _haveAmount, _wantAmount);
+        require(haveAmount > 0 && wantAmount > 0, "zero input");
+        require(haveAmount < INPUTS_MAX && wantAmount < INPUTS_MAX, "input over limit");
+        bytes32 id = _calcID(maker, index);
         Order storage order = book.orders[id];
-        if (!order.exists()) {
-            // create new order
-            book.orders[id] = Order(_maker, _haveAmount, _wantAmount, 0, 0);
-            return id;
-        }
-        require(order.maker == _maker, "hash collision");
-        // duplicate orders, combine them into one
-        order.haveAmount = order.haveAmount.add(_haveAmount);
-        order.wantAmount = order.wantAmount.add(_wantAmount);
-        require(order.haveAmount < INPUTS_MAX && order.wantAmount < INPUTS_MAX, "combined input over limit");
-        // caller should take no further action
-        return ZERO_ID;
+        require(!order.exists(), "order index exists");
+        // create new order
+        book.orders[id] = Order(maker, haveAmount, wantAmount, 0, 0);
+        return id;
     }
 
     // insert [id] as [prev].next
@@ -343,16 +337,19 @@ library dex {
     {
         (totalBMT, totalAMT) = book.absorb(useHaveAmount, target);
         (uint haveAMT, uint wantAMT) = useHaveAmount ? (totalAMT, totalBMT) : (totalBMT, totalAMT);
-        if (book.haveToken.allowance(initiator, address(this)) < haveAMT ||
-            book.haveToken.balanceOf(initiator) < haveAMT) {
-            // not enough alowance to side-absorb, halt the absorption for this call
-            return (0, 0);
+        if (haveAMT <= book.haveToken.allowance(initiator, address(this)) &&
+            haveAMT <= book.haveToken.balanceOf(initiator))
+        {
+            book.haveToken.transferFrom(initiator, book.haveToken.dex(), haveAMT);
+            book.haveToken.dexBurn(haveAMT);
+            book.wantToken.dexMint(wantAMT);
+            book.wantToken.transfer(initiator, wantAMT);
+            // accumulate the side-absorb
+            totalAMT += useHaveAmount ? haveAMT : wantAMT;
+            totalBMT += useHaveAmount ? wantAMT : haveAMT;
+            // TODO: emit event for side-absorption
         }
-        book.haveToken.transferFrom(initiator, book.haveToken.dex(), haveAMT);
-        book.haveToken.dexBurn(haveAMT);
-        book.wantToken.dexMint(wantAMT);
-        book.wantToken.transfer(initiator, wantAMT);
-        return (totalBMT, totalAMT);
+        // not enough alowance for side absorption
     }
 
     function absorb(

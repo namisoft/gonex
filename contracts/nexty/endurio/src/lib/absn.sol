@@ -1,10 +1,10 @@
 pragma solidity ^0.5.2;
 
 import "./util.sol";
-import "./set.sol";
+import "./map.sol";
 
 library absn {
-    using set for set.AddressSet;
+    using map for map.AddressBool;
 
     address constant ZERO_ADDRESS = address(0x0);
 
@@ -35,11 +35,11 @@ library absn {
         // address of the proposer
         address maker;
 
-        // amount of StablizeToken to absorb, positive for inflation, negative for deflation
-        int amount;
-
         // NTY amount staked for the preemptive proposal
         uint stake;
+
+        // amount of StablizeToken to absorb, positive for inflation, negative for deflation
+        int amount;
 
         // lockdown duration (in blocks from the activation)
         uint lockdownExpiration;
@@ -53,23 +53,20 @@ library absn {
         // block number the proposal is proposed
         uint number;
 
-        // voters set
-        set.AddressSet upVoters;
-        set.AddressSet downVoters;
+        // voters map
+        map.AddressBool votes;
     }
 
-    function voteUp(Proposal storage this) internal {
-        this.downVoters.remove(msg.sender);
-        this.upVoters.push(msg.sender);
-    }
-
-    function voteDown(Proposal storage this) internal {
-        this.upVoters.remove(msg.sender);
-        this.downVoters.push(msg.sender);
+    function vote(Proposal storage this, bool up) internal {
+        this.votes.set(msg.sender, up);
     }
 
     function exists(Proposal storage this) internal view returns (bool) {
         return (this.maker != ZERO_ADDRESS);
+    }
+
+    function clear(Proposal storage this) internal {
+        this.votes.clear();
     }
 
     struct Preemptive {

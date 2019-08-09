@@ -27,14 +27,15 @@ contract StableToken is ERC223{
 
     // order USD -> MNTY
     function trade(
-        uint _haveAmount,
-        uint _wantAmount,
-        bytes32 _assistingID
+        bytes32 index,
+        uint haveAmount,
+        uint wantAmount,
+        bytes32 assistingID
     )
         public
         payable
     {
-        bytes memory data = abi.encode(_wantAmount, _assistingID);
-        transfer(owner(), _haveAmount, data);
+        bytes memory data = abi.encode(index, wantAmount, assistingID);
+        transfer(owner(), haveAmount, data);
     }
 }

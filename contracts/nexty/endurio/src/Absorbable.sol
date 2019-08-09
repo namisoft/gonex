@@ -14,7 +14,7 @@ contract Absorbable is Orderbook {
     using absn for absn.Preemptive;
 
     IToken VolatileToken;
-    IToken StablizeToken; // intentional incorrect spelling
+    IToken StablizeToken; // spelling intented
 
     // constants
     uint EXPIRATION = 1 weeks / 2 seconds;
@@ -41,8 +41,8 @@ contract Absorbable is Orderbook {
     )
         public
     {
-        require(address(VolatileToken) == address(0), "already set");
-        require(address(StablizeToken) == address(0), "already set");
+        require(address(VolatileToken) == address(0), "VolatileToken already set");
+        require(address(StablizeToken) == address(0), "StablizeToken already set");
         VolatileToken = IToken(volatileToken);
         StablizeToken = IToken(stablizeToken);
         super.registerTokens(volatileToken, stablizeToken);
@@ -154,7 +154,7 @@ contract Absorbable is Orderbook {
                 return b / a <= 2;
             }
         }
-     }
+    }
 
     function unlock() internal {
         if (!lockdown.exists()) {
