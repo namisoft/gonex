@@ -30,6 +30,7 @@ import (
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vdf"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/log"
@@ -142,6 +143,8 @@ type Dccs struct {
 	signer common.Address // Ethereum address of the signing key
 	signFn SignerFn       // Signer function to authorize hashes with
 	lock   sync.RWMutex   // Protects the signer fields
+
+	blockDelayer *vdf.Delayer
 }
 
 // New creates a Dccs proof-of-foundation consensus engine with the initial
@@ -359,6 +362,18 @@ func (d *Dccs) CalcDifficulty(chain consensus.ChainReader, time uint64, parent *
 
 // SealHash returns the hash of a block prior to it being sealed.
 func (d *Dccs) SealHash(header *types.Header) common.Hash {
+	if d.config.IsCoLoa(header.Number) {
+		// this is not actual sealing hash,
+		// clearing the MigDigest for mining worker
+		mixDigest := header.MixDigest
+		difficulty := header.Difficulty
+		header.MixDigest = common.Hash{}
+		header.Difficulty = common.Big0
+		hash := SealHash(header)
+		header.Difficulty = difficulty
+		header.MixDigest = mixDigest
+		return hash
+	}
 	return SealHash(header)
 }
 
