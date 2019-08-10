@@ -171,18 +171,26 @@ contract Preemptivable is Absorbable {
             // there's current active or lockdown absorption
             return false;
         }
-        address bestMaker = calcBestProposal();
-        if (bestMaker == ZERO_ADDRESS) {
+        (address maker, uint rank) = winningProposal();
+        if (maker == ZERO_ADDRESS) {
             // no eligible proposals
             return false;
         }
-        triggerPreemptive(bestMaker);
+        absn.Proposal storage proposal = proposals.get(maker);
+        triggerPreemptive(proposal);
+        adaptParams(proposal, rank);
         return true;
     }
 
+    // adapt the global params to the last winning preemptive
+    function adaptParams(absn.Proposal storage proposal, uint rank) internal {
+        globalSuccessRank = (globalSuccessRank + rank) >> 1;
+        globalLockdownExpiration = (globalLockdownExpiration + proposal.lockdownExpiration) >> 1;
+        globalSlashingDuration = (globalSlashingDuration + proposal.slashingDuration) >> 1;
+    }
+
     // trigger an absorption from a maker's proposal
-    function triggerPreemptive(address maker) internal {
-        absn.Proposal storage proposal = proposals.get(maker);
+    function triggerPreemptive(absn.Proposal storage proposal) internal {
         proposal.votes.clear(); // clear the votes (consensus only)
         lockdown = absn.Preemptive(
             proposal.maker,
@@ -191,7 +199,7 @@ contract Preemptivable is Absorbable {
             proposal.slashingDuration,
             block.number + proposal.lockdownExpiration
         );
-        proposals.remove(maker);
+        proposals.remove(proposal.maker);
         triggerAbsorption(util.add(StablizeToken.totalSupply(), lockdown.amount), true);
     }
 
@@ -220,7 +228,8 @@ contract Preemptivable is Absorbable {
     }
 
     // expensive calculation, only consensus can affort this
-    function calcBestProposal() internal view returns(address) {
+    function winningProposal() internal view returns(address, uint) {
+        int globalRequirement = int(globalSuccessRank - (globalSuccessRank / PARAM_TOLERANCE));
         int bestRank = 0;
         address bestMaker = ZERO_ADDRESS;
         for (uint i = 0; i < proposals.count(); ++i) {
@@ -230,12 +239,16 @@ contract Preemptivable is Absorbable {
                 continue;
             }
             int rank = calcRank(proposal);
+            if (rank < globalRequirement) {
+                // not good enough
+                continue;
+            }
             if (rank > bestRank) {
                 bestRank = rank;
                 bestMaker = proposal.maker;
             }
         }
-        return bestMaker;
+        return (bestMaker, uint(bestRank));
     }
 
     function totalVote(address maker) public view returns(int) {
