@@ -127,6 +127,9 @@ var (
 	// errRecentlySigned is returned if a header is signed by an authorized entity
 	// that already signed a header recently, thus is temporarily not allowed to.
 	errRecentlySigned = errors.New("recently signed")
+
+	// errInvalidBeneficiary is returned if a block has a difference beneficiary with sealer list
+	errInvalidBeneficiary = errors.New("beneficiary address is invalid")
 )
 
 // SignerFn is a signer callback function to request a header to be signed by a

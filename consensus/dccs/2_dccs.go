@@ -147,8 +147,14 @@ func (d *Dccs) verifySeal2(chain consensus.ChainReader, header *types.Header, pa
 	if err != nil {
 		return err
 	}
-	if _, ok := snap.Sealers[signer]; !ok {
+
+	beneficiary, ok := snap.Sealers[signer]
+	if !ok {
 		return errUnauthorizedSigner
+	}
+
+	if header.Coinbase != beneficiary {
+		return errInvalidBeneficiary
 	}
 
 	for seen, recent := range snap.Recents {
@@ -254,14 +260,14 @@ func (d *Dccs) seal2(chain consensus.ChainReader, block *types.Block, results ch
 func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error {
 	log.Debug("prepare2", "number", header.Number)
 	header.Nonce = types.BlockNonce{}
-	// Get the beneficiary of signer from smart contract and set to header's coinbase to give sealing reward later
+	// Get the beneficiary of signer from snapshot and set to header's coinbase to give sealing reward later
 	number := header.Number.Uint64()
-
-	// Set the correct difficulty
 	snap, err := d.snapshot2(chain, number-1, header.ParentHash, nil)
 	if err != nil {
 		return err
 	}
+	header.Coinbase = snap.Sealers[header.Coinbase]
+
 	parent := chain.GetHeader(header.ParentHash, number-1)
 	if parent == nil {
 		return consensus.ErrUnknownAncestor
@@ -274,6 +280,7 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 	header.Extra = header.Extra[:extraVanity]
 	header.Extra = append(header.Extra, make([]byte, extraSeal)...)
 
+	// Set the correct difficulty
 	header.Difficulty = CalcDifficulty2(snap, d.signer, parent)
 	log.Trace("header.Difficulty", "difficulty", header.Difficulty)
 

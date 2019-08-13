@@ -300,7 +300,6 @@ func (d *Dccs) prepare1(chain consensus.ChainReader, header *types.Header) error
 		return errors.New("state is not available at the block number")
 	}
 
-	// Set the correct difficulty
 	snap, err := d.snapshot1(chain, number-1, header.ParentHash, nil)
 	if err != nil {
 		return err
@@ -309,6 +308,7 @@ func (d *Dccs) prepare1(chain consensus.ChainReader, header *types.Header) error
 	if parent == nil {
 		return consensus.ErrUnknownAncestor
 	}
+	// Set the correct difficulty
 	header.Difficulty = CalcDifficulty1(snap, d.signer, parent)
 	log.Trace("header.Difficulty", "difficulty", header.Difficulty)
 
