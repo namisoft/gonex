@@ -521,29 +521,6 @@ func (d *Dccs) calculateRewards(chain consensus.ChainReader, state *state.StateD
 }
 
 // calcDelayTime calculate delay time for current sealing node
-func (d *Dccs) calcDelayTime(snap *Snapshot, block *types.Block, signer common.Address) time.Duration {
-	header := block.Header()
-	number := header.Number.Uint64()
-	sigs := snap.signers1()
-	pos := 0
-	for seen, sig := range sigs {
-		if sig.Address == signer {
-			pos = seen
-		}
-	}
-	cp := d.config.Checkpoint(number)
-	total := uint64(len(sigs))
-	offset := (number - cp) - (number-cp)/total*total
-	log.Trace("calcDelayTime", "number", number, "checkpoint", cp, "len", uint64(len(sigs)), "offset", offset)
-	if pos >= int(offset) {
-		pos -= int(offset)
-	} else {
-		pos += len(sigs) - int(offset)
-	}
-	return d.calcDelayTimeForOffset(pos)
-}
-
-// calcDelayTime calculate delay time for current sealing node
 func (d *Dccs) calcDelayTimeForOffset(pos int) time.Duration {
 	delay := time.Duration(0)
 	wiggle := float64(0.0)
