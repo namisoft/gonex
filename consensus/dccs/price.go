@@ -25,15 +25,15 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
 	lru "github.com/hashicorp/golang-lru"
 )
 
 const (
-	priceServiceURL       = "http://localhost:3000/price/NUSD_USD"
-	nonCanonicalCacheSize = params.CanonicalDepth // unrelated, but relevant
-	medianPriceCacheSize  = 6
+	priceServiceURL      = "http://localhost:3000/price/NUSD_USD"
+	medianPriceCacheSize = 6
 )
 
 // PriceData represents the external price feeded from outside
@@ -47,8 +47,7 @@ type PriceData struct {
 type PriceEngine struct {
 	feeder       *Feeder
 	ticker       *time.Ticker
-	canonPrices  *lru.Cache // canonical prices: number -> Price
-	nonacPrices  *lru.Cache // non-canonical prices: hash -> Price
+	headerPrices *lru.Cache // header price: hash -> Price
 	medianPrices *lru.Cache // calculated median price: hash -> Price
 	ttl          time.Duration
 	config       *params.DccsConfig
@@ -73,15 +72,9 @@ func newPriceEngine(conf *params.DccsConfig) *PriceEngine {
 	var err error
 
 	maxPriceCount := int(conf.PriceSamplingDuration / conf.PriceSamplingInterval)
-	e.canonPrices, err = lru.New(maxPriceCount) // add some extra buffer for values in forks
+	e.headerPrices, err = lru.New(maxPriceCount * 3 / 2) // add some extra buffer for values in forks
 	if err != nil {
-		log.Crit("Unable to create the canonical price cache", "CoLoa block", conf.CoLoaBlock, "pricesCount", (conf.PriceSamplingDuration / conf.PriceSamplingInterval), "error", err)
-		return nil
-	}
-
-	e.nonacPrices, err = lru.New(nonCanonicalCacheSize)
-	if err != nil {
-		log.Crit("Unable to create the non-canonical price cache", "CoLoa block", conf.CoLoaBlock, "nonCanonicalCacheSize", nonCanonicalCacheSize, "error", err)
+		log.Crit("Unable to create the header price cache", "CoLoa block", conf.CoLoaBlock, "pricesCount", (conf.PriceSamplingDuration / conf.PriceSamplingInterval), "error", err)
 		return nil
 	}
 
@@ -116,9 +109,17 @@ func (e *PriceEngine) CalcMedianPrice(chain consensus.ChainReader, number uint64
 		// not a price block
 		return nil, errors.New("Not a price block")
 	}
-	header := chain.GetHeaderByNumber(number)
-	if header == nil {
+	if number > chain.CurrentHeader().Number.Uint64() {
 		return nil, errors.New("Block number too high")
+	}
+	var header *types.Header
+	for {
+		header = chain.GetHeaderByNumber(number)
+		if header != nil {
+			break
+		}
+		log.Trace("CalcMedianPrice: waiting for header", "number", number, "chain head", chain.CurrentHeader().Number)
+		time.Sleep(time.Second)
 	}
 	if median, ok := e.medianPrices.Get(header.Hash()); ok {
 		// cache found
@@ -164,42 +165,23 @@ func (e *PriceEngine) GetBlockPrice(chain consensus.ChainReader, number uint64) 
 		// not a price block
 		return nil
 	}
-	currentNumber := chain.CurrentHeader().Number.Uint64()
-	if number >= currentNumber-params.CanonicalDepth {
-		// cache non-canonical price by block hash
-		header := chain.GetHeaderByNumber(number)
-		if header == nil {
-			log.Error("PriceEngine.GetBlockPrice: failed to get header by number ", "number", number)
-			return nil
-		}
-		hash := header.Hash()
-		if price, ok := e.nonacPrices.Get(hash); ok {
-			// non-canonical cache found
-			return price.(*Price)
-		}
-		price := PriceDecodeFromExtra(header.Extra)
-		if price == nil {
-			log.Error("PriceEngine.GetBlockPrice: failed to decode price from non-canonical header extra", "number", number, "extra", header.Extra)
-			return nil
-		}
-		log.Trace("Non-canonical block price", "number", number, "price", price.Rat().RatString())
-		e.nonacPrices.Add(hash, price)
-		return price
-	}
-
-	// cache canonical price by block number
-	if price, ok := e.canonPrices.Get(number); ok {
-		// canonical cache found
-		return price.(*Price)
-	}
 	header := chain.GetHeaderByNumber(number)
-	price := PriceDecodeFromExtra(header.Extra)
-	if price == nil {
-		log.Error("PriceEngine.GetBlockPrice: failed to decode price from canonical header extra", "number", number, "extra", header.Extra)
+	if header == nil {
+		log.Error("PriceEngine.GetBlockPrice: failed to get header by number ", "number", number)
 		return nil
 	}
-	log.Trace("Canonical block price", "number", number, "price", price.Rat().RatString())
-	e.canonPrices.Add(number, price)
+	hash := header.Hash()
+	if price, ok := e.headerPrices.Get(hash); ok {
+		// cache found
+		return price.(*Price)
+	}
+	price := PriceDecodeFromExtra(header.Extra)
+	if price == nil {
+		log.Error("PriceEngine.GetBlockPrice: failed to decode price from header extra", "number", number, "extra", header.Extra)
+		return nil
+	}
+	log.Trace("Header block price", "number", number, "price", price.Rat().RatString())
+	e.headerPrices.Add(hash, price)
 	return price
 }
 
