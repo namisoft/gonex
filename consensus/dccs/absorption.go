@@ -33,8 +33,12 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 )
 
+var (
+	emptyHash = common.Hash{}
+)
+
 // OnBlockInitialized handles supply absorption on each block initialization
-func OnBlockInitialized(chain consensus.ChainReader, state *state.StateDB, medianPrice *Price) {
+func OnBlockInitialized(chain consensus.ChainReader, header *types.Header, state *state.StateDB, medianPrice *Price) (types.Transactions, types.Receipts, error) {
 	backend := backends.NewRealBackend(state, chain, nil) // consensus only
 	target := common.Big0
 
@@ -42,12 +46,12 @@ func OnBlockInitialized(chain consensus.ChainReader, state *state.StateDB, media
 		stableToken, err := stable.NewStableTokenCaller(params.StableTokenAddress, backend)
 		if err != nil {
 			log.Error("Failed to create StableToken contract caller", "err", err)
-			return
+			return nil, nil, err
 		}
 		target, err = stableToken.TotalSupply(nil)
 		if err != nil {
 			log.Error("Failed to get stable token supply", "err", err)
-			return
+			return nil, nil, err
 		}
 
 		target.Mul(target, medianPrice.Rat().Num())
@@ -57,12 +61,12 @@ func OnBlockInitialized(chain consensus.ChainReader, state *state.StateDB, media
 	volatileToken, err := volatile.NewVolatileTokenCaller(params.VolatileTokenAddress, backend)
 	if err != nil {
 		log.Error("Failed to create VolatileToken contract caller", "err", err)
-		return
+		return nil, nil, err
 	}
 	supply, err := volatileToken.TotalSupply(nil)
 	if err != nil {
 		log.Error("Failed to get volatile token supply", "err", err)
-		return
+		return nil, nil, err
 	}
 
 	log.Trace("VolatileToken supply before", "supply", supply)
@@ -70,6 +74,7 @@ func OnBlockInitialized(chain consensus.ChainReader, state *state.StateDB, media
 	seign, err := endurio.NewSeigniorage(params.SeigniorageAddress, backend)
 	if err != nil {
 		log.Error("Failed to create new Seigniorage contract executor", "err", err)
+		return nil, nil, err
 	}
 
 	consensusTransactOpts := &bind.TransactOpts{
@@ -79,19 +84,29 @@ func OnBlockInitialized(chain consensus.ChainReader, state *state.StateDB, media
 		},
 	}
 
-	_, err = seign.OnBlockInitialized(consensusTransactOpts, target)
+	state.Prepare(emptyHash, emptyHash, 0)
+
+	tx, err := seign.OnBlockInitialized(consensusTransactOpts, target)
 	if err != nil {
 		log.Error("Failed to execute Seigniorage.OnBlockInitialized", "err", err)
+		return nil, nil, err
 	}
+	failed := err != nil
 
 	newSupply, err := volatileToken.TotalSupply(nil)
-	if newSupply.Cmp(supply) == 0 {
-		return
+	if newSupply.Cmp(supply) != 0 {
+		log.Trace("VolatileToken supply after", "new supply", newSupply, "change", new(big.Int).Sub(newSupply, supply))
+		stateObject := state.GetOrNewStateObject(params.VolatileTokenAddress)
+		stateObject.SetBalance(newSupply)
+		stateObject.CommitTrie(state.Database())
 	}
-	log.Trace("VolatileToken supply after", "new supply", newSupply, "change", new(big.Int).Sub(newSupply, supply))
-	stateObject := state.GetOrNewStateObject(params.VolatileTokenAddress)
-	stateObject.SetBalance(newSupply)
-	stateObject.CommitTrie(state.Database())
+
+	root := state.IntermediateRoot(chain.Config().IsEIP158(header.Number)).Bytes()
+	receipt := types.NewReceipt(root, failed, 0)
+	receipt.Logs = state.GetLogs(emptyHash)
+	receipt.Bloom = types.CreateBloom(types.Receipts{receipt})
+
+	return types.Transactions{tx}, types.Receipts{receipt}, nil
 }
 
 // AbsorbedStat returns ethstats data for stablecoin supply absorbed by the block

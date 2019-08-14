@@ -262,7 +262,7 @@ func (d *Dccs) initialize2(chain consensus.ChainReader, header *types.Header, st
 			log.Error("Failed to deploy CoLoa stablecoin contracts", "err", err)
 			return nil, nil, err
 		}
-		header.Root = state.IntermediateRoot(false)
+		header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
 		log.Info("⚙ Successfully deploy CoLoa stablecoin contracts")
 		return nil, nil, nil
 	}
@@ -272,9 +272,9 @@ func (d *Dccs) initialize2(chain consensus.ChainReader, header *types.Header, st
 		log.Trace("Failed to calculate canonical median price", "err", err, "number", header.Number)
 	}
 
-	OnBlockInitialized(chain, state, medianPrice)
-	header.Root = state.IntermediateRoot(false)
-	return nil, nil, nil
+	txs, receipts, err := OnBlockInitialized(chain, header, state, medianPrice)
+	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
+	return txs, receipts, err
 }
 
 // finalize2 implements consensus.Engine, ensuring no uncles are set, nor block
@@ -351,7 +351,6 @@ func deployCoLoaContracts(chain consensus.ChainReader, state *state.StateDB) err
 
 	// Link them together
 	{
-		//state.IntermediateRoot(false)
 		backend := backends.NewRealBackend(state, chain, nil)
 		seign, err := endurio.NewSeigniorage(params.SeigniorageAddress, backend)
 		if err != nil {
@@ -368,7 +367,7 @@ func deployCoLoaContracts(chain consensus.ChainReader, state *state.StateDB) err
 
 		_, err = seign.RegisterTokens(consensusTransactOpts, params.VolatileTokenAddress, params.StableTokenAddress)
 		if err != nil {
-			log.Error("Failed to execute Seigniorage.OnBlockInitialized", "err", err)
+			log.Error("Failed to execute Seigniorage.RegisterTokens", "err", err)
 			return err
 		}
 		state.Commit(false)
