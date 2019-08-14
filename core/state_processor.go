@@ -17,12 +17,15 @@
 package core
 
 import (
+	"fmt"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
 )
 
@@ -54,15 +57,29 @@ func NewStateProcessor(config *params.ChainConfig, bc *BlockChain, engine consen
 // transactions failed to execute due to insufficient gas it will return an error.
 func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg vm.Config) (types.Receipts, []*types.Log, uint64, error) {
 	var (
-		receipts types.Receipts
-		usedGas  = new(uint64)
-		header   = block.Header()
-		allLogs  []*types.Log
-		gp       = new(GasPool).AddGas(block.GasLimit())
+		usedGas = new(uint64)
+		header  = block.Header()
+		allLogs []*types.Log
+		gp      = new(GasPool).AddGas(block.GasLimit())
 	)
-	p.engine.Initialize(p.bc, header, statedb)
+	txs, receipts, err := p.engine.Initialize(p.bc, header, statedb)
+	if err != nil {
+		log.Error("Error on block initialization", "err", err)
+	}
+	for _, receipt := range receipts {
+		allLogs = append(allLogs, receipt.Logs...)
+	}
+
 	// Iterate over and process the individual transactions
 	for i, tx := range block.Transactions() {
+		if i < len(txs) {
+			// block initializing txs and receipts are included in the block for reference, not for execution.
+			if txs[i].Hash() != tx.Hash() {
+				log.Error("unexpected consensus tx", "index", i, "expected", txs[i].Hash(), "actual", tx.Hash())
+				return nil, nil, 0, fmt.Errorf("unexpected consensus transaction with index %v", i)
+			}
+			continue
+		}
 		statedb.Prepare(tx.Hash(), block.Hash(), i)
 		receipt, _, err := ApplyTransaction(p.config, p.bc, nil, gp, statedb, header, tx, usedGas, cfg)
 		if err != nil {

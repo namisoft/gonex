@@ -888,12 +888,17 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 	}
 	// Create the current work task and check any fork transitions needed
 	env := w.current
-	// Initialize the block state
-	_, _, err = w.engine.Initialize(w.chain, env.header, env.state)
+
+	// Initialize the block state and receipts
+	txs, receipts, err := w.engine.Initialize(w.chain, env.header, env.state)
 	if err != nil {
 		log.Error("Failed to initialize the block", "err", err)
 		return
 	}
+	// block initializing txs and receipts are included in the block for reference, not for execution.
+	env.txs = txs
+	env.receipts = receipts
+
 	// Accumulate the uncles for the current block
 	uncles := make([]*types.Header, 0, 2)
 	commitUncles := func(blocks map[common.Hash]*types.Block) {

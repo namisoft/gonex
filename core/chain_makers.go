@@ -204,7 +204,13 @@ func GenerateChain(config *params.ChainConfig, parent *types.Block, engine conse
 			}
 		}
 		if b.engine != nil {
-			b.engine.Initialize(chainreader, b.header, statedb)
+			txs, receipts, err := b.engine.Initialize(chainreader, b.header, statedb)
+			if err != nil {
+				panic(fmt.Sprintf("block initialization error: %v", err))
+			}
+			// block initializing txs and receipts are included in the block for reference, not for execution.
+			b.txs = txs
+			b.receipts = receipts
 		}
 		// Execute any user modifications to the block
 		if gen != nil {
