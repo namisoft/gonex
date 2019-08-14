@@ -150,6 +150,8 @@ func (b *RealBackend) CallContract(ctx context.Context, call ethereum.CallMsg, b
 	if blockNumber != nil && blockNumber.Cmp(b.blockchain.CurrentHeader().Number) != 0 {
 		return nil, errBlockNumberUnsupported
 	}
+	// make sure pure/view contract call does not modify the state
+	defer b.state.RevertToSnapshot(b.state.Snapshot())
 	rval, _, _, err := b.callContract(ctx, call, b.blockchain.CurrentHeader(), b.state)
 	return rval, err
 }
@@ -158,7 +160,6 @@ func (b *RealBackend) CallContract(ctx context.Context, call ethereum.CallMsg, b
 func (b *RealBackend) PendingCallContract(ctx context.Context, call ethereum.CallMsg) ([]byte, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	//defer b.state.RevertToSnapshot(b.state.Snapshot())
 
 	rval, _, _, err := b.callContract(ctx, call, b.blockchain.CurrentHeader(), b.state)
 	return rval, err
