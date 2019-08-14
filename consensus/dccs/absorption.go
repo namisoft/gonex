@@ -106,6 +106,17 @@ func OnBlockInitialized(chain consensus.ChainReader, header *types.Header, state
 	receipt.Logs = state.GetLogs(emptyHash)
 	receipt.Bloom = types.CreateBloom(types.Receipts{receipt})
 
+	log.Trace("OnBlockInitialized", "receipt.Logs len", len(receipt.Logs))
+	for i, l := range receipt.Logs {
+		log.Trace("OnBlockInitialized", "i", i,
+			"address", l.Address,
+			"data", common.Bytes2Hex(l.Data),
+		)
+		for _, topic := range l.Topics {
+			log.Trace("+ Topic", "topic", topic)
+		}
+	}
+
 	return types.Transactions{tx}, types.Receipts{receipt}, nil
 }
 

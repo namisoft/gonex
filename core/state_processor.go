@@ -66,7 +66,18 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	if err != nil {
 		log.Error("Error on block initialization", "err", err)
 	}
+	log.Trace("receipts", "len", len(receipts))
 	for _, receipt := range receipts {
+		log.Trace("receipt.Logs", "len", len(receipt.Logs))
+		for i, l := range receipt.Logs {
+			log.Trace("consensus receipt log", "i", i,
+				"address", l.Address,
+				"data", common.Bytes2Hex(l.Data),
+			)
+			for _, topic := range l.Topics {
+				log.Trace("- Topic", "topic", topic)
+			}
+		}
 		allLogs = append(allLogs, receipt.Logs...)
 	}
 
