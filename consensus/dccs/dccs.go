@@ -23,6 +23,7 @@ import (
 	"io"
 	"math/big"
 	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
@@ -445,4 +446,30 @@ func ecrecover(header *types.Header, sigcache *lru.ARCCache) (common.Address, er
 
 	sigcache.Add(hash, signer)
 	return signer, nil
+}
+
+// useful while header chain is syncing
+func mustGetHeader(chain consensus.ChainReader, number uint64) *types.Header {
+	// looping until the header is available locally
+	for {
+		header := chain.GetHeaderByNumber(number)
+		if header != nil {
+			return header
+		}
+		log.Trace("Waiting for header", "number", number, "chain head", chain.CurrentHeader().Number)
+		time.Sleep(65 * time.Millisecond)
+	}
+}
+
+// useful while state is syncing
+func mustGetStateAt(chain consensus.ChainReader, root common.Hash) *state.StateDB {
+	// looping until the state is available locally
+	for {
+		state, err := chain.StateAt(root)
+		if state != nil && err == nil {
+			return state
+		}
+		log.Trace("Waiting for state", "root", root, "err", err)
+		time.Sleep(137 * time.Millisecond)
+	}
 }
