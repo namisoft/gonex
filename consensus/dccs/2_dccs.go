@@ -258,7 +258,7 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 // initialize implements the consensus.Engine
 func (d *Dccs) initialize2(chain consensus.ChainReader, header *types.Header, state *state.StateDB) (types.Transactions, types.Receipts, error) {
 	if header.Number.Cmp(d.config.CoLoaBlock) == 0 {
-		if err := deployCoLoaContracts(chain, state); err != nil {
+		if err := deployCoLoaContracts(chain, header, state); err != nil {
 			log.Error("Failed to deploy CoLoa stablecoin contracts", "err", err)
 			return nil, nil, err
 		}
@@ -295,7 +295,7 @@ func (d *Dccs) seal2(chain consensus.ChainReader, block *types.Block, results ch
 	return d.seal1(chain, block, results, stop)
 }
 
-func deployCoLoaContracts(chain consensus.ChainReader, state *state.StateDB) error {
+func deployCoLoaContracts(chain consensus.ChainReader, header *types.Header, state *state.StateDB) error {
 	// Deploy Seigniorage Contract
 	{
 		// Generate contract code and data using a simulated backend
@@ -351,7 +351,7 @@ func deployCoLoaContracts(chain consensus.ChainReader, state *state.StateDB) err
 
 	// Link them together
 	{
-		backend := backends.NewRealBackend(state, chain, nil)
+		backend := backends.NewRealBackend(chain, header, state, nil)
 		seign, err := endurio.NewSeigniorage(params.SeigniorageAddress, backend)
 		if err != nil {
 			log.Error("Failed to create new Seigniorage contract executor", "err", err)

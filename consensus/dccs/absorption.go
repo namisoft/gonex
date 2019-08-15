@@ -39,7 +39,7 @@ var (
 
 // OnBlockInitialized handles supply absorption on each block initialization
 func OnBlockInitialized(chain consensus.ChainReader, header *types.Header, state *state.StateDB, medianPrice *Price) (types.Transactions, types.Receipts, error) {
-	backend := backends.NewRealBackend(state, chain, nil) // consensus only
+	backend := backends.NewRealBackend(chain, header, state, nil) // consensus only
 	target := common.Big0
 
 	if medianPrice != nil {
@@ -114,28 +114,31 @@ func AbsorbedStat(chain consensus.ChainReader, number uint64) string {
 	if number <= 0 {
 		return ""
 	}
-	state, err := chain.StateAt(chain.GetHeaderByNumber(number - 1).Root)
+	header := chain.GetHeaderByNumber(number - 1)
+	state, err := chain.StateAt(header.Root)
 	if err != nil {
 		return err.Error()
 	}
 	if state == nil {
 		return "No state at " + string(number-1)
 	}
-	oldSupply, err := GetStableTokenSupply(state, chain)
+	oldSupply, err := GetStableTokenSupply(chain, header, state)
 	if err != nil {
 		return err.Error()
 	}
 	if oldSupply == nil {
 		return "No Old Supply"
 	}
-	state, err = chain.StateAt(chain.GetHeaderByNumber(number).Root)
+
+	header = chain.GetHeaderByNumber(number)
+	state, err = chain.StateAt(header.Root)
 	if err != nil {
 		return err.Error()
 	}
 	if state == nil {
 		return "No state at " + string(number)
 	}
-	supply, err := GetStableTokenSupply(state, chain)
+	supply, err := GetStableTokenSupply(chain, header, state)
 	if err != nil {
 		return err.Error()
 	}
@@ -159,7 +162,7 @@ func RemainToAbsorbStat(chain consensus.ChainReader, number uint64) string {
 		return "No state at " + string(number)
 	}
 	// Random key to make sure no one has any special right
-	backend := backends.NewRealBackend(state, chain, nil)
+	backend := backends.NewRealBackend(chain, header, state, nil)
 
 	caller, err := endurio.NewSeigniorageCaller(params.SeigniorageAddress, backend)
 	if err != nil {
@@ -188,7 +191,7 @@ func StableSupplyStat(chain consensus.ChainReader, number uint64) string {
 	if state == nil {
 		return "No state at " + string(number)
 	}
-	supply, err := GetStableTokenSupply(state, chain)
+	supply, err := GetStableTokenSupply(chain, header, state)
 	if err != nil {
 		return err.Error()
 	}
@@ -199,8 +202,8 @@ func StableSupplyStat(chain consensus.ChainReader, number uint64) string {
 }
 
 // GetStableTokenSupply returns the current supply of the stable token in the stateDB
-func GetStableTokenSupply(state *state.StateDB, chain consensus.ChainReader) (*big.Int, error) {
-	backend := backends.NewRealBackend(state, chain, nil)
+func GetStableTokenSupply(chain consensus.ChainReader, header *types.Header, state *state.StateDB) (*big.Int, error) {
+	backend := backends.NewRealBackend(chain, header, state, nil)
 	caller, err := stable.NewStableTokenCaller(params.StableTokenAddress, backend)
 	if err != nil {
 		return nil, err
