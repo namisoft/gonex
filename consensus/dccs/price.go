@@ -25,7 +25,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
 	lru "github.com/hashicorp/golang-lru"
@@ -112,15 +111,7 @@ func (e *PriceEngine) CalcMedianPrice(chain consensus.ChainReader, number uint64
 	if number > chain.CurrentHeader().Number.Uint64() {
 		return nil, errors.New("Block number too high")
 	}
-	var header *types.Header
-	for {
-		header = chain.GetHeaderByNumber(number)
-		if header != nil {
-			break
-		}
-		log.Trace("CalcMedianPrice: waiting for header", "number", number, "chain head", chain.CurrentHeader().Number)
-		time.Sleep(time.Second)
-	}
+	header := mustGetHeader(chain, number)
 	if median, ok := e.medianPrices.Get(header.Hash()); ok {
 		// cache found
 		return median.(*Price), nil
