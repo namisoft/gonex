@@ -42,6 +42,7 @@ var _ bind.ContractBackend = (*RealBackend)(nil)
 // the background. Its main purpose is to allow easily testing contract bindings.
 type RealBackend struct {
 	blockchain consensus.ChainReader
+	header     *types.Header
 	caller     *common.Address
 
 	mu    sync.Mutex
@@ -53,12 +54,13 @@ type RealBackend struct {
 }
 
 // NewRealBackend creates a new binding backend for modifying the real blockchain state.
-func NewRealBackend(state *state.StateDB, chain consensus.ChainReader, caller *common.Address) *RealBackend {
+func NewRealBackend(chain consensus.ChainReader, header *types.Header, state *state.StateDB, caller *common.Address) *RealBackend {
 	if caller == nil {
 		caller = &params.ZeroAddress
 	}
 	backend := &RealBackend{
 		blockchain: chain,
+		header:     header,
 		caller:     caller,
 		state:      state,
 		config:     chain.Config(),
@@ -71,7 +73,7 @@ func (b *RealBackend) CodeAt(ctx context.Context, contract common.Address, block
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	if blockNumber != nil && blockNumber.Cmp(b.blockchain.CurrentHeader().Number) != 0 {
+	if blockNumber != nil && blockNumber.Cmp(b.header.Number) != 0 {
 		return nil, errBlockNumberUnsupported
 	}
 	return b.state.GetCode(contract), nil
@@ -82,7 +84,7 @@ func (b *RealBackend) BalanceAt(ctx context.Context, contract common.Address, bl
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	if blockNumber != nil && blockNumber.Cmp(b.blockchain.CurrentHeader().Number) != 0 {
+	if blockNumber != nil && blockNumber.Cmp(b.header.Number) != 0 {
 		return nil, errBlockNumberUnsupported
 	}
 	return b.state.GetBalance(contract), nil
@@ -93,7 +95,7 @@ func (b *RealBackend) NonceAt(ctx context.Context, contract common.Address, bloc
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	if blockNumber != nil && blockNumber.Cmp(b.blockchain.CurrentHeader().Number) != 0 {
+	if blockNumber != nil && blockNumber.Cmp(b.header.Number) != 0 {
 		return 0, errBlockNumberUnsupported
 	}
 	return b.state.GetNonce(contract), nil
@@ -104,7 +106,7 @@ func (b *RealBackend) MRUNumberAt(ctx context.Context, contract common.Address, 
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	if blockNumber != nil && blockNumber.Cmp(b.blockchain.CurrentHeader().Number) != 0 {
+	if blockNumber != nil && blockNumber.Cmp(b.header.Number) != 0 {
 		return 0, errBlockNumberUnsupported
 	}
 	return b.state.GetMRUNumber(contract), nil
@@ -115,7 +117,7 @@ func (b *RealBackend) ForEachStorageAt(ctx context.Context, contract common.Addr
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	if blockNumber != nil && blockNumber.Cmp(b.blockchain.CurrentHeader().Number) != 0 {
+	if blockNumber != nil && blockNumber.Cmp(b.header.Number) != 0 {
 		return errBlockNumberUnsupported
 	}
 	b.state.ForEachStorage(contract, f)
@@ -127,7 +129,7 @@ func (b *RealBackend) StorageAt(ctx context.Context, contract common.Address, ke
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	if blockNumber != nil && blockNumber.Cmp(b.blockchain.CurrentHeader().Number) != 0 {
+	if blockNumber != nil && blockNumber.Cmp(b.header.Number) != 0 {
 		return nil, errBlockNumberUnsupported
 	}
 	val := b.state.GetState(contract, key)
@@ -147,12 +149,12 @@ func (b *RealBackend) CallContract(ctx context.Context, call ethereum.CallMsg, b
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	if blockNumber != nil && blockNumber.Cmp(b.blockchain.CurrentHeader().Number) != 0 {
+	if blockNumber != nil && blockNumber.Cmp(b.header.Number) != 0 {
 		return nil, errBlockNumberUnsupported
 	}
 	// make sure pure/view contract call does not modify the state
 	defer b.state.RevertToSnapshot(b.state.Snapshot())
-	rval, _, _, err := b.callContract(ctx, call, b.blockchain.CurrentHeader(), b.state)
+	rval, _, _, err := b.callContract(ctx, call, b.header, b.state)
 	return rval, err
 }
 
@@ -161,7 +163,7 @@ func (b *RealBackend) PendingCallContract(ctx context.Context, call ethereum.Cal
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	rval, _, _, err := b.callContract(ctx, call, b.blockchain.CurrentHeader(), b.state)
+	rval, _, _, err := b.callContract(ctx, call, b.header, b.state)
 	return rval, err
 }
 
@@ -195,7 +197,7 @@ func (b *RealBackend) EstimateGas(ctx context.Context, call ethereum.CallMsg) (u
 	if call.Gas >= params.TxGas {
 		hi = call.Gas
 	} else {
-		hi = b.blockchain.CurrentHeader().GasLimit
+		hi = b.header.GasLimit
 	}
 	cap = hi
 
@@ -204,7 +206,7 @@ func (b *RealBackend) EstimateGas(ctx context.Context, call ethereum.CallMsg) (u
 		call.Gas = gas
 
 		snapshot := b.state.Snapshot()
-		_, _, failed, err := b.callContract(ctx, call, b.blockchain.CurrentHeader(), b.state)
+		_, _, failed, err := b.callContract(ctx, call, b.header, b.state)
 		b.state.RevertToSnapshot(snapshot)
 
 		if err != nil || failed {
@@ -235,17 +237,14 @@ func (b *RealBackend) EstimateGas(ctx context.Context, call ethereum.CallMsg) (u
 func (b *RealBackend) callContract(ctx context.Context, call ethereum.CallMsg, header *types.Header, statedb *state.StateDB) ([]byte, uint64, bool, error) {
 	// Ensure message is initialized properly.
 	if call.GasPrice == nil {
-		call.GasPrice = big.NewInt(1)
+		call.GasPrice = common.Big0
 	}
 	if call.Gas == 0 {
-		call.Gas = 50000000
+		call.Gas = math.MaxUint64
 	}
 	if call.Value == nil {
-		call.Value = new(big.Int)
+		call.Value = common.Big0
 	}
-	// Set infinite balance to the fake caller account.
-	from := statedb.GetOrNewStateObject(call.From)
-	from.SetBalance(math.MaxBig256)
 	// Execute the call.
 	msg := callmsg{call}
 
