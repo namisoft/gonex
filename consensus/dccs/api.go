@@ -43,7 +43,7 @@ func (api *API) GetSnapshot(number *rpc.BlockNumber) (*Snapshot, error) {
 	if header == nil {
 		return nil, errUnknownBlock
 	}
-	return api.dccs.snapshot1(api.chain, header.Number.Uint64(), header.Hash(), nil)
+	return api.dccs.snapshot1(api.chain, header, nil)
 }
 
 // GetSnapshotAtHash retrieves the state snapshot at a given block.
@@ -52,7 +52,7 @@ func (api *API) GetSnapshotAtHash(hash common.Hash) (*Snapshot, error) {
 	if header == nil {
 		return nil, errUnknownBlock
 	}
-	return api.dccs.snapshot1(api.chain, header.Number.Uint64(), header.Hash(), nil)
+	return api.dccs.snapshot1(api.chain, header, nil)
 }
 
 // GetSigners retrieves the list of authorized signers at the specified block.
@@ -68,7 +68,7 @@ func (api *API) GetSigners(number *rpc.BlockNumber) ([]Signer, error) {
 	if header == nil {
 		return nil, errUnknownBlock
 	}
-	snap, err := api.dccs.snapshot1(api.chain, header.Number.Uint64(), header.Hash(), nil)
+	snap, err := api.dccs.snapshot1(api.chain, header, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (api *API) GetSignersAtHash(hash common.Hash) ([]Signer, error) {
 	if header == nil {
 		return nil, errUnknownBlock
 	}
-	snap, err := api.dccs.snapshot1(api.chain, header.Number.Uint64(), header.Hash(), nil)
+	snap, err := api.dccs.snapshot1(api.chain, header, nil)
 	if err != nil {
 		return nil, err
 	}

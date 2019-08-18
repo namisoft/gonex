@@ -20,6 +20,7 @@ package dccs
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"math"
 	"math/big"
 	"time"
@@ -40,6 +41,10 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
+)
+
+var (
+	errSnapshotNotAvailable = errors.New("Snapshot contract not available")
 )
 
 var (
@@ -148,7 +153,7 @@ func (d *Dccs) verifyCascadingFields1(chain consensus.ChainReader, header *types
 		return ErrInvalidTimestamp
 	}
 	// Retrieve the snapshot needed to verify this header and cache it
-	snap, err := d.snapshot1(chain, number-1, header.ParentHash, parents)
+	snap, err := d.snapshot1(chain, header, parents)
 	if err != nil {
 		return err
 	}
@@ -168,64 +173,135 @@ func (d *Dccs) verifyCascadingFields1(chain consensus.ChainReader, header *types
 }
 
 // snapshot1 retrieves the authorization snapshot at a given point in time.
-func (d *Dccs) snapshot1(chain consensus.ChainReader, number uint64, hash common.Hash, parents []*types.Header) (*Snapshot, error) {
-	// Search for a snapshot in memory or on disk for checkpoints
-	var (
-		snap *Snapshot
-	)
-	cp := d.config.Snapshot(number + 1)
-	// looping until data/state are available on local
-	for snap == nil {
-		// Get signers from Nexty staking smart contract at the latest epoch checkpoint from block number
-		checkpoint := chain.GetHeaderByNumber(cp)
-		if checkpoint == nil {
-			log.Trace("snapshot header not available", "number", cp)
-			continue
+//
+// Note: signers list for checkpoint block is gotten from it's snapshot block,
+// which is (checkpoint-canonicalDepth). This list is then recorded to the
+// checkpoint block extra itself.
+// So the signers list for block n can be retrieved from either:
+// 1. header extra of block checkpoint(n), or
+// 2. state of block snapshot(n) => this is required for miner
+func (d *Dccs) snapshot1(chain consensus.ChainReader, header *types.Header, parents []*types.Header) (*Snapshot, error) {
+	number := header.Number.Uint64()
+	ssNumber := d.config.Snapshot(number)
+	ssHeader := chain.GetHeaderByNumber(ssNumber)
+	if ssHeader != nil {
+		if s, ok := d.recents.Get(ssHeader.Hash()); ok {
+			// in-memory snapshot found
+			snap := s.(*Snapshot)
+			log.Trace("Snapshot loaded from mem-cache", "snapshot number", snap.Number, "hash", snap.Hash, "signers length", len(snap.Signers), "for number", header.Number)
+			return snap, nil
 		}
-		hash := checkpoint.Hash()
-		log.Trace("Reading signers from epoch checkpoint", "number", cp, "hash", hash)
-		// If an in-memory snapshot was found, use that
-		if s, ok := d.recents.Get(hash); ok && number+1 != d.config.ThangLongBlock.Uint64() {
-			snap = s.(*Snapshot)
-			log.Trace("Loading snapshot from mem-cache", "hash", snap.Hash, "length", len(snap.signers()))
-			break
-		}
-		state, err := chain.StateAt(checkpoint.Root)
-		if state == nil || err != nil {
-			log.Trace("snapshot state not available", "number", cp, "err", err)
-			continue
-		}
-		size := state.GetCodeSize(chain.Config().Dccs.Contract)
-		if size <= 0 || state.Error() != nil {
-			log.Trace("snapshot contract state not available", "number", cp, "err", state.Error())
-			continue
-		}
-		index := common.BigToHash(common.Big0)
-		result := state.GetState(chain.Config().Dccs.Contract, index)
-		var length int64
-		if (result == common.Hash{}) {
-			length = 0
+	}
+	// no cache found
+
+	if d.config.IsCheckpoint(number) {
+		if ssHeader != nil {
+			snap, err := d.getStateSnapshot(chain, ssHeader)
+			if err == nil && snap != nil {
+				log.Trace("Snapshot retrieved from state and cached", "for number", header.Number, "snapshot number", snap.Number, "hash", snap.Hash)
+				// Store found snapshot into mem-cache
+				d.recents.Add(snap.Hash, snap)
+				return snap, nil
+			}
+			log.Warn("☢ Snapshot state missing for checkpoint block, continue at your own risk", "snapshot number", ssNumber, "for number", number, "err", err)
 		} else {
-			length = result.Big().Int64()
+			log.Warn("☢ Snapshot header missing for checkpoint block, continue at your own risk", "snapshot number", ssNumber, "for number", number)
 		}
-		log.Trace("Total number of signer from staking smart contract", "length", length)
-		signers := make([]common.Address, length)
-		key := crypto.Keccak256Hash(hexutil.MustDecode(index.String()))
-		for i := 0; i < len(signers); i++ {
-			log.Trace("key hash", "key", key)
-			singer := state.GetState(chain.Config().Dccs.Contract, key)
-			signers[i] = common.HexToAddress(singer.Hex())
-			key = key.Plus()
-		}
-		snap = newSnapshot(d.config, d.signatures, number, hash, signers)
-		// Store found snapshot into mem-cache
-		d.recents.Add(snap.Hash, snap)
-		break
 	}
 
-	// Set current block number for snapshot to calculate the inturn & difficulty
-	snap.Number = number
-	return snap, nil
+	return d.getHeaderSnapshotFor(header, chain, parents)
+}
+
+func (d *Dccs) getStateSnapshot(chain consensus.ChainReader, header *types.Header) (*Snapshot, error) {
+	number := header.Number.Uint64()
+	state, err := chain.StateAt(header.Root)
+	if state == nil || err != nil {
+		log.Trace("Snapshot state not available", "number", number, "err", err)
+		return nil, errSnapshotNotAvailable
+	}
+	size := state.GetCodeSize(chain.Config().Dccs.Contract)
+	if size <= 0 || state.Error() != nil {
+		log.Trace("Snapshot contract state not available", "number", number, "err", state.Error())
+		return nil, errSnapshotNotAvailable
+	}
+	index := common.BigToHash(common.Big0)
+	result := state.GetState(chain.Config().Dccs.Contract, index)
+	var length int64
+	if (result == common.Hash{}) {
+		length = 0
+	} else {
+		length = result.Big().Int64()
+	}
+	log.Trace("Total number of signer from staking smart contract", "length", length)
+	signers := make([]common.Address, length)
+	key := crypto.Keccak256Hash(hexutil.MustDecode(index.String()))
+	for i := 0; i < len(signers); i++ {
+		log.Trace("key hash", "key", key)
+		singer := state.GetState(chain.Config().Dccs.Contract, key)
+		signers[i] = common.HexToAddress(singer.Hex())
+		key = key.Plus()
+	}
+	return newSnapshot(d.config, d.signatures, number, header.Hash(), signers), nil
+}
+
+// getHeaderFromInput return either:
+// + the input header, if number == header.Number
+// + the header in parent if available (nessesary for batch headers processing)
+// + chain.GetHeaderByNumber(number), if all else fail
+func getAvailableHeader(number uint64, header *types.Header, parents []*types.Header, chain consensus.ChainReader) *types.Header {
+	headerNumber := header.Number.Uint64()
+	if number == headerNumber {
+		return header
+	}
+	if number > headerNumber {
+		return chain.GetHeaderByNumber(number)
+	}
+	idx := len(parents) - int(headerNumber) + int(number)
+	if idx >= 0 {
+		header := parents[idx]
+		if header.Number.Uint64() == number {
+			return header
+		}
+		log.Error("invalid parrent number", "expected", number, "actual", header.Number)
+	}
+	return chain.GetHeaderByNumber(number)
+}
+
+func (d *Dccs) getHeaderSnapshotFor(header *types.Header, chain consensus.ChainReader, parents []*types.Header) (*Snapshot, error) {
+	number := header.Number.Uint64()
+	cp := d.config.Checkpoint(number)
+	cpHeader := getAvailableHeader(cp, header, parents, chain)
+	if cpHeader == nil {
+		return nil, fmt.Errorf("checkpoint header missing: checkpoint = %v, header = %v", cp, number)
+	}
+	ss := d.config.Snapshot(number)
+	ssHeader := getAvailableHeader(ss, header, parents, chain)
+	return d.getHeaderSnapshot(cpHeader, ssHeader)
+}
+
+// the signer list is retrieved from header extra, but the hash of the snapshot is
+// not the header.Hash(), but the snapshot(header).Hash()
+func (d *Dccs) getHeaderSnapshot(header, ssHeader *types.Header) (*Snapshot, error) {
+	number := header.Number.Uint64()
+	extraSuffix := len(header.Extra) - extraSeal
+	extraSealers := header.Extra[extraVanity:extraSuffix]
+	if len(extraSealers) == 0 {
+		log.Error("empty sealers list", "number", number, "extra", common.Bytes2Hex(header.Extra))
+		return nil, errInvalidCheckpointSigners
+	}
+	if len(extraSealers)%common.AddressLength != 0 {
+		log.Error("not divided by common.AddressLength", "number", number, "actual", common.Bytes2Hex(extraSealers))
+		return nil, errInvalidCheckpointSigners
+	}
+	signersCount := len(extraSealers) / common.AddressLength
+	signers := make([]common.Address, signersCount)
+	for i := 0; i < signersCount; i++ {
+		offset := i * common.AddressLength
+		signers[i] = common.BytesToAddress(extraSealers[offset : offset+common.AddressLength])
+	}
+
+	log.Trace("Snapshot parsed from checkpoint header", "snapshot number", ssHeader.Number, "hash", ssHeader.Hash(), "for number", header.Number)
+	return newSnapshot(d.config, d.signatures, ssHeader.Number.Uint64(), ssHeader.Hash(), signers), nil
 }
 
 // verifySeal1 checks whether the signature contained in the header satisfies the
@@ -239,7 +315,7 @@ func (d *Dccs) verifySeal1(chain consensus.ChainReader, header *types.Header, pa
 		return errUnknownBlock
 	}
 	// Retrieve the snapshot needed to verify this header and cache it
-	snap, err := d.snapshot1(chain, number-1, header.ParentHash, parents)
+	snap, err := d.snapshot1(chain, header, parents)
 	if err != nil {
 		return err
 	}
@@ -287,23 +363,26 @@ func (d *Dccs) prepare1(chain consensus.ChainReader, header *types.Header) error
 	header.Nonce = types.BlockNonce{}
 	// Get the beneficiary of signer from smart contract and set to header's coinbase to give sealing reward later
 	number := header.Number.Uint64()
-	cp := d.config.Snapshot(number)
-	checkpoint := chain.GetHeaderByNumber(cp)
-	if checkpoint != nil {
-		root, _ := chain.StateAt(checkpoint.Root)
-		index := common.BigToHash(common.Big1).String()[2:]
-		coinbase := "0x000000000000000000000000" + header.Coinbase.String()[2:]
-		key := crypto.Keccak256Hash(hexutil.MustDecode(coinbase + index))
-		result := root.GetState(chain.Config().Dccs.Contract, key)
-		beneficiary := common.HexToAddress(result.Hex())
-		header.Coinbase = beneficiary
-	} else {
-		log.Error("state is not available at the block number", "number", cp)
-		return errors.New("state is not available at the block number")
+	ss := d.config.Snapshot(number)
+	ssHeader := chain.GetHeaderByNumber(ss)
+	if ssHeader == nil {
+		log.Trace("Header not available at snapshot", "number", ss)
+		return errSnapshotNotAvailable
 	}
+	ssState, err := chain.StateAt(ssHeader.Root)
+	if ssState == nil || err != nil {
+		log.Trace("State not available at snapshot", "number", ss, "err", err)
+		return errSnapshotNotAvailable
+	}
+	index := common.BigToHash(common.Big1).String()[2:]
+	coinbase := "0x000000000000000000000000" + header.Coinbase.String()[2:]
+	key := crypto.Keccak256Hash(hexutil.MustDecode(coinbase + index))
+	result := ssState.GetState(chain.Config().Dccs.Contract, key)
+	beneficiary := common.HexToAddress(result.Hex())
+	header.Coinbase = beneficiary
 
 	// Set the correct difficulty
-	snap, err := d.snapshot1(chain, number-1, header.ParentHash, nil)
+	snap, err := d.snapshot1(chain, header, nil)
 	if err != nil {
 		return err
 	}
@@ -379,7 +458,7 @@ func (d *Dccs) seal1(chain consensus.ChainReader, block *types.Block, results ch
 	d.lock.RUnlock()
 
 	// Bail out if we're unauthorized to sign a block
-	snap, err := d.snapshot1(chain, number-1, header.ParentHash, nil)
+	snap, err := d.snapshot1(chain, header, nil)
 	if err != nil {
 		return err
 	}

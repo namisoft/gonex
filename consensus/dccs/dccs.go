@@ -25,6 +25,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/eth/downloader"
+
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -344,8 +346,13 @@ func (d *Dccs) Seal(chain consensus.ChainReader, block *types.Block, results cha
 // that a new block should have based on the previous blocks in the chain and the
 // current signer.
 func (d *Dccs) CalcDifficulty(chain consensus.ChainReader, time uint64, parent *types.Header) *big.Int {
-	if chain.Config().IsThangLong(parent.Number) {
-		snap, err := d.snapshot1(chain, parent.Number.Uint64(), parent.Hash(), nil)
+	number := new(big.Int).Add(common.Big1, parent.Number)
+	if chain.Config().IsThangLong(number) {
+		// create a fake header for the being-mined block
+		snap, err := d.snapshot1(chain, &types.Header{
+			Number:     number,
+			ParentHash: parent.Hash(),
+		}, nil)
 		if err != nil {
 			return nil
 		}
@@ -456,20 +463,12 @@ func mustGetHeader(chain consensus.ChainReader, number uint64) *types.Header {
 		if header != nil {
 			return header
 		}
-		log.Trace("Waiting for header", "number", number, "chain head", chain.CurrentHeader().Number)
-		time.Sleep(65 * time.Millisecond)
-	}
-}
-
-// useful while state is syncing
-func mustGetStateAt(chain consensus.ChainReader, root common.Hash) *state.StateDB {
-	// looping until the state is available locally
-	for {
-		state, err := chain.StateAt(root)
-		if state != nil && err == nil {
-			return state
+		head := chain.CurrentHeader().Number.Uint64()
+		if number > head+uint64(downloader.MaxHeaderFetch) {
+			log.Error("Header request too far", "number", number, "chain head", head)
+			return nil
 		}
-		log.Trace("Waiting for state", "root", root, "err", err)
-		time.Sleep(137 * time.Millisecond)
+		log.Trace("Waiting for header", "number", number, "chain head", head)
+		time.Sleep(65 * time.Millisecond)
 	}
 }
