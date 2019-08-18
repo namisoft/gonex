@@ -51,12 +51,15 @@ func (s *Snapshot) init1() *Snapshot {
 
 // signers1 retrieves the list of authorized signers in hash ascending order.
 func (s *Snapshot) signers1() []Signer {
-	sigs := make([]Signer, 0, len(s.Signers))
-	for sig := range s.Signers {
-		sigs = append(sigs, Signer{Hash: s.Hash, Address: sig})
-	}
-	sort.Sort(signersAscendingByHash(sigs))
-	return sigs
+	s.sortedOnce.Do(func() {
+		sigs := make([]Signer, 0, len(s.Signers))
+		for sig := range s.Signers {
+			sigs = append(sigs, Signer{Hash: s.Hash, Address: sig})
+		}
+		sort.Sort(signersAscendingByHash(sigs))
+		s.sorted = sigs
+	})
+	return s.sorted
 }
 
 // inturn2 returns if a signer at a given block height is in-turn or not.

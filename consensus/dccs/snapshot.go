@@ -17,6 +17,8 @@
 package dccs
 
 import (
+	"sync"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/params"
 	lru "github.com/hashicorp/golang-lru"
@@ -33,6 +35,9 @@ type Snapshot struct {
 	Recents map[uint64]common.Address   `json:"recents"` // Set of recent signers for spam protections
 	Votes   []*Vote                     `json:"votes"`   // List of votes cast in chronological order
 	Tally   map[common.Address]Tally    `json:"tally"`   // Current vote tally to avoid recalculating
+
+	sortedOnce sync.Once
+	sorted     []Signer // sorted signer list
 }
 
 // newSnapshot creates a new snapshot with the specified startup parameters. This
