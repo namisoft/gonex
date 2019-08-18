@@ -280,6 +280,24 @@ func NewBlockChain(db ethdb.Database, cacheConfig *CacheConfig, chainConfig *par
 			}
 		}
 	}
+	if chainConfig.IsThangLong(bc.CurrentHeader().Number) {
+		number := bc.CurrentHeader().Number.Uint64()
+		ss := chainConfig.Dccs.Snapshot(number)
+		log.Info("Sanity check for ThangLong snapshot header", "snapshot", ss, "head", number)
+		if bc.GetHeaderByNumber(ss) == nil {
+			log.Warn("Corrupted snapshot header found, rewinding chain", "head", number, "target", ss-1)
+			bc.SetHead(ss - 1)
+		}
+	}
+	if chainConfig.IsThangLong(bc.CurrentHeader().Number) {
+		number := bc.CurrentHeader().Number.Uint64()
+		cp := chainConfig.Dccs.Checkpoint(number)
+		log.Info("Sanity check for ThangLong checkpoint header", "checkpoint", cp, "head", number)
+		if bc.GetHeaderByNumber(cp) == nil {
+			log.Warn("Corrupted checkpoint header found, rewinding chain", "head", number, "target", cp-1)
+			bc.SetHead(cp - 1)
+		}
+	}
 	// Take ownership of this particular state
 	go bc.update()
 	return bc, nil
