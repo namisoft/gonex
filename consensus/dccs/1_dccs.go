@@ -213,7 +213,13 @@ func (d *Dccs) snapshot1(chain consensus.ChainReader, header *types.Header, pare
 		}
 	}
 
-	return d.getHeaderSnapshotFor(header, chain, parents)
+	snap, err := d.getHeaderSnapshotFor(header, chain, parents)
+	if err != nil || snap == nil {
+		return nil, err
+	}
+	// Store found snapshot into mem-cache
+	d.recents.Add(snap.Hash, snap)
+	return snap, nil
 }
 
 func (d *Dccs) getStateSnapshot(chain consensus.ChainReader, header *types.Header) (*Snapshot, error) {
