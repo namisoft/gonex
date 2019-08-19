@@ -30,13 +30,17 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
-type Backend interface {
-	ChainDb() ethdb.Database
-	EventMux() *event.TypeMux
+type SimpleBackend interface {
 	HeaderByNumber(ctx context.Context, blockNr rpc.BlockNumber) (*types.Header, error)
 	HeaderByHash(ctx context.Context, blockHash common.Hash) (*types.Header, error)
 	GetReceipts(ctx context.Context, blockHash common.Hash) (types.Receipts, error)
 	GetLogs(ctx context.Context, blockHash common.Hash) ([][]*types.Log, error)
+}
+
+type Backend interface {
+	SimpleBackend
+	ChainDb() ethdb.Database
+	EventMux() *event.TypeMux
 
 	SubscribeNewTxsEvent(chan<- core.NewTxsEvent) event.Subscription
 	SubscribeChainEvent(ch chan<- core.ChainEvent) event.Subscription
@@ -231,8 +235,24 @@ func (f *Filter) unindexedLogs(ctx context.Context, end uint64) ([]*types.Log, e
 
 // blockLogs returns the logs matching the filter criteria within a single block.
 func (f *Filter) blockLogs(ctx context.Context, header *types.Header) (logs []*types.Log, err error) {
-	if bloomFilter(header.Bloom, f.addresses, f.topics) {
-		found, err := f.checkMatches(ctx, header)
+	return blockLogs(ctx, header, f.addresses, f.topics, f.backend)
+}
+
+// checkMatches checks if the receipts belonging to the given header contain any log events that
+// match the filter criteria. This function is called when the bloom filter signals a potential match.
+func (f *Filter) checkMatches(ctx context.Context, header *types.Header) (logs []*types.Log, err error) {
+	return checkMatches(ctx, header, f.addresses, f.topics, f.backend)
+}
+
+// BlockLogs returns the logs matching the filter criteria within a single block.
+func BlockLogs(header *types.Header, addresses []common.Address, topics [][]common.Hash, backend SimpleBackend) (logs []*types.Log, err error) {
+	return blockLogs(nil, header, addresses, topics, backend)
+}
+
+// blockLogs returns the logs matching the filter criteria within a single block.
+func blockLogs(ctx context.Context, header *types.Header, addresses []common.Address, topics [][]common.Hash, backend SimpleBackend) (logs []*types.Log, err error) {
+	if bloomFilter(header.Bloom, addresses, topics) {
+		found, err := checkMatches(ctx, header, addresses, topics, backend)
 		if err != nil {
 			return logs, err
 		}
@@ -243,9 +263,9 @@ func (f *Filter) blockLogs(ctx context.Context, header *types.Header) (logs []*t
 
 // checkMatches checks if the receipts belonging to the given header contain any log events that
 // match the filter criteria. This function is called when the bloom filter signals a potential match.
-func (f *Filter) checkMatches(ctx context.Context, header *types.Header) (logs []*types.Log, err error) {
+func checkMatches(ctx context.Context, header *types.Header, addresses []common.Address, topics [][]common.Hash, backend SimpleBackend) (logs []*types.Log, err error) {
 	// Get the logs of the block
-	logsList, err := f.backend.GetLogs(ctx, header.Hash())
+	logsList, err := backend.GetLogs(ctx, header.Hash())
 	if err != nil {
 		return nil, err
 	}
@@ -253,11 +273,11 @@ func (f *Filter) checkMatches(ctx context.Context, header *types.Header) (logs [
 	for _, logs := range logsList {
 		unfiltered = append(unfiltered, logs...)
 	}
-	logs = filterLogs(unfiltered, nil, nil, f.addresses, f.topics)
+	logs = filterLogs(unfiltered, nil, nil, addresses, topics)
 	if len(logs) > 0 {
 		// We have matching logs, check if we need to resolve full logs via the light client
 		if logs[0].TxHash == (common.Hash{}) {
-			receipts, err := f.backend.GetReceipts(ctx, header.Hash())
+			receipts, err := backend.GetReceipts(ctx, header.Hash())
 			if err != nil {
 				return nil, err
 			}
@@ -265,7 +285,7 @@ func (f *Filter) checkMatches(ctx context.Context, header *types.Header) (logs [
 			for _, receipt := range receipts {
 				unfiltered = append(unfiltered, receipt.Logs...)
 			}
-			logs = filterLogs(unfiltered, nil, nil, f.addresses, f.topics)
+			logs = filterLogs(unfiltered, nil, nil, addresses, topics)
 		}
 		return logs, nil
 	}

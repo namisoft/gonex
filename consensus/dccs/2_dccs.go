@@ -19,7 +19,14 @@ package dccs
 
 import (
 	"bytes"
+	"context"
 	"time"
+
+	"github.com/ethereum/go-ethereum/core/rawdb"
+
+	"github.com/ethereum/go-ethereum/eth/filters"
+	"github.com/ethereum/go-ethereum/ethdb"
+	"github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
@@ -88,6 +95,40 @@ func (d *Dccs) verifyHeader2(chain consensus.ChainReader, header *types.Header, 
 	// All basic checks passed, verify cascading fields
 	return d.verifyCascadingFields2(chain, header, parents)
 }
+
+type LogFilterBackend struct {
+	chain consensus.ChainReader
+	db    ethdb.Reader
+}
+
+func (b *LogFilterBackend) HeaderByNumber(ctx context.Context, blockNr rpc.BlockNumber) (*types.Header, error) {
+	return b.chain.GetHeaderByNumber(uint64(blockNr.Int64())), nil
+}
+
+func (b *LogFilterBackend) HeaderByHash(ctx context.Context, blockHash common.Hash) (*types.Header, error) {
+	return b.chain.GetHeaderByHash(blockHash), nil
+}
+
+func (b *LogFilterBackend) GetReceipts(ctx context.Context, blockHash common.Hash) (types.Receipts, error) {
+	header := b.chain.GetHeaderByHash(blockHash)
+	if header == nil {
+		return nil, nil
+	}
+	receipts := rawdb.ReadReceipts(b.db, blockHash, header.Number.Uint64(), b.chain.Config())
+	return receipts, nil
+}
+
+func (b *LogFilterBackend) GetLogs(ctx context.Context, blockHash common.Hash) ([][]*types.Log, error) {
+	receipts, _ := b.GetReceipts(ctx, blockHash)
+	logs := make([][]*types.Log, len(receipts))
+	for i, receipt := range receipts {
+		logs[i] = receipt.Logs
+	}
+	return logs, nil
+}
+
+// This nil assignment ensures compile time that LogFilterBackend implements filters.SimpleBackend.
+var _ filters.SimpleBackend = (*LogFilterBackend)(nil)
 
 // verifyCascadingFields2 verifies all the header fields that are not standalone,
 // rather depend on a batch of previous headers. The caller may optionally pass
@@ -209,6 +250,30 @@ func (d *Dccs) prepare2(chain consensus.ChainReader, header *types.Header) error
 		header.Extra = append(header.Extra, bytes.Repeat([]byte{0x00}, extraVanity-len(header.Extra))...)
 	}
 	header.Extra = header.Extra[:extraVanity]
+
+	// Keccak256("Joined(address,address)")
+	joinedTopic := common.HexToHash("7702dccda75540ad1dca8d5276c048f4a5c0e4203f6da4be214bfb1901b203ea")
+	// Keccak256("Left(address,address)")
+	leftTopic := common.HexToHash("4b9ee4dd061ba088b22898a02491f3896a4a580c6cda8783ca579ee159f8e8c5")
+	logs, err := filters.BlockLogs(parent,
+		[]common.Address{d.config.Contract},
+		[][]common.Hash{{joinedTopic, leftTopic}},
+		&LogFilterBackend{
+			chain: chain,
+			db:    d.db,
+		})
+
+	for _, log := range logs {
+		action := log.Topics[0]
+		// len(log.Data) must be 32 * 2 here
+		sealer := common.BytesToAddress(log.Data[32:])
+		switch action {
+		case joinedTopic:
+
+		case leftTopic:
+
+		}
+	}
 
 	if d.config.IsCheckpoint(number) {
 		for _, signer := range snap.signers1() {
