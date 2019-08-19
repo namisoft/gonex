@@ -183,7 +183,7 @@ func (d *Dccs) verifyCascadingFields1(chain consensus.ChainReader, header *types
 func (d *Dccs) snapshot1(chain consensus.ChainReader, header *types.Header, parents []*types.Header) (*Snapshot, error) {
 	number := header.Number.Uint64()
 	ssNumber := d.config.Snapshot(number)
-	ssHeader := chain.GetHeaderByNumber(ssNumber)
+	ssHeader := getAvailableHeader(ssNumber, header, parents, chain)
 	if ssHeader != nil {
 		if s, ok := d.recents.Get(ssHeader.Hash()); ok {
 			// in-memory snapshot found
@@ -244,9 +244,9 @@ func (d *Dccs) getStateSnapshot(chain consensus.ChainReader, header *types.Heade
 	return newSnapshot(d.config, d.signatures, number, header.Hash(), signers), nil
 }
 
-// getHeaderFromInput return either:
+// getHeaderFromInput returns either:
 // + the input header, if number == header.Number
-// + the header in parent if available (nessesary for batch headers processing)
+// + the header in parents if available (nessesary for batch headers processing)
 // + chain.GetHeaderByNumber(number), if all else fail
 func getAvailableHeader(number uint64, header *types.Header, parents []*types.Header, chain consensus.ChainReader) *types.Header {
 	headerNumber := header.Number.Uint64()
