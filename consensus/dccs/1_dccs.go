@@ -44,7 +44,11 @@ import (
 )
 
 var (
-	errSnapshotNotAvailable = errors.New("Snapshot contract not available")
+	errSnapshotNotAvailable     = errors.New("Snapshot contract not available")
+	errNotCheckpoint            = errors.New("Not a checkpoint block")
+	errNotSnapshot              = errors.New("Not a snapshot block")
+	errMissingHeaderExtra       = errors.New("missing extra data in header")
+	errMissingCheckpointSigners = errors.New("missing signer list on checkpoint block")
 )
 
 var (
@@ -279,18 +283,28 @@ func (d *Dccs) getHeaderSnapshotFor(header *types.Header, chain consensus.ChainR
 	return d.getHeaderSnapshot(cpHeader, ssHeader)
 }
 
-// the signer list is retrieved from header extra, but the hash of the snapshot is
-// not the header.Hash(), but the snapshot(header).Hash()
-func (d *Dccs) getHeaderSnapshot(header, ssHeader *types.Header) (*Snapshot, error) {
-	number := header.Number.Uint64()
-	extraSuffix := len(header.Extra) - extraSeal
-	extraSealers := header.Extra[extraVanity:extraSuffix]
+// the signer list is retrieved from checkpoint header extra,
+// but the snapshot hash is hash of snapshot header
+func (d *Dccs) getHeaderSnapshot(cpHeader, ssHeader *types.Header) (*Snapshot, error) {
+	cp := cpHeader.Number.Uint64()
+	if !d.config.IsCheckpoint(cp) {
+		return nil, errNotCheckpoint
+	}
+	ss := ssHeader.Number.Uint64()
+	if d.config.Snapshot(cp) != ss {
+		return nil, errNotSnapshot
+	}
+	if len(cpHeader.Extra) <= extraVanity+extraSeal {
+		return nil, errMissingCheckpointSigners
+	}
+	extraSuffix := len(cpHeader.Extra) - extraSeal
+	extraSealers := cpHeader.Extra[extraVanity:extraSuffix]
 	if len(extraSealers) == 0 {
-		log.Error("empty sealers list", "number", number, "extra", common.Bytes2Hex(header.Extra))
-		return nil, errInvalidCheckpointSigners
+		log.Error("empty sealers list", "number", cp, "extra", common.Bytes2Hex(cpHeader.Extra))
+		return nil, errMissingCheckpointSigners
 	}
 	if len(extraSealers)%common.AddressLength != 0 {
-		log.Error("not divided by common.AddressLength", "number", number, "actual", common.Bytes2Hex(extraSealers))
+		log.Error("not divided by common.AddressLength", "number", cp, "actual", common.Bytes2Hex(extraSealers))
 		return nil, errInvalidCheckpointSigners
 	}
 	signersCount := len(extraSealers) / common.AddressLength
@@ -300,8 +314,8 @@ func (d *Dccs) getHeaderSnapshot(header, ssHeader *types.Header) (*Snapshot, err
 		signers[i] = common.BytesToAddress(extraSealers[offset : offset+common.AddressLength])
 	}
 
-	log.Trace("Snapshot parsed from checkpoint header", "snapshot number", ssHeader.Number, "hash", ssHeader.Hash(), "for number", header.Number)
-	return newSnapshot(d.config, d.signatures, ssHeader.Number.Uint64(), ssHeader.Hash(), signers), nil
+	log.Trace("Snapshot parsed from checkpoint header", "snapshot number", ss, "hash", ssHeader.Hash(), "for number", cpHeader.Number)
+	return newSnapshot(d.config, d.signatures, ss, ssHeader.Hash(), signers), nil
 }
 
 // verifySeal1 checks whether the signature contained in the header satisfies the
