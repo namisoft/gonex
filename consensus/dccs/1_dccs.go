@@ -375,31 +375,14 @@ func (d *Dccs) verifySeal1(chain consensus.ChainReader, header *types.Header, pa
 // header for running the transactions on top.
 func (d *Dccs) prepare1(chain consensus.ChainReader, header *types.Header) error {
 	header.Nonce = types.BlockNonce{}
-	// Get the beneficiary of signer from smart contract and set to header's coinbase to give sealing reward later
-	number := header.Number.Uint64()
-	ss := d.config.Snapshot(number)
-	ssHeader := chain.GetHeaderByNumber(ss)
-	if ssHeader == nil {
-		log.Trace("Header not available at snapshot", "number", ss)
-		return errSnapshotNotAvailable
-	}
-	ssState, err := chain.StateAt(ssHeader.Root)
-	if ssState == nil || err != nil {
-		log.Trace("State not available at snapshot", "number", ss, "err", err)
-		return errSnapshotNotAvailable
-	}
-	index := common.BigToHash(common.Big1).String()[2:]
-	coinbase := "0x000000000000000000000000" + header.Coinbase.String()[2:]
-	key := crypto.Keccak256Hash(hexutil.MustDecode(coinbase + index))
-	result := ssState.GetState(chain.Config().Dccs.Contract, key)
-	beneficiary := common.HexToAddress(result.Hex())
-	header.Coinbase = beneficiary
+	d.prepareBeneficiary(header, chain)
 
 	// Set the correct difficulty
 	snap, err := d.snapshot1(chain, header, nil)
 	if err != nil {
 		return err
 	}
+	number := header.Number.Uint64()
 	parent := chain.GetHeader(header.ParentHash, number-1)
 	if parent == nil {
 		return consensus.ErrUnknownAncestor
@@ -429,6 +412,47 @@ func (d *Dccs) prepare1(chain consensus.ChainReader, header *types.Header) error
 		header.Time = uint64(time.Now().Unix())
 	}
 	return nil
+}
+
+// prepareBeneficiary gets the beneficiary of signer from smart contract and
+// set to header's coinbase to give sealing reward later.
+// if all else fails, the sealer address is kept as reward beneficiary
+func (d *Dccs) prepareBeneficiary(header *types.Header, chain consensus.ChainReader) {
+	index := common.BigToHash(common.Big1).String()[2:]
+	sealer := "0x000000000000000000000000" + header.Coinbase.String()[2:]
+	key := crypto.Keccak256Hash(hexutil.MustDecode(sealer + index))
+
+	number := header.Number.Uint64()
+
+	// try the current active state first
+	state, err := chain.State()
+	if err != nil {
+		log.Error("Chain state not available", "number", number, "err", err)
+	} else if state != nil {
+		hash := state.GetState(chain.Config().Dccs.Contract, key)
+		if (hash != common.Hash{}) {
+			header.Coinbase = common.HexToAddress(hash.Hex())
+			return
+		}
+	}
+
+	// then try the snapshot state
+	ss := d.config.Snapshot(number)
+	ssHeader := chain.GetHeaderByNumber(ss)
+	if ssHeader == nil {
+		log.Warn("Snapshot header not avaialbe", "for number", number, "snapshot number", ss)
+		return
+	}
+	state, err = chain.StateAt(ssHeader.Root)
+	if err != nil || state == nil {
+		log.Warn("Snapshot state not available", "for number", number, "snapshot number", ss, "err", err)
+		return
+	}
+
+	hash := state.GetState(chain.Config().Dccs.Contract, key)
+	if (hash != common.Hash{}) {
+		header.Coinbase = common.HexToAddress(hash.Hex())
+	}
 }
 
 // finalize1 implements consensus.Engine, ensuring no uncles are set, nor block
