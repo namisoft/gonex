@@ -188,29 +188,26 @@ func (d *Dccs) snapshot1(chain consensus.ChainReader, header *types.Header, pare
 	number := header.Number.Uint64()
 	ssNumber := d.config.Snapshot(number)
 	ssHeader := getAvailableHeader(ssNumber, header, parents, chain)
-	if ssHeader != nil {
-		if s, ok := d.recents.Get(ssHeader.Hash()); ok {
-			// in-memory snapshot found
-			snap := s.(*Snapshot)
-			log.Trace("Snapshot loaded from mem-cache", "snapshot number", snap.Number, "hash", snap.Hash, "signers length", len(snap.Signers), "for number", header.Number)
-			return snap, nil
-		}
+	if ssHeader == nil {
+		log.Error("💀 Snapshot header missing", "snapshot number", ssNumber, "for number", number)
+		return nil, errSnapshotNotAvailable
 	}
-	// no cache found
+	if s, ok := d.recents.Get(ssHeader.Hash()); ok {
+		// in-memory snapshot found
+		snap := s.(*Snapshot)
+		log.Trace("Snapshot loaded from mem-cache", "snapshot number", snap.Number, "hash", snap.Hash, "signers length", len(snap.Signers), "for number", header.Number)
+		return snap, nil
+	}
 
 	if d.config.IsCheckpoint(number) {
-		if ssHeader != nil {
-			snap, err := d.getStateSnapshot(chain, ssHeader)
-			if err == nil && snap != nil {
-				log.Trace("Snapshot retrieved from state and cached", "for number", header.Number, "snapshot number", snap.Number, "hash", snap.Hash)
-				// Store found snapshot into mem-cache
-				d.recents.Add(snap.Hash, snap)
-				return snap, nil
-			}
-			log.Warn("☢ Snapshot state missing for checkpoint block, continue at your own risk", "snapshot number", ssNumber, "for number", number, "err", err)
-		} else {
-			log.Warn("☢ Snapshot header missing for checkpoint block, continue at your own risk", "snapshot number", ssNumber, "for number", number)
+		snap, err := d.getStateSnapshot(chain, ssHeader)
+		if err == nil && snap != nil {
+			log.Trace("Snapshot retrieved from state and cached", "for number", header.Number, "snapshot number", snap.Number, "hash", snap.Hash)
+			// Store found snapshot into mem-cache
+			d.recents.Add(snap.Hash, snap)
+			return snap, nil
 		}
+		log.Warn("☢ Snapshot state missing for checkpoint block, continue at your own risk", "snapshot number", ssNumber, "for number", number, "err", err)
 	}
 
 	snap, err := d.getHeaderSnapshotFor(header, chain, parents)
